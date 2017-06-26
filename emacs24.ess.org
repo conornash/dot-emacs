@@ -60,7 +60,9 @@
 * Load ESS
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package ess
-    :mode ("\\.R$|\\.Rprofile$" . R-mode)
+    :mode (("\\.R$" . R-mode)
+           ("\\.Rprofile$" . R-mode))
+  
     :bind
     (:map ess-mode-map
           ("C-\\" . ess-eval-line)

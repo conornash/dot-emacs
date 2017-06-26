@@ -436,13 +436,19 @@
 * Line numbers
 #+BEGIN_SRC emacs-lisp :tangle yes
 
-  (use-package nlinum)
-  (setq line-number-display-limit-width 9000000)
-  ;; Use nlinum instead
-  (global-nlinum-mode 0)
-  ;; Visual line mode - is awkward for killing long lines in R
+  (use-package nlinum
+    :commands (global-nlinum-mode nlinum-mode)
+    :config
+    (setq line-number-display-limit-width 9000000))
+#+END_SRC
 
-  (global-visual-line-mode t)
+* Visual line mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+ 
+  (use-package visual-line-mode
+    :ensure nil
+    :config
+    (global-visual-line-mode t))
 
  #+END_SRC
 
