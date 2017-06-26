@@ -1,0 +1,73 @@
+* Helper functions
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package s)
+
+  (defun elisp-time-to-epoch (elisp-time)
+    (+ (* (nth 0 elisp-time) (expt 2 16)) (nth 1 elisp-time)))
+
+  (defun list-flatten (listed nested-car nested-extract)
+    (let (res)
+      (dolist (elem listed res)
+        (let ((json-extract (s-concat "JSON_EXTRACT_PATH_TEXT(" nested-extract ", '" (symbol-name (car elem)) "')" ))
+              (json-name (s-concat nested-car "_" (symbol-name (car elem)))))
+
+          (cond
+           ((not (listp (cdr elem)))
+            (list-flatten (cdr elem) json-extract json-name))
+           (t
+            (setq res (cons (s-concat json-extract " AS " json-name) res))))))))
+
+  (defun read-json-get-keys (jsoned)
+    ;; use json-read-from-string to make jsoned
+    (let (foo '())
+      (dolist (elem jsoned foo)
+        (setq foo (append foo `(,(symbol-name (car elem))))))))
+
+#+END_SRC
+
+
+
+* Elisp
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package paredit)
+  (use-package redshank
+    :diminish (redshank-mode . " 🗡"))
+  (use-package elisp-slime-nav
+    :diminish
+    (elisp-slime-nav-mode . " ꖑ"))
+  (use-package eldoc)
+  (use-package company)
+
+  (setq elisp-mode-hook-actions
+        #'(lambda ()
+            (company-mode 1)
+            (eldoc-mode 1)
+            (elisp-slime-nav-mode 1)          
+            (rainbow-delimiters-mode 1)
+            (rainbow-mode 1)
+            (redshank-mode 1)
+            (turn-on-smartparens-strict-mode)
+
+            (setq eval-expression-debug-on-error t)
+            (add-hook 'after-save-hook 'delete-trailing-whitespace nil t)
+            ))
+
+  (add-hook 'emacs-lisp-mode-hook elisp-mode-hook-actions)
+  (add-hook 'lisp-interaction-mode-hook elisp-mode-hook-actions)
+  (add-hook 'edebug-eval-mode-hook elisp-mode-hook-actions)
+
+  (-map (lambda (map)
+          (when (keymapp map)
+            (define-key map (kbd "C-,") 'pop-tag-mark)
+            (define-key map (kbd "C-c C-r") 'eval-region)
+            (define-key map (kbd "C-c C-b") 'eval-buffer)
+            (define-key map (kbd "C-.") 'elisp-slime-nav-find-elisp-thing-at-point)
+            (define-key map (kbd "C-c C-e") 'macrostep-expand)
+            (define-key map (kbd "C-c C-d") 'elisp-slime-nav-describe-elisp-thing-at-point)
+            (define-key map (kbd "C-c d") 'elisp-slime-nav-describe-elisp-thing-at-point)
+            (define-key map (kbd "M-j") 'eval-print-last-sexp)
+            ))
+        '(emacs-lisp-mode-map lisp-interaction-mode-map edebug-eval-mode-map))
+
+  (define-key emacs-lisp-mode-map (kbd "C-s-j") 'eval-print-last-sexp)
+#+END_SRC

@@ -1,0 +1,115 @@
+* Helper functions
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  (defun conor-helm-files ()
+    "Helm function to open files or buffers"
+    (interactive)
+    (unless helm-source-buffers-list
+      (setq helm-source-buffers-list
+            (helm-make-source "Buffers" 'helm-source-buffers)))
+    (let ((helm-ff-transformer-show-only-basename nil))
+      (helm :sources '(helm-source-buffers-list
+                       helm-source-recentf
+                       helm-source-bookmarks
+                       helm-source-file-cache
+                       helm-source-files-in-current-dir
+                       helm-source-buffer-not-found
+                       helm-source-mac-spotlight)
+            :buffer "*Where would you like to go?*")))
+
+  (defun conor-helm-insert ()
+    "Helm function to insert text in a buffer"
+    (interactive)
+    (helm-register-candidates)
+    (helm-kill-ring-candidates)
+    (helm :sources '(helm-source-register
+                     helm-source-kill-ring)
+          :buffer "*helm insert*"))
+
+  (defun conor-helm-project ()
+    "Helm function to work with projects"
+    (interactive)
+    (helm :sources '(helm-source-projectile-buffers-list
+                     helm-source-projectile-files-list
+                     helm-source-projectile-projects)
+          :buffer "*helm project*"))
+
+  (defun conor-helm-kill-ring-regsters ()
+    (interactive)
+    (helm :sources '(helm-source-kill-ring
+                     helm-source-register)
+          :buffer "*helm kill ring & registers"))
+
+  (defun conor-helm-ag-here ()
+    (interactive)
+    (helm-do-ag default-directory))
+#+END_SRC
+
+
+
+* Helm
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  (use-package helm
+    :commands helm-mode 
+
+    :init
+    (setq
+     helm-ag-base-command "/usr/local/bin/ag -U -z --hidden --nocolor --nogroup --path-to-ignore=~/.agignore"
+     helm-boring-buffer-regexp-list nil
+     helm-buffer-max-length 40
+     helm-multi-swoop-ignore-buffers-match "aaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     ;; open helm buffer inside current window, not occupy whole other window
+     helm-split-window-in-side-p 1
+     ;; move to end or beginning of source when reaching top or bottom of source.
+     helm-move-to-line-cycle-in-source nil
+     ;; search for library in `require' and `declare-function' sexp.
+     helm-ff-search-library-in-sexp t
+     helm-for-files-preferred-list '(helm-source-buffers-list
+                                     helm-source-recentf
+                                     helm-source-bookmarks
+                                     helm-source-file-cache
+                                     helm-source-files-in-current-dir
+                                     helm-source-mac-spotlight)
+     ;; scroll 8 lines other window using M-<next>/M-<prior>
+     helm-echo-input-in-header-line t
+     helm-ff-file-name-history-use-recentf t
+     helm-ff-transformer-show-only-basename nil
+     helm-follow-mode t
+     helm-idle-delay 0.0 ;; update fast sources immediately (doesn't).
+     helm-input-idle-delay 0.01  ;; this actually updates things reeeelatively quickly.
+     helm-org-show-filename t
+     helm-quick-update t
+     helm-scroll-amount 8)
+
+    (add-hook 'helm-cleanup-hook
+              #'(lambda ()
+                  (setq gc-cons-percentage 0.2)))
+    (add-hook 'helm-before-initialize-hook
+              #'(lambda ()
+                  (setq gc-cons-percentage 0.8)))
+
+    :config
+    (use-package helm-config :ensure nil)
+    (use-package helm-ring :ensure nil))
+
+  (use-package helm-swoop
+    :bind
+    (("<M-f12>" . helm-multi-swoop-org))
+    :diminish
+    (helm-mode . " 🟍"))
+
+  (use-package helm-dash
+    :bind (("C-c C-d" . helm-dash-at-point))
+    :config
+    (setq helm-dash-browser-func 'eww
+          helm-dash-docsets-path "~/dotfiles/.docsets"
+          helm-dash-common-docsets '("Python 2" "Python 3" "PostgreSQL" "Javascript" "Emacs Lisp" "R" "SQLAlchemy" "boto3" "Jinja"))
+    (use-package helm-pydoc))
+
+  (use-package helm-ag
+    :commands (helm-do-ag helm-ag conor-helm-ag-here))
+
+
+  ;;(add-to-list 'helm-completing-read-handlers-alist '(find-file))
+#+END_SRC

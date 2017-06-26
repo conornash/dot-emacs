@@ -1,0 +1,28 @@
+* Prerequisites
+You must have Emacs 25 or greater installed on your system. Tested with emacs-plus from Homebrew
+
+
+* Installation
+Clone this repository using the following command:
+
+#+BEGIN_SRC sh
+git clone git@github.com:conornash/dot-emacs.git ~/.emacs.d
+#+END_SRC
+
+
+Once the clone has completed successfully, run the following command:
+
+#+BEGIN_SRC sh
+  emacs --batch --eval '(require (quote org))' \
+        --eval '(require (quote ob))' \
+        --eval '(org-babel-load-file  (expand-file-name "~/.emacs.d/init.org"))'
+#+END_SRC
+
+
+This will download all required packages for Emacs. The first time you run Emacs, use:
+#+BEGIN_SRC sh
+emacs --debug-init
+
+#+END_SRC
+
+This will tell you what issues are present in your install.

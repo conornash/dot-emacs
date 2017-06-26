@@ -1,0 +1,1278 @@
+#+LAST_MOBILE_CHANGE: 2013-02-23 12:26:49
+#+TITLE: Conor's Dot Emacs
+#+COLUMNS: %50ITEM(Task) %13CLOCKSUM(Clocked Total) %8Effort(Estimate){:} %13CLOCKSUM_T(Clocked Today) %18DEADLINE
+#+STARTUP: hidestars indent
+#+PROPERTY: Effort_ALL 0 0:05 0:15 0:30 1:00 2:00 5:00 10:00 20:00
+#+PROPERTY: ORDERED t
+#+SEQ_TODO: NEXTACTION(@) | DONE(@) TRANSFERRED(@) CANCELLED(@)
+#+PRIORITIES: A E A
+#+DRAWERS: PROPERTIES ARCHIVE
+#+LATEX_HEADER: \hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
+#+BABEL: :session *R* :cache yes :results output graphics :exports both :tangle yes
+#+STARTUP: hidestars
+#+SETUPFILE: theme-readtheorg.setup
+
+
+* Initial requirements
+
+** Setup system
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (setq gc-cons-percentage 0.8)
+
+  ;;(setq debug-on-error t)
+  (package-initialize nil)
+  ;; (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/") t)
+  (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+  ;; (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t) ;; Goes down often
+  (add-to-list 'package-archives '("ELPA" . "http://tromey.com/elpa/") t)
+  (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/") t)
+  (package-refresh-contents)
+
+  (setq max-lisp-eval-depth 60000
+        max-specpdl-size 13000)
+
+  (unless (package-installed-p 'use-package)
+    (package-initialize)
+    (package-refresh-contents)
+    (package-install 'use-package))
+
+  (eval-when-compile
+    (require 'use-package))
+  (require 'files)
+  (require 'diminish)
+  (require 'bind-key)
+  (setq use-package-verbose t
+        use-package-always-ensure t)
+
+  (setq inhibit-startup-screen t
+        ring-bell-function 'ignore
+        mac-command-modifier 'control
+        mac-control-modifier 'super
+        mac-option-modifier 'meta
+        mac-pass-command-to-system nil)
+  (modify-frame-parameters nil '((wait-for-wm . nil)))
+
+  (tool-bar-mode -1)
+  ;; (menu-bar-mode -1)
+  (scroll-bar-mode -1)
+
+  ;; Don't say yes or no, just y or n
+  (fset 'yes-or-no-p 'y-or-n-p)
+
+  ;; Coding system
+  (prefer-coding-system 'utf-8)
+  (set-default-coding-systems 'utf-8)
+  (set-terminal-coding-system 'utf-8)
+  (set-keyboard-coding-system 'utf-8)
+  ;; backwards compatibility as default-buffer-file-coding-system
+  ;; is deprecated in 23.2.
+  (if (boundp 'buffer-file-coding-system)
+      (setq-default buffer-file-coding-system 'utf-8)
+    (setq default-buffer-file-coding-system 'utf-8))
+  (setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING))
+
+  ;; Header line
+  ;; (setq-default header-line-format mode-line-format)
+  ;; (setq-default mode-line-format nil)
+
+  ;; Recursive....
+  (setq enable-recursive-minibuffers t)
+
+  (setq delete-active-region 'kill)
+#+END_SRC
+
+
+** Load Orgmode early
+ #+BEGIN_SRC emacs-lisp :tangle yes
+
+   ;; This is required early on so that we can load org files as config
+   (use-package org
+     :mode ("\\.org$" . org-mode)
+
+     :bind (("<s-tab>" . org-force-cycle-archived)
+            ("<s-down>" . org-forward-element)
+            ("<s-up>" . org-backward-element)
+            ("<s-left>" . org-up-element)
+            ("<s-right>" . org-down-element)
+            ("M-<down>" . org-metadown)
+            ("M-<up>" . org-metaup)
+            ("C-c l" . org-store-link)
+            ("C-c C-l" . org-insert-link)
+            ("s-!" . insert-current-timestamp-inactive)
+            ("s-o" . org-open-at-point)
+            ("s-O" . org-open-at-point-global))
+
+     :config
+     (require 'org-macs)
+     (require 'ob)
+  
+     (defun org-babel-load-if-exists (org-file)
+       (when (file-exists-p org-file)
+         (org-babel-load-file org-file)))
+
+     (setq org-list-allow-alphabetical t))
+#+END_SRC
+
+
+** Fonts 
+#+BEGIN_SRC emacs-lisp :tangle yes
+  ;; Requires font to be downloaded from https://www.fontsquirrel.com/fonts/inconsolata
+  (set-face-attribute 'default nil
+                      :family "Inconsolata"
+                      :height 120
+                      :weight 'normal
+                      :width 'normal)
+
+  (when (functionp 'set-fontset-font)
+    (set-fontset-font "fontset-default"
+                      'unicode
+                      (font-spec :family "Droid Sans Mono"
+                                 :width 'normal
+                                 :size 11
+                                 :weight 'normal)))
+
+  ;; Requires font to be downloaded from http://fontawesome.io/
+  (use-package fontawesome)
+
+  ;; Unicode coding
+  (set-language-environment "UTF-8")
+
+  ;; unicode-fonts package
+  (use-package unicode-fonts
+    :config
+    (unicode-fonts-setup))
+
+#+END_SRC
+
+
+** Environment Variables
+#+BEGIN_SRC emacs-lisp :tangle yes
+  ;; Pull in environment variables
+  (use-package exec-path-from-shell
+    :commands (exec-path-from-shell-initialize)
+    :config
+    (setq exec-path-from-shell-variables
+          '("PATH" "MANPATH" "DOCKER_TLS_VERIFY" "DOCKER_HOST" "DOCKER_CERT_PATH" "DOCKER_MACHINE_NAME"))
+    (when (memq window-system '(mac ns))
+      (exec-path-from-shell-initialize)))
+
+  ;; To allow Python to be in UTF-8
+  (defvar universal-coding-system-env-list '("PYTHONIOENCODING")
+    "List of environment variables \\[universal-coding-system-argument] should set")
+
+  (defadvice universal-coding-system-argument (around provide-env-handler activate)
+    "Augments \\[universal-coding-system-argument] so it also sets environment variables
+
+  Naively sets all environment variables specified in
+  `universal-coding-system-env-list' to the literal string
+  representation of the argument `coding-system'.
+
+  No guarantees are made that the environment variables set by this advice support
+  the same coding systems as Emacs."
+    (let ((process-environment (copy-alist process-environment)))
+      (dolist (extra-env universal-coding-system-env-list)
+        (setenv extra-env (symbol-name (ad-get-arg 0))))
+      ad-do-it))
+
+#+END_SRC
+
+
+** Byte Compile
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (defun tangle-init ()
+    "If the current buffer is an org file in the user directory the code-blocks are
+  tangled, and the tangled file is compiled."
+    (when (and
+           (equal (file-name-directory (buffer-file-name)) (expand-file-name user-emacs-directory))
+           (file-exists-p (buffer-file-name))
+           (string= "org" (file-name-extension (buffer-file-name))))
+      ;; Avoid running hooks when tangling.
+      (let ((prog-mode-hook nil)
+            (org-file-to-compile (expand-file-name (buffer-file-name))))
+        (org-babel-tangle)
+        (byte-compile-file (expand-file-name (concat (file-name-sans-extension org-file-to-compile) ".el"))))))
+
+  (add-hook 'after-save-hook #'tangle-init)
+#+END_SRC
+
+
+* Smartparens
+#+BEGIN_SRC emacs-lisp :tangle yes
+;; load last so that it doesn't override other bindings
+
+(org-babel-load-file (expand-file-name "emacs24.smartparens.org" user-emacs-directory))
+
+ #+END_SRC
+
+
+* Paredit
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package paredit)
+#+END_SRC
+
+
+* Company-mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package company
+    :bind ("\M-\t" . company-complete)
+    :config
+    (use-package company-anaconda)
+    (setq company-tooltip-limit 20
+          company-idle-delay 0.1)
+    (define-key company-active-map (kbd "C-n") 'company-select-next)
+    (define-key company-active-map (kbd "C-p") 'company-select-previous))
+
+ #+END_SRC
+
+
+* Smartscan
+ #+BEGIN_SRC emacs-lisp :tangle yes
+(use-package smartscan)
+#+END_SRC
+
+
+* Load Python
+ #+BEGIN_SRC emacs-lisp :tangle yes
+
+   (org-babel-load-file (expand-file-name "emacs24.python.org" user-emacs-directory))
+#+END_SRC
+
+
+* Org Mode (full config)
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  (org-babel-load-file (expand-file-name "emacs24.orgmode.org" user-emacs-directory))
+
+#+END_SRC
+
+
+* Helm
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (org-babel-load-file (expand-file-name "emacs24.helm.org" user-emacs-directory))
+
+ #+END_SRC
+
+
+* Flycheck
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package flycheck
+    :bind (("s-[" . flycheck-previous-error)
+           ("s-]" . flycheck-next-error)))
+  (use-package flycheck-mypy
+    :config
+    (setq flycheck-python-mypy-args "--ignore-missing-imports"))
+
+
+#+END_SRC
+
+
+* Rainbow Delimiters
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package rainbow-delimiters)
+
+#+END_SRC
+
+
+* CSV Mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package csv-mode
+  :mode "\\.csv\\'" "\\.psv\\'" "\\.tsv\\'"
+  :init
+  (setq csv-separators '("," "\t" "|"))
+  (add-hook 'csv-mode-hook
+            #'(lambda()
+                (hl-line-mode 1))))
+#+END_SRC
+
+
+* Column Number Mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  ;; column-number-mode
+  (column-number-mode t)
+#+END_SRC
+
+
+* Direnv
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  ;; direnv
+  (org-babel-load-file (expand-file-name "emacs24.direnv.org" user-emacs-directory))
+#+END_SRC
+
+
+* Guide-key
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  (use-package guide-key
+    :config
+    (setq guide-key/guide-key-sequence '("C-x r" "C-x 4" "C-x v" "C-x j" "<C-f1>" "C-;" "C-c" "<f2>")
+          guide-key/idle-delay 0.5
+          guide-key/recursive-key-sequence-flag t)
+    (guide-key-mode 1))
+
+#+END_SRC
+
+
+* Hy
+#+BEGIN_SRC emacs-lisp :tangle yes
+(add-hook 'hy-mode-hook
+          #'(lambda ()
+              (pyenv-mode 1)
+              (rainbow-mode 1)
+              (smartparens-mode 1)
+              (turn-on-smartparens-strict-mode)
+              (add-hook 'after-save-hook 'delete-trailing-whitespace nil t)
+              (setq tab-width 4
+                    ;; jedi:complete-on-dot t              ; optional
+                    ;; flycheck-checker 'python-flake8
+                    jit-lock-defer-time 0.25)
+              (define-key hy-mode-map (kbd "M-\\") 'switch-to-lisp)
+              ))
+
+(add-hook 'inferior-lisp-mode-hook
+          #'(lambda ()
+              (define-key inferior-lisp-mode-map (kbd "C-M-p") 'backward-list)
+              (define-key inferior-lisp-mode-map (kbd "C-M-n") 'forward-list)))
+
+#+END_SRC
+
+
+* Scheme
+#+BEGIN_SRC emacs-lisp :tangle yes
+(org-babel-load-if-exists (expand-file-name "emacs24.scheme.org" user-emacs-directory))
+
+#+END_SRC
+
+
+* Keyfreq
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+(use-package keyfreq
+  :config
+  (setq keyfreq-excluded-commands
+        '(self-insert-command
+          keyboard-quit
+          abort-recursive-edit
+          )
+        keyfreq-file (expand-file-name "keyfreq" user-emacs-directory))
+  (keyfreq-mode 1)
+  (keyfreq-autosave-mode 1))
+
+
+#+END_SRC
+
+
+* Auto-compile
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package auto-compile
+  :config
+  (auto-compile-on-load-mode 1)
+  (auto-compile-on-save-mode 1)
+  (setq load-prefer-newer t))
+
+ #+END_SRC
+
+
+* iBuffer
+#+BEGIN_SRC emacs-lisp :tangle yes
+(autoload 'ibuffer "ibuffer" "List buffers." t)
+
+ #+END_SRC
+
+
+* cua-mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+(cua-mode t)
+(setq cua-enable-cua-keys nil)
+(setq cua-delete-selection nil)
+(setq delete-active-region nil)
+
+ #+END_SRC
+
+
+* Help-mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+(add-hook 'help-mode-hook #'(lambda()
+                              (define-key help-mode-map (kbd "b") 'help-go-back)
+                              (define-key help-mode-map (kbd "f") 'help-go-forward)))
+
+ #+END_SRC
+
+
+* hungry-delete
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package hungry-delete)
+  (global-hungry-delete-mode 1)
+  (setq hungry-delete-chars-to-skip " \t\f\v")
+  (defalias 'delete-backward-char 'hungry-delete-backward "To delete a single character provide a numeric prefix.")
+  (defalias 'delete-forward-char 'hungry-delete-forward "To delete a single character provide a numeric prefix.")
+
+
+ #+END_SRC
+
+
+* Tabs defaults
+#+BEGIN_SRC emacs-lisp :tangle yes
+(setq default-tab-width 4
+      tab-width 4)
+
+(setq-default indent-tabs-mode nil
+              tab-width 4)
+
+(setq whitespace-display-mappings
+;; all numbers are Unicode codepoint in decimal. try (insert-char 182 ) to see it
+      '(
+        (space-mark 32 [183] [46]) ; 32 SPACE, 183 MIDDLE DOT 「·」, 46 FULL STOP 「.」
+        (newline-mark 10 [182 10]) ; 10 LINE FEED
+        (tab-mark 9 [9655 9] [92 9]) ; 9 TAB, 9655 WHITE RIGHT-POINTING TRIANGLE 「▷」
+        ))
+
+(setq whitespace-style '(face tabs spaces trailing space-before-tab::space newline indentation::space indentation indentation::tab empty space-after-tab::space space-mark tab-mark newline-mark))
+
+ #+END_SRC
+
+
+* Line numbers
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  (use-package nlinum)
+  (setq line-number-display-limit-width 9000000)
+  ;; Use nlinum instead
+  (global-nlinum-mode 0)
+  ;; Visual line mode - is awkward for killing long lines in R
+
+  (global-visual-line-mode t)
+
+ #+END_SRC
+
+
+* Automatically refresh open files if changed on disk
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+(global-auto-revert-mode t)
+(setq auto-revert-interval 2
+
+;; Also auto refresh dired, but be quiet about it
+      global-auto-revert-non-file-buffers t
+      auto-revert-verbose nil)
+
+
+ #+END_SRC
+
+
+* Window splitting horizontally
+#+BEGIN_SRC emacs-lisp :tangle yes
+(setq split-height-threshold 140)
+(setq split-width-threshold 140)
+
+ #+END_SRC
+
+
+* w3m
+#+BEGIN_SRC emacs-lisp :tangle yes
+;;(setq browse-url-browser-function 'w3m-browse-url)
+(setq browse-url-browser-function 'browse-url-default-macosx-browser)
+
+ #+END_SRC
+
+
+* kill ring
+#+BEGIN_SRC emacs-lisp :tangle yes
+(setq kill-ring-max 200)
+
+ #+END_SRC
+
+
+* Movement
+#+BEGIN_SRC emacs-lisp :tangle yes
+(global-set-key (kbd "<M-up>") 'move-text-up)
+(global-set-key (kbd "<M-down>") 'move-text-down)
+
+#+END_SRC
+
+
+* Enable narrowing
+#+BEGIN_SRC emacs-lisp :tangle yes
+(put 'narrow-to-region 'disabled nil)
+
+ #+END_SRC
+
+
+* Enable downcase-region
+#+BEGIN_SRC emacs-lisp :tangle yes
+(put 'downcase-region 'disabled nil)
+
+ #+END_SRC
+
+
+* Browse at remote
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package browse-at-remote)
+
+ #+END_SRC
+
+
+* Tramp
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package tramp
+    :config
+    (setq tramp-default-method "ssh"
+          tramp-copy-size-limit -1
+          tramp-use-ssh-controlmaster-options t
+          tramp-ssh-controlmaster-options
+          (concat
+           "-o ControlPath=/tmp/ssh-ControlPath-%%r@%%h:%%p "
+           "-o ControlMaster=auto -o ControlPersist=yes"))
+  ;; allow sudo access to hosts
+  ;; (add-to-list 'tramp-default-proxies-alist '(".*" "\\`root\\'" "/ssh:%h:"))
+  ;; It's just too long to type
+    (defalias 'tcac 'tramp-cleanup-all-connections))
+
+ #+END_SRC
+
+
+* SSH mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+(add-to-list 'auto-mode-alist '(".ssh/config\\'"       . ssh-config-mode))
+(add-to-list 'auto-mode-alist '("sshd?_config\\'"      . ssh-config-mode))
+(add-to-list 'auto-mode-alist '("known_hosts\\'"       . ssh-known-hosts-mode))
+(add-to-list 'auto-mode-alist '("authorized_keys2?\\'" . ssh-authorized-keys-mode))
+(add-hook 'ssh-config-mode-hook 'turn-on-font-lock)
+
+ #+END_SRC
+
+
+* TAGS
+#+BEGIN_SRC emacs-lisp :tangle yes
+  ;; (setq tags-table-list (expand-file-name "emacs24/" user-emacs-directory))
+  ;; (use-package gtags
+  ;;   :config
+  ;;   (define-key gtags-mode-map (kbd "M-.") 'gtags-find-tag)
+  ;;   (define-key gtags-mode-map (kbd "M-,") 'gtags-find-rtag)
+  ;;   (define-key gtags-select-mode-map (kbd "RET") 'gtags-select-tag)
+  ;;   (define-key gtags-select-mode-map (kbd "M-RET") 'gtags-pop-stack)
+  ;;   (define-key gtags-mode-map (kbd "M-RET") 'gtags-pop-stack))
+
+ #+END_SRC
+
+
+* Multi Compile
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package multi-compile)
+ #+END_SRC
+
+
+
+* Dired
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (setq ls-lisp-use-insert-directory-program nil
+        dired-listing-switches "-alh")
+  (require 'ls-lisp)
+  (add-hook 'dired-mode-hook
+            #'(lambda ()            
+                (hl-line-mode 1)))
+
+  (defun dired-back-to-top ()
+    (interactive)
+    (beginning-of-buffer)
+    (dired-next-line 4))
+
+  (defun dired-jump-to-bottom ()
+    (interactive)
+    (end-of-buffer)
+    (dired-next-line -1))
+ #+END_SRC
+
+
+* Find file at point
+#+BEGIN_SRC emacs-lisp :tangle yes
+;; (ffap-bindings)
+;; (setq ffap-require-prefix t)
+;;(setq dired-at-point-require-prefix t)
+
+(setq save-abbrevs nil
+      hippie-expand-try-functions-list
+      '(try-expand-dabbrev-all-buffers
+        try-complete-file-name
+        try-complete-file-name-partially
+        try-complete-lisp-symbol
+        try-complete-lisp-symbol-partially
+        try-expand-all-abbrevs
+        try-expand-dabbrev
+        try-expand-dabbrev-from-kill
+        try-expand-dabbrev-visible
+        try-expand-line
+        try-expand-list
+        yas-hippie-try-expand))
+
+ #+END_SRC
+
+
+* Uniquify
+#+BEGIN_SRC emacs-lisp :tangle yes
+(require 'uniquify)
+(setq uniquify-buffer-name-style 'post-forward-angle-brackets)
+
+ #+END_SRC
+
+
+* Docker
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package docker-tramp)
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
+#+END_SRC
+
+
+* Dockerfile
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package dockerfile-mode
+  :init
+  (add-hook 'dockerfile-mode-hook
+            #'(lambda ()
+                (add-hook 'after-save-hook 'delete-trailing-whitespace nil t)
+                )))
+
+ #+END_SRC
+
+
+* SQL
+#+BEGIN_SRC emacs-lisp :tangle yes
+(org-babel-load-if-exists (expand-file-name "emacs24.sql.org" user-emacs-directory))
+
+ #+END_SRC
+
+
+* Transpose-frame
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package transpose-frame
+  :bind
+  (("C-<" . rotate-frame-anticlockwise)
+   ("C->" . rotate-frame-clockwise)))
+
+
+ #+END_SRC
+
+
+* Comint
+#+BEGIN_SRC emacs-lisp :tangle yes
+(require 'comint)
+
+ #+END_SRC
+
+
+* ESS / R
+#+BEGIN_SRC emacs-lisp :tangle yes
+(org-babel-load-if-exists (expand-file-name "emacs24.ess.org" user-emacs-directory))
+
+ #+END_SRC
+
+
+* Shell
+#+BEGIN_SRC emacs-lisp :tangle yes
+  ; Add keybindings
+  (add-hook 'sh-mode-hook
+            #'(lambda()
+               (define-key sh-mode-map (kbd "C-\\") 'shell-eval-line)))
+ #+END_SRC
+
+
+* Key Chord
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+(use-package key-chord
+  :config
+  (key-chord-mode 1)
+  (key-chord-define-global "HH" 'helm-apropos)
+  (key-chord-define-global "hh" 'helm-M-x)
+  (key-chord-define-global "JJ" 'org-agenda)
+  (key-chord-define-global "jj" 'conor-helm-files))
+
+
+#+END_SRC
+
+
+* Undo Tree
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package undo-tree
+  :config
+  (global-undo-tree-mode 1))
+
+ #+END_SRC
+
+
+* Multiple cursors
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package multiple-cursors
+    :commands
+    (mc/mark-next-like-this
+     mc/mark-previous-like-this
+     mc/edit-beginnings-of-lines
+     mc/add-multiple-cursors-to-region-lines
+     mc/edit-ends-of-lines)
+
+    :init
+    (setq mc/list-file (expand-file-name "emacs24.mc.el" user-emacs-directory)
+          mc/cmds-to-run-for-all
+          '(
+            backward-sexp
+            beginning-of-visual-line
+            cua-copy-region
+            cua-cut-region
+            cua-exchange-point-and-mark
+            cua-paste
+            djcb-duplicate-line
+            downcase-region
+            electric-newline-and-maybe-indent
+            end-of-buffer
+            end-of-visual-line
+            ess-smart-S-assign
+            ess-smart-comma
+            ess-yank
+            forward-sexp
+            hungry-delete-backward
+            hungry-delete-forward
+            iregister-copy-to-register-kill
+            iregister-point-or-text-to-register-kill-ring-save
+            jedi:dot-complete
+            kill-region
+            kill-sexp
+            kill-visual-line
+            move-text-down
+            move-text-up
+            my-python-eval-line
+            org-beginning-of-line
+            org-delete-char
+            org-end-of-line
+            org-force-self-insert
+            org-self-insert-command
+            paredit-backward
+            paredit-backward-kill-word
+            paredit-close-round
+            paredit-doublequote
+            paredit-forward
+            paredit-forward-delete
+            paredit-forward-kill-word
+            paredit-forward-slurp-sexp
+            paredit-join-sexps
+            paredit-kill
+            paredit-newline
+            paredit-open-round
+            paredit-open-square
+            paredit-semicolon
+            paredit-splice-sexp
+            paredit-wrap-round
+            python-indent-dedent-line-backspace
+            python-indent-electric-colon
+            sp--self-insert-command
+            sp-backward-delete-char
+            sp-backward-kill-word
+            sp-backward-sexp
+            sp-delete-char
+            sp-down-sexp
+            sp-forward-sexp
+            sp-forward-slurp-sexp
+            sp-kill-hybrid-sexp
+            sp-kill-sexp
+            sp-kill-word
+            sp-remove-active-pair-overlay
+            sp-splice-sexp
+            sp-up-sexp
+            transpose-words
+            yas-expand
+            )))
+
+ #+END_SRC
+
+
+* Expand region
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package expand-region
+    :commands
+    (er/expand-region))
+ #+END_SRC
+
+
+* js2 stuff
+#+BEGIN_SRC emacs-lisp :tangle yes
+(org-babel-load-if-exists (expand-file-name "emacs24.js2.org" user-emacs-directory))
+
+ #+END_SRC
+
+
+* JSON
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package json-mode
+    :mode "\\.json\\'"
+    :init
+    (add-hook 'json-mode-hook
+              #'(lambda ()
+                  (smartparens-mode 1))))
+
+ #+END_SRC
+
+
+* Recentf
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package recentf
+  :init
+  (setq recentf-max-saved-items nil))
+
+(require 'prog-mode)
+ #+END_SRC
+
+
+* Prettify
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  (global-prettify-symbols-mode 1)
+  (setq prettify-symbols-unprettify-at-point 'right-edge)
+
+ #+END_SRC
+
+
+* isearch
+#+BEGIN_SRC emacs-lisp :tangle yes
+(defun isearch-exit-other-end ()
+  "Exit isearch, at the opposite end of the string."
+  (interactive)
+  (isearch-exit)
+  (goto-char isearch-other-end))
+
+(define-key isearch-mode-map (kbd "C-o") 'isearch-occur)
+(define-key isearch-mode-map (kbd "<backspace>") 'conor-mydelete)
+(define-key isearch-mode-map (kbd "M-o") 'helm-swoop-from-isearch)
+(define-key isearch-mode-map (kbd "s-o") 'helm-swoop-from-isearch)
+(define-key isearch-mode-map (kbd "C-<return>") 'isearch-exit-other-end)
+
+ #+END_SRC
+
+
+* Edebug
+#+BEGIN_SRC emacs-lisp :tangle yes
+(setq edebug-trace t
+      edebug-save-windows nil)
+
+ #+END_SRC
+
+
+* RealGUD
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package realgud)
+
+ #+END_SRC
+
+
+* visual-regexp
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package visual-regexp)
+ #+END_SRC
+
+
+* Restclient
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package restclient
+    :mode ("\\.http\\'" . restclient-mode)
+    :init
+    (add-hook 'restclient-mode-hook
+              '(lambda ()
+                 (smartparens-mode 1)))
+    :config
+    (use-package restclient-helm))
+
+
+ #+END_SRC
+
+
+* Markdown
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package markdown-mode
+    :mode "\\.md\\'")
+
+ #+END_SRC
+
+
+* RMarkdown
+#+BEGIN_SRC emacs-lisp :tangle yes
+  ;; (use-package polymode
+  ;;   :mode ("\\.Rmd\\'" . poly-markdown+r-mode)
+  ;;   :init
+  ;;   (require 'poly-R)
+  ;;   (require 'poly-markdown)
+  ;;   :config
+  ;;   (require 'ess))
+
+
+ #+END_SRC
+
+
+* SCSS
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package scss-mode
+    :mode "\\.scss\\'")
+
+ #+END_SRC
+
+
+* Smalltalk
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package shampoo
+    :mode ( "\\.st\\'" . shampoo-code-mode))
+
+ #+END_SRC
+
+
+* SASS
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  (use-package sass-mode
+    :mode "\\.sass\\'")
+
+ #+END_SRC
+
+
+* web-mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package web-mode
+    :mode "\\.html\\'" "\\.php\\'" "\\.tpl\\'" "\\.mustache\\'" "\\.erb\\'" "\\.jinja\\'" "\\.jinja2\\'"
+    :init
+    (add-hook 'web-mode-hook
+              '(lambda ()
+                 (setq web-mode-markup-indent-offset 2
+                       web-mode-css-indent-offset 2
+                       web-mode-code-indent-offset 2
+                       web-mode-enable-engine-detection t
+                       ;; ( web-mode-indent-style 2)
+                       web-mode-style-padding 1
+                       web-mode-script-padding 1
+                       web-mode-block-padding 0)
+
+)))
+
+ #+END_SRC
+
+
+* CSS mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package css-mode
+  :init
+  (add-hook 'css-mode-hook
+            '(lambda ()
+               (skewer-html-mode 1)
+               (setq css-indent-offset 2))))
+
+
+ #+END_SRC
+
+
+* Scala
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (add-hook 'scala-mode-hook
+            #'(lambda ()
+                (smartparens-mode 1)
+                ))
+
+ #+END_SRC
+
+
+* Calendar
+#+BEGIN_SRC emacs-lisp :tangle yes
+(setq calendar-latitude 38.6
+      calendar-longitude -90.1
+      calendar-location-name "St. Louis")
+
+ #+END_SRC
+
+
+* window-number
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package window-number)
+(window-number-meta-mode 1)
+
+ #+END_SRC
+
+
+* VC settings
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package vc
+  :init
+  (setq vc-follow-symlinks t))
+
+ #+END_SRC
+
+
+* Rudel
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package rudel)
+  (require 'rudel-mode)
+  (require 'rudel-obby)
+  (global-rudel-minor-mode 1)
+#+END_SRC
+
+
+* YAML
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package yaml-mode
+    :mode "\\.lookml\\'" "\\.yaml.template\\'" "\\.yaml\\'" "\\.yml\\'")
+
+ #+END_SRC
+
+
+* Magit
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package magit
+  :commands magit-status
+  :init
+  (add-hook 'with-editor-mode-hook 'turn-on-orgstruct++)
+  (setq magit-push-always-verify nil
+        magit-diff-use-overlays nil))
+
+ #+END_SRC
+
+
+* Gist
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package gist
+  :commands gist-list)
+
+ #+END_SRC
+
+
+* Buffer Move
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package buffer-move)
+
+ #+END_SRC
+
+
+* Encryption
+#+BEGIN_SRC emacs-lisp :tangle yes
+;; EasyPG
+(require 'epa-file)
+(epa-file-enable)
+
+ #+END_SRC
+
+
+* Subword mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+(global-subword-mode 1)
+(setq subword-forward-regexp "\\W*\\(\\([[:upper:]]*\\(\\W\\)?\\)[[:lower:][:digit:]]*[_.-]*\\)"
+      subword-backward-regexp "\\(\\(\\W\\|[[:lower:][:digit:]]\\)\\([[:upper:]]+\\W*\\)\\|\\W\\w+\\)")
+
+
+ #+END_SRC
+
+
+* manage-minor-mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package manage-minor-mode)
+
+ #+END_SRC
+
+
+* rainbow-mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package rainbow-mode)
+ #+END_SRC
+
+
+* Backup each save
+#+BEGIN_SRC emacs-lisp :tangle yes
+(defun backup-each-save-filter (filename)
+  (let ((ignored-filenames
+         '("^/tmp" "semantic.cache$" "\\sv$"  "\\.emacs-places$" "\\.gpg$"
+           "\\.recentf$" ".newsrc\\(\\.eld\\)?"))
+        (matched-ignored-filename nil))
+    (mapc
+     (lambda (x)
+       (when (string-match x filename)
+         (setq matched-ignored-filename t)))
+     ignored-filenames)
+    (not matched-ignored-filename)))
+
+(use-package backup-each-save
+  :init
+  (setq backup-each-save-remote-files t
+        backup-each-save-filter-function 'backup-each-save-filter
+        backup-directory-alist `(("." . ,(expand-file-name "emacs-backups" user-emacs-directory)))
+        backup-by-copying t
+        delete-old-versions t
+        kept-new-versions 25
+        kept-old-versions 1
+        vc-make-backup-files t
+        version-control t))
+
+ #+END_SRC
+
+
+* emojify
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package emojify
+  :init
+  (global-emojify-mode -1))
+
+ #+END_SRC
+
+
+* Ediff
+#+BEGIN_SRC emacs-lisp :tangle yes
+(setq ediff-split-window-function 'split-window-horizontally
+      ediff-window-setup-function 'ediff-setup-windows-plain)
+
+
+ #+END_SRC
+
+
+* Paradox Package Manager
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package paradox
+  :init
+  (setq paradox-automatically-star t
+;; Auth token in emacs24.auth.org
+        paradox-execute-asynchronously t))
+
+ #+END_SRC
+
+
+* yasnippet
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package yasnippet
+  :config
+  (add-to-list 'yas-snippet-dirs (expand-file-name "snippets" user-emacs-directory)))
+(yas-global-mode 1)
+
+ #+END_SRC
+
+
+* Elisp functions
+#+BEGIN_SRC emacs-lisp :tangle yes
+  ;; Emacs Lisp
+  (org-babel-load-if-exists (expand-file-name "emacs24.elisp.org" user-emacs-directory))
+
+  ;; Hacky functions
+  (org-babel-load-if-exists (expand-file-name "emacs24.hacky.org" user-emacs-directory))
+
+#+END_SRC
+
+
+* Eshell
+#+BEGIN_SRC emacs-lisp :tangle yes
+(load (expand-file-name "emacs24.eshell" user-emacs-directory))
+
+ #+END_SRC
+
+
+* Keybindings
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (org-babel-load-if-exists (expand-file-name "emacs24.keybindings.org" user-emacs-directory))
+
+ #+END_SRC
+
+
+* Floobits
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package floobits)
+#+END_SRC
+
+
+* Diminish
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package diminish)
+(diminish 'context-coloring-mode " ")
+(diminish 'eldoc-mode "Ed")
+(diminish 'hungry-delete-mode " 𐑙")
+(diminish 'projectile-mode " ")
+(diminish 'rainbow-mode " 🌈")
+(diminish 'undo-tree-mode " ")
+(diminish 'visual-line-mode " ")
+(diminish 'guide-key-mode)
+(diminish 'sqlup-mode)
+
+
+ #+END_SRC
+
+
+* Scratch buffer
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  ;; (defun scratch-fortune (file)
+  ;;   (fortune-in-buffer t file)
+  ;;   (save-current-buffer
+  ;;     (set-buffer fortune-buffer-name)
+  ;;     (s-concat
+  ;;      (replace-regexp-in-string "^[A-Za-z(\"-]" ";; " (buffer-string))
+  ;;      "\n\n")))
+
+  ;; (use-package fortune
+  ;;   :config
+  ;;   (setq fortune-dir "/Users/conornash/Dropbox/Settings/fortunes"
+  ;;         initial-scratch-message (scratch-fortune "/Users/conornash/Dropbox/Settings/fortunes/quotes.fortune")))
+
+#+END_SRC
+
+
+* Delete trailing whitespace
+#+BEGIN_SRC emacs-lisp :tangle yes
+;; Shouldn't be global since it can mess up TSV files
+;;(add-hook 'after-save-hook 'delete-trailing-whitespace)
+
+ #+END_SRC
+
+
+* Whitespace mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package whitespace
+    :bind (("C-c w" . whitespace-mode)))
+
+ #+END_SRC
+
+
+* Misc
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  (use-package docker)
+
+  (require 'prog-mode)
+
+  ;; -- generally these things should come last --
+  (use-package atom-dark-theme)
+  (load-theme 'atom-dark t)
+
+  ;; Delete trailing whitespace
+  ;; Shouldn't be global since it can mess up TSV files
+  ;; (add-hook 'after-save-hook 'delete-trailing-whitespace)
+
+  (use-package hungry-delete)
+
+#+END_SRC
+
+
+* End of Config
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (setq gc-cons-percentage 0.2)
+  (helm-mode t)
+
+#+END_SRC
+
+
+** Private settings
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (when (file-exists-p (expand-file-name "private.org" user-emacs-directory))
+    (org-babel-load-if-exists (expand-file-name "private.org" user-emacs-directory)))
+
+
+#+END_SRC
+
+
+** Customize
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+  (cond
+   ((file-exists-p custom-file)
+    (load custom-file))
+   (t
+    (write-region "" nil custom-file)))
+#+END_SRC
+
+

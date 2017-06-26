@@ -1,0 +1,161 @@
+* Helper functions
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  (defun display-r-instance ()
+    "Display the currently running R instance in another window"
+    (interactive)
+    (display-buffer (ess-get-process-buffer) t))
+
+  (defun paredit-space-for-delimiter-p (endp delimiter)
+    (and (not (if endp (eobp) (bobp)))
+         (memq (char-syntax (if endp (char-after) (char-before)))
+               (list  ;; REMOVED ?w ?_ ?\"
+                (let ((matching (matching-paren delimiter)))
+                  (and matching (char-syntax matching)))))))
+
+  (defun paredit-insert-pair (n open close forward)
+    (let* ((regionp
+            (and (paredit-region-active-p)
+                 (paredit-region-safe-for-insert-p)))
+           (end
+            (and regionp
+                 (not n)
+                 (prog1 (region-end) (goto-char (region-beginning))))))
+      (let ((spacep (paredit-space-for-delimiter-p nil open)))
+        (if spacep (insert ""))
+        (insert open)
+        (save-excursion
+          ;; Move past the desired region.
+          (cond (n
+                 (funcall forward
+                          (paredit-scan-sexps-hack (point)
+                                                   (prefix-numeric-value n))))
+                (regionp
+                 (funcall forward (+ end (if spacep 2 1)))))
+          ;; The string case can happen if we are inserting string
+          ;; delimiters.  The comment case may happen by moving to the
+          ;; end of a buffer that has a comment with no trailing newline.
+          (if (and (not (paredit-in-string-p))
+                   (paredit-in-comment-p))
+              (newline))
+          (insert close)
+          (if (paredit-space-for-delimiter-p t close)
+              (insert ""))))))
+
+  (defun paredit-current-parse-state ()
+    "Return parse state of point from beginning of defun."
+    (let ((point (point))
+          (begresult (beginning-of-defun)))
+      (if begresult
+          ;; Calling PARSE-PARTIAL-SEXP will advance the point to its second
+          ;; argument (unless parsing stops due to an error, but we assume it
+          ;; won't in paredit-mode).
+          (parse-partial-sexp (point) point)
+        (progn (beginning-of-visual-line)
+               (parse-partial-sexp (point) point)))))
+
+#+END_SRC
+
+
+* Load ESS
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package ess
+    :mode ("\\.R$|\\.Rprofile$" . R-mode)
+    :bind
+    (:map ess-mode-map
+          ("C-\\" . ess-eval-line)
+          ("M-\\" . display-r-instance)
+          ("C-|" . eval-at-cursor)
+          ("C-." . xref-find-definitions)
+          ("C-c C-s" . ess-switch-process)
+          ("C-," . xref-pop-marker-stack))
+
+    :config
+    (setq
+     comint-input-ring-size 99999
+     comint-move-point-for-output t
+     comint-prompt-read-only t
+     comint-scroll-to-bottom-on-input t
+     comint-scroll-to-bottom-on-output t
+     ess-ask-for-ess-directory t
+     ess-continued-statement-offset 0
+     ess-eval-visibly-p nil
+     ess-first-continued-statement-offset 4
+     ess--prettify-symbols-alist '(("ANY" . 8707)
+                                   ("any" . 8707)
+                                   ("ALL" . 8704)
+                                   ("all" . 8704)
+                                   ("NOT" . 172)
+                                   ("not" . 172)
+                                   ("OR" . 8744)
+                                   ("or" . 8744)
+                                   ("AND" . 8743)
+                                   ("and" . 8743)
+                                   ("**n" . 8319)
+                                   ("**3" . 179)
+                                   ("**2" . 178)
+                                   ("phi" . 966)
+                                   ("PI" . 960)
+                                   ("pi" . 960)
+                                   ("LAMBDA" . 955)
+                                   ("lambda" . 955)
+                                   ("theta" . 952)
+                                   ("epsilon" . 949)
+                                   ("DELTA" . 916)
+                                   ("delta" . 916)
+                                   ("GAMMA" . 947)
+                                   ("gamma" . 947)
+                                   ("BETA" . 946)
+                                   ("beta" . 946)
+                                   ("ALPHA" . 945)
+                                   ("alpha" . 945)
+                                   ("SUM" . 8721)
+                                   ("sum" . 8721)
+                                   ("SQRT" . 8730)
+                                   ("sqrt" . 8730)
+                                   ("NOT IN" . 8713)
+                                   ("not in" . 8713)
+                                   ("IN" . 8712)
+                                   ("in" . 8712)
+                                   ("union" . 8899)
+                                   ("intersect" . 8898)
+                                   ("NONE" . 8709)
+                                   ("None" . 8709)
+                                   (">=" . 8805)
+                                   ("<=" . 8804)
+                                   ("!=" . 8800))
+     flycheck-lintr-linters "with_defaults(object_usage_linter = NULL, camel_case_linter = NULL, assignment_linter = NULL, infix_spaces_linter = NULL, line_length_linter = NULL, multiple_dots_linter = NULL, object_length_linter = NULL, absolute_paths_linter = NULL, spaces_left_parentheses_linter = NULL, single_quotes_linter = NULL)"
+     inferior-R-program-name "/usr/local/bin/R"
+     jit-lock-defer-time 0.25
+     smartscan-symbol-selector "symbol")
+
+    (add-hook 'ess-mode-hook
+              #'(lambda()
+                  (smartparens-mode 1)
+                  (turn-on-smartparens-strict-mode)
+                  (flycheck-mode 1)
+                  (company-mode 1)
+                  (rainbow-mode 1)
+                  (smartscan-mode 1)
+                  (define-key ess-mode-map (kbd "M-\\") 'display-r-instance)
+                  (add-hook 'after-save-hook 'delete-trailing-whitespace nil t)))
+
+    (add-hook 'inferior-ess-mode-hook
+              #'(lambda()
+                  (smartparens-mode 1)
+                  (turn-on-smartparens-strict-mode)
+                  ;; (auto-complete-mode t)
+                  (company-mode 1)
+                  (define-key inferior-ess-mode-map (kbd "M-<up>") 'move-text-up)
+                  (define-key inferior-ess-mode-map (kbd "M-<down>") 'move-text-down)
+                  (define-key inferior-ess-mode-map "\C-ct" 'ess-R-object-tooltip)
+                  ;;	     (ess-rdired)
+                  ;;	     (define-key ess-rdired-mode-map "t" 'ess-R-object-tooltip)
+                  ;;	     (define-key ess-rdired-mode-map "\C-c\C-t" 'ess-R-object-tooltip)
+                  ))
+
+    (require 'ess-rutils)
+    ;; (use-package ess-smart-underscore)
+    (require 'ess-eldoc)
+    (use-package helm-R))
+#+END_SRC

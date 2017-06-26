@@ -1,0 +1,228 @@
+* Helper Functions
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (defun insert-current-timestamp-inactive ()
+    (interactive)
+    (let ((current-prefix-arg '(16)))
+      (org-time-stamp-inactive current-prefix-arg)))
+
+#+END_SRC
+
+
+* Load Org-mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+  ;; Startup with Agenda
+  ;; (add-hook 'after-init-hook #'(lambda () (org-todo-list 0)))
+
+  ;; This can stop emacs shutdown
+  ;; (add-hook 'kill-emacs-hook 'org-mobile-push)
+  (setq comment-start-skip "^\\s-*#\\(?: \\|$\\)"
+        org-use-speed-commands t
+        org-speed-commands-user '(("S" . widen)
+                                  ("d" . org-deadline))
+        org-enforce-todo-dependencies t
+        org-agenda-dim-blocked-tasks 'invisible
+        org-clock-out-remove-zero-time-clocks t
+        org-deadline-warning-days 28
+        org-agenda-deadline-faces '((1.0 . '(:foreground "#cd4740"))
+                                    (0.9 . '(:foreground "goldenrod1"))
+                                    (0.0 . default))
+        ;; We don't want to see days in the clock report
+        org-time-clocksum-format '(:hours "%d" :require-hours t :minutes ":%02d" :require-minutes t)
+        ;; In Sparse Trees, show the details below the matching entries
+        org-show-entry-below t
+        ;; Follow the point in the agenda buffer with the org file in the other buffer
+        org-agenda-start-with-follow-mode t
+
+        org-confirm-babel-evaluate nil
+        org-refile-use-outline-path 'file
+        org-outline-path-complete-in-steps nil
+        ;; don't show scheduled tasks in the TODO view of the agenda
+        org-agenda-todo-ignore-scheduled nil
+        org-src-window-setup 'current-window
+        org-src-fontify-natively t
+        org-clock-persist 'history
+        org-log-done t
+        ;; Timestamp of changes to deadline using C-c C-d/C-s
+        org-log-redeadline 'time
+        org-log-reschedule 'time
+        org-refile-targets '((org-agenda-files . (:maxlevel . 2))
+                             (org-agenda-files . (:todo . "NEXTACTION"))))
+
+  (org-clock-persistence-insinuate)
+
+  (add-hook 'org-mode-hook
+            #'(lambda ()
+                (setq-local isearch-lazy-highlight nil)
+                (org-defkey org-mode-map [remap forward-paragraph] 'forward-paragraph)
+                (org-defkey org-mode-map [remap backward-paragraph] 'backward-paragraph)
+                (define-key org-mode-map (kbd "C-z") 'yas/expand)
+                (define-key org-mode-map (kbd "M-#") 'er/expand-region)
+                ;; (define-key org-mode-map (kbd "s-o") 'org-open-at-point)
+                ;; (define-key org-mode-map (kbd "s-O") 'org-open-at-point-global)
+                (delete '("\\.pdf\\'" . default) org-file-apps)
+                ;; PDF viewer
+                (add-to-list 'org-file-apps '("\\.pdf\\'" . "open %s"))))
+
+  ;; (add-hook 'orgstruct-mode-map
+  ;;           #'(lambda ()
+  ;;               (org-defkey org-mode-map [remap forward-paragraph] 'forward-paragraph)
+  ;;               (org-defkey org-mode-map [remap backward-paragraph] 'backward-paragraph)
+  ;;               ;; (define-key org-mode-map (kbd "<s-tab>") 'org-force-cycle-archived)
+  ;;               ;; (define-key org-mode-map (kbd "<s-down>") 'org-forward-element)
+  ;;               ;; (define-key org-mode-map (kbd "<s-up>") 'org-backward-element)
+  ;;               ;; (define-key org-mode-map (kbd "<s-left>") 'org-up-element)
+  ;;               ;; (define-key org-mode-map (kbd "<s-right>") 'org-down-element)
+  ;;               ;; (define-key org-mode-map (kbd "M-<down>") 'org-metadown)
+  ;;               ;; (define-key org-mode-map (kbd "M-<up>") 'org-metaup)
+  ;;               (define-key org-mode-map (kbd "s-!") 'insert-current-timestamp-inactive)
+  ;;               (define-key org-mode-map (kbd "C-z") 'yas/expand)
+  ;;               (define-key org-mode-map (kbd "M-#") 'er/expand-region)
+  ;;               (define-key org-mode-map (kbd "s-o") 'org-open-at-point-global)
+  ;;               ;; (delete '("\\.pdf\\'" . default) org-file-apps)
+  ;;               ;; PDF viewer
+  ;;               ;; (add-to-list 'org-file-apps '("\\.pdf\\'" . "open %s"))
+  ;;               ))
+
+  (add-hook 'org-src-mode-hook
+            #'(lambda ()
+                (hack-dir-local-variables-non-file-buffer)))
+
+  ;;
+  ;; fix yasnippet conflict
+  ;;(add-hook 'org-mode-hook
+  ;;	  (lambda ()
+  ;;	    (org-set-local 'yas/trigger-key [tab])
+  ;;	    (define-key yas/keymap [tab] 'yas/next-field-or-maybe-expand)
+  ;;	    (define-key org-mode-map "\M-A" 'org-archive-to-archive-sibling)))
+
+  ;; org export docbook
+  (setq org-export-docbook-xslt-proc-command "xsltproc --output %o %s %i")
+  (setq org-export-docbook-xslt-proc-command "")
+
+  (add-hook 'org-agenda-mode-hook
+            #'(lambda ()
+                (define-key org-agenda-mode-map (kbd ">") 'org-agenda-remove-restriction-lock)
+                (define-key org-agenda-mode-map (kbd "M") 'org-google-calendar-sync)))
+
+  (defun org-google-calendar-sync ()
+    (interactive)
+    (progn
+      (org-gcal-sync)
+      (org-agenda-redo t)
+      (message "Refreshed Google Calendars")))
+
+
+  ;;  ;; Sacha Chua's clock-in-and-mark-task-started-at-the-same-time code
+  ;;  (eval-after-load 'org
+  ;;    '(progn
+  ;;       (defun wicked/org-clock-in-if-starting ()
+  ;;         "Clock in when the task is marked STARTED."
+  ;;         (when (and (string= state "STARTED")
+  ;;                 (not (string= last-state state)))
+  ;;        (org-clock-in)))
+  ;;       (add-hook 'org-after-todo-state-change-hook
+  ;;              'wicked/org-clock-in-if-starting)
+  ;;       (defadvice org-clock-in (after wicked activate)
+  ;;         "Set this task's status to 'STARTED'."
+  ;;         (org-todo "STARTED"))
+  ;;       (defun wicked/org-clock-out-if-waiting ()
+  ;;         "Clock out when the task is marked SCHEDULED."
+  ;;         (when (and (string= state "SCHEDULED")
+  ;;                 (equal (marker-buffer org-clock-marker) (current-buffer))
+  ;;                 (< (point) org-clock-marker)
+  ;;                 (> (save-excursion (outline-next-heading) (point))
+  ;;                    org-clock-marker)
+  ;;                 (not (string= last-state state)))
+  ;;        (org-clock-out)))
+  ;;       (add-hook 'org-after-todo-state-change-hook
+  ;;              'wicked/org-clock-out-if-waiting)))
+
+  ;; Import Org-Mobile changes
+  ;;(org-mobile-pull)
+
+
+  ;;
+  (setq org-babel-R-command "/usr/local/bin/R --slave --no-save")
+
+
+  ;; Recalculate the agenda every 5 seconds when idle
+  ;; (run-with-idle-timer 5 nil (lambda () (org-agenda-list) (delete-window)))
+
+  ;; org-mode HTML export
+  ;; (setq org-export-html-style "<link rel=\"stylesheet\" type=\"text/css\" href=\"css/msnyder.css\">")
+  (setq org-export-html-style 'nil)
+
+  (setq org-agenda-exporter-settings
+        '((ps-number-of-columns 2)
+          (ps-landscape-mode t)
+          (org-agenda-add-entry-text-maxlines 5)
+          (htmlize-output-type 'css)))
+
+  ;; Use readtheorg theme for exports by default
+  (setq org-html-head "
+  <link rel=\"stylesheet\" type=\"text/css\" href=\"http://www.pirilampo.org/styles/readtheorg/css/htmlize.css\"/>
+  <link rel=\"stylesheet\" type=\"text/css\" href=\"http://www.pirilampo.org/styles/readtheorg/css/readtheorg.css\"/>
+  <script src=\"https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js\"></script>
+  <script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js\"></script>
+  <script type=\"text/javascript\" src=\"http://www.pirilampo.org/styles/lib/js/jquery.stickytableheaders.js\"></script>
+  <script type=\"text/javascript\" src=\"http://www.pirilampo.org/styles/readtheorg/js/readtheorg.js\"></script>")
+
+  (add-to-list 'org-modules "org-habit")
+  ;; (require 'org-bullets)
+  ;; (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+
+  ;; Properties drawers are now required to be located right after a headline and its planning line, when applicable.
+  ;; It will break some documents as TODO states changes were sometimes logged before the property drawer.
+  ;; The following function will repair them:
+  (defun org-repair-property-drawers ()
+    "Fix properties drawers in current buffer.
+   Ignore non Org buffers."
+    (when (eq major-mode 'org-mode)
+      (org-with-wide-buffer
+       (goto-char (point-min))
+       (let ((case-fold-search t)
+             (inline-re (and (featurep 'org-inlinetask)
+                             (concat (org-inlinetask-outline-regexp)
+                                     "END[ \t]*$"))))
+         (org-map-entries
+          (lambda ()
+            (unless (and inline-re (org-looking-at-p inline-re))
+              (save-excursion
+                (let ((end (save-excursion (outline-next-heading) (point))))
+                  (forward-line)
+                  (when (org-looking-at-p org-planning-line-re) (forward-line))
+                  (when (and (< (point) end)
+                             (not (org-looking-at-p org-property-drawer-re))
+                             (save-excursion
+                               (and (re-search-forward org-property-drawer-re end t)
+                                    (eq (org-element-type
+                                         (save-match-data (org-element-at-point)))
+                                        'drawer))))
+                    (insert (delete-and-extract-region
+                             (match-beginning 0)
+                             (min (1+ (match-end 0)) end)))
+                    (unless (bolp) (insert "\n"))))))))))))
+
+#+END_SRC
+
+
+* Org Babel
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  ;; (org-babel-do-load-languages
+  ;;  'org-babel-load-languages
+  ;;  '((python . t)
+  ;;    (sh . t)
+  ;;    (js . t)
+  ;;    (org . t)
+  ;;    (lisp . t)
+  ;;    (emacs-lisp . t)
+  ;;    (R . t)
+  ;;    (sql . t)))
+
+  ;; (org-babel-lob-ingest "~/Dropbox/emacs/emacs24/elisp/emacs24.Babel.org")
+
+  (add-to-list 'org-structure-template-alist '("el" "#+BEGIN_SRC emacs-lisp :tangle yes\n ?\n#+END_SRC"))
+#+END_SRC
+
+
