@@ -1,0 +1,71 @@
+
+* SQL
+  #+BEGIN_SRC emacs-lisp :tangle yes
+    (use-package sql
+      :mode
+      (("\\.hql\\'" . sql-mode)
+       ("\\.sql\\'" . sql-mode))
+
+      :config
+      (make-local-variable 'indent-line-function)
+      (setq sql-pop-to-buffer-after-send-region t
+            sql-send-terminator t
+            indent-line-function 'sql-indent-line
+            sql-postgres-program "/usr/local/bin/psql"
+            sql-postgres-options '("-P" "pager=off"))
+
+      (define-key sql-mode-map (kbd "C-\\") 'conor-sql-send-paragraph)
+
+      (add-hook 'sql-interactive-mode-hook
+                #'(lambda ()
+                    (visual-line-mode -1)
+                    (toggle-truncate-lines t))) 
+
+      (add-hook 'sql-mode-hook
+                #'(lambda ()
+                    (smartparens-mode 1)
+                    ;; (sqlup-mode 1)
+                    ;; (add-hook 'before-save-hook 'sqlup-buffer nil t)
+                    (add-hook 'after-save-hook 'delete-trailing-whitespace nil t)
+                    ))
+
+      (use-package sqlup-mode
+        :diminish (sqlup-mode . " 🡅"))
+      ;; SQL Indent
+      (use-package sql-indent)
+      )
+
+  #+END_SRC
+
+* Helper functions
+
+  #+BEGIN_SRC emacs-lisp :tangle yes
+
+    (defun sql-connect-preset (name)
+      "Connect to a predefined SQL connection listed in `sql-connection-alist'"
+      (eval `(let ,(cdr (assoc name sql-connection-alist))
+               (flet ((sql-get-login (&rest what)))
+                 (sql-product-interactive sql-product)))))
+
+    (defun sqlup-buffer ()
+      "Appropriately upcase all SQL commands in the buffer"
+      (interactive)
+      (save-excursion
+        (let ((start (point-min))
+              (end (point-max)))
+          (sqlup-capitalize-keywords-in-region start end))))
+
+    (defun conor-sql-send-paragraph ()
+      "Send SQL paragraph to SQLi buffer, plus some convenience"
+      (interactive)
+      (save-selected-window
+        (unless (sql-find-sqli-buffer)
+          (let ((connection (if sql-connection-alist
+                                (sql-read-connection "Connection: " nil '(nil))
+                              (user-error "No SQL Connections defined"))))
+            (sql-connect connection)))
+        (unless sql-buffer
+          (sql-set-sqli-buffer))
+        (sql-send-paragraph)))
+
+  #+END_SRC
