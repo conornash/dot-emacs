@@ -1164,7 +1164,7 @@
 
 * Eshell
 #+BEGIN_SRC emacs-lisp :tangle yes
-(load (expand-file-name "emacs24.eshell" user-emacs-directory))
+(org-babel-load-if-exists (expand-file-name "emacs24.eshell.org" user-emacs-directory))
 
  #+END_SRC
 
