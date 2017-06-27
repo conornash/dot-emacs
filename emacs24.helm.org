@@ -95,7 +95,7 @@
 
   (use-package helm-swoop
     :bind
-    (("<M-f12>" . helm-multi-swoop-org))
+    (("<C-M-f12>" . helm-multi-swoop-org))
     :diminish
     (helm-mode . " 🟍"))
 
