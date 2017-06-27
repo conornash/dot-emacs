@@ -442,6 +442,8 @@
     (setq line-number-display-limit-width 9000000))
 #+END_SRC
 
+
+
 * Visual line mode
 #+BEGIN_SRC emacs-lisp :tangle yes
  
@@ -494,6 +496,15 @@
 #+BEGIN_SRC emacs-lisp :tangle yes
 (global-set-key (kbd "<M-up>") 'move-text-up)
 (global-set-key (kbd "<M-down>") 'move-text-down)
+
+#+END_SRC
+
+
+* Regular Expression Builder
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package re-builder
+    :config
+    (setq reb-re-syntax 'string))
 
 #+END_SRC
 
