@@ -198,7 +198,6 @@
 
 * Smartparens
 #+BEGIN_SRC emacs-lisp :tangle yes
-;; load last so that it doesn't override other bindings
 
 (org-babel-load-file (expand-file-name "emacs24.smartparens.org" user-emacs-directory))
 
@@ -908,19 +907,6 @@
 
  #+END_SRC
 
-
-* RMarkdown
-#+BEGIN_SRC emacs-lisp :tangle yes
-  ;; (use-package polymode
-  ;;   :mode ("\\.Rmd\\'" . poly-markdown+r-mode)
-  ;;   :init
-  ;;   (require 'poly-R)
-  ;;   (require 'poly-markdown)
-  ;;   :config
-  ;;   (require 'ess))
-
-
- #+END_SRC
 
 
 * SCSS
