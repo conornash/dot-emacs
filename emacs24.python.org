@@ -75,7 +75,8 @@
 * Python Mode
   #+BEGIN_SRC emacs-lisp :tangle yes
     (use-package pyenv-mode)
-    (use-package pyenv-mode-auto)
+    (use-package pyenv-mode-auto
+      :mode "\\.py'")
 
     (use-package anaconda-mode
       :bind
