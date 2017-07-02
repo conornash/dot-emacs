@@ -498,6 +498,8 @@
 * Regular Expression Builder
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package re-builder
+    :commands
+    (re-builder regexp-builder)
     :config
     (setq reb-re-syntax 'string))
 
@@ -871,7 +873,64 @@
 
 * RealGUD
 #+BEGIN_SRC emacs-lisp :tangle yes
-(use-package realgud)
+  (use-package realgud
+    :commands (realgud:cmd-eval
+    realgud:zshdb-customize realgud:ipdb-remote realgud:terminate
+    realgud:window-bt-undisturb-src realgud:cmd-break
+    realgud:trepan-goto-syntax-error-line realgud:cmd-delete
+    realgud:unload-features realgud:remake realgud:rdebug-customize
+    realgud:cmd-frame realgud:trepanjs-reset
+    realgud:trepan-goto-control-frame-line realgud:trepan2-customize
+    realgud:cmd-newer-frame realgud:gdb-reset
+    realgud:trepanjs-goto-syntax-error-line realgud:reload-features
+    realgud:cmd-enable realgud:send-input realgud:bashdb-customize
+    realgud:cmd-until realgud:cmd-terminate
+    realgud:perl-goto-errmsg-line realgud:backtrace-init
+    realgud:goto-loc-hist-9 realgud:goto-loc-hist-8
+    realgud:goto-loc-hist-7 realgud:goto-loc-hist-6
+    realgud:goto-loc-hist-5 realgud:goto-loc-hist-4
+    realgud:cmd-eval-dwim realgud:gub-customize realgud:pdb
+    realgud:nodejs-customize realgud:ipdb-customize realgud:cmd-next
+    realgud:jdb realgud:nodejs-reset realgud:cmd-continue
+    realgud:pdb-customize realgud:jdb-goto-control-frame-line
+    realgud:ipdb-backend-complete realgud:backtrace-describe
+    realgud:trepan3k-delayed realgud:jdb-goto-syntax-error-line
+    realgud:trepanjs realgud:follow-event realgud:cmd-step
+    realgud:cmd-repeat-last realgud:zshdb realgud:ipdb
+    realgud:track-set-debugger realgud:pdb-remote
+    realgud:cmd-eval-region realgud:reset realgud:loc-describe
+    realgud:track-from-region realgud:kshdb-customize
+    realgud:trepanpl-track-mode realgud:cmd-jump
+    realgud:gub-goto-location realgud:goto-lang-backtrace-line
+    realgud:cmd-next-no-arg realgud:follow-point
+    realgud:perldb-customize realgud:pdb-delayed
+    realgud:rspec-goto-backtrace-line realgud:flake8-goto-msg-line
+    realgud:gdb-pid realgud:goto-debugger-backtrace-line
+    realgud:cmd-finish realgud:ruby-goto-dollar-bang-line
+    realgud:info-mode realgud:pytest-goto-errmsg-line realgud:cmd-quit
+    realgud:trepan realgud:remake-customize realgud:trepan\.pl
+    realgud:window-bt realgud:jdb-track-mode
+    realgud:srcbuf-info-describe realgud:ruby-goto-backtrace-line
+    realgud:goto-maven-errmsg-line realgud:bashdb
+    realgud:track-mode-enable realgud:remove-ansi-schmutz
+    realgud:cmdbuf-follow-buffer realgud:rails-goto-backtrace-line
+    realgud:perldb realgud:follow realgud:cmd-shell
+    realgud:rubinius-goto-Xagent-backtrace-line
+    realgud:trepanpl-goto-syntax-error-line realgud:gdb-pid-associate
+    realgud:cmd-backtrace realgud:track-mode-disable realgud:gdb
+    realgud:trepanpl-reset realgud:tooltip-eval realgud:gdb-customize
+    realgud:cmd-disable realgud:cmdbuf-info-describe
+    realgud:trepan2-delayed realgud:gub-goto-panic-location
+    realgud:cmd-restart realgud:goto-debugger-loc-line
+    realgud:trepanpl-customize realgud:cmd-kill
+    realgud:terminate-srcbuf realgud:trepan2 realgud:gdb-track-mode
+    realgud:rdebug realgud:cmd-older-frame realgud:trepan3k
+    realgud:cmd-clear realgud:nodejs realgud:cmd-step-no-arg
+    realgud:jdb-customize realgud:trepan3k-customize
+    realgud:trepanjs-customize realgud:trepan-customize realgud:kshdb
+    realgud:perldb-reset)
+    :config
+    (setq realgud:ipdb-command-name "python -m ipdb"))
 
  #+END_SRC
 
@@ -1003,11 +1062,21 @@
 
 * Rudel
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package rudel)
-  (require 'rudel-mode)
-  (require 'rudel-obby)
-  (global-rudel-minor-mode 1)
-#+END_SRC
+  (use-package rudel
+    :commands
+    (rudel-subscribe
+     global-rudel-header-subscriptions-mode
+     rudel-header-subscriptions-minor-mode
+     global-rudel-mode-line-publish-state-mode rudel-change-color
+     rudel-mode-line-publish-state-minor-mode rudel-publish-buffer
+     rudel-host-session rudel-backend-dump rudel-minor-menu
+     rudel-join-session global-rudel-minor-mode rudel-speedbar
+     rudel-unsubscribe rudel-leave-session)
+    :config
+    (require 'rudel-mode)
+    (require 'rudel-obby)
+    (global-rudel-minor-mode 1))
+    #+END_SRC
 
 
 * YAML
@@ -1126,21 +1195,22 @@
 
 * Paradox Package Manager
 #+BEGIN_SRC emacs-lisp :tangle yes
-(use-package paradox
-  :init
-  (setq paradox-automatically-star t
-;; Auth token in emacs24.auth.org
-        paradox-execute-asynchronously t))
+  (use-package paradox
+    :commands paradox-list-packages
+    :init
+    (setq paradox-automatically-star t
+          ;; Auth token in private.org
+          paradox-execute-asynchronously t))
 
  #+END_SRC
 
 
 * yasnippet
 #+BEGIN_SRC emacs-lisp :tangle yes
-(use-package yasnippet
-  :config
-  (add-to-list 'yas-snippet-dirs (expand-file-name "snippets" user-emacs-directory)))
-(yas-global-mode 1)
+  (use-package yasnippet
+    :config
+    (add-to-list 'yas-snippet-dirs (expand-file-name "snippets" user-emacs-directory)))
+  (yas-global-mode 1)
 
  #+END_SRC
 
@@ -1172,7 +1242,15 @@
 
 * Floobits
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package floobits)
+  (use-package floobits
+    :commands (floobits-delete-workspace
+    floobits-follow-mode-toggle floobits-complete-signup
+    floobits-clear-highlights floobits-summon
+    floobits-workspace-settings floobits-add-to-workspace
+    floobits-open-workspace-in-browser floobits-share-dir-public
+    floobits-leave-workspace floobits-share-dir-private
+    floobits-join-workspace floobits-debug-output floobits-debug
+    floobits-follow-user floobits-remove-from-workspace))
 #+END_SRC
 
 
