@@ -105,7 +105,7 @@
      :config
      (require 'org-macs)
      (require 'ob)
-  
+
      (defun org-babel-load-if-exists (org-file)
        (when (file-exists-p org-file)
          (org-babel-load-file org-file)))
@@ -114,7 +114,7 @@
 #+END_SRC
 
 
-** Fonts 
+** Fonts
 #+BEGIN_SRC emacs-lisp :tangle yes
   ;; Requires font to be downloaded from https://www.fontsquirrel.com/fonts/inconsolata
   (set-face-attribute 'default nil
@@ -318,7 +318,7 @@
               (rainbow-mode 1)
               (smartparens-mode 1)
               (turn-on-smartparens-strict-mode)
-              (add-hook 'after-save-hook 'delete-trailing-whitespace nil t)
+              (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
               (setq tab-width 4
                     ;; jedi:complete-on-dot t              ; optional
                     ;; flycheck-checker 'python-flake8
@@ -439,14 +439,13 @@
 #+END_SRC
 
 
-
 * Visual line mode
 #+BEGIN_SRC emacs-lisp :tangle yes
- 
-  (use-package visual-line-mode
+  (use-package simple
     :ensure nil
-    :config
-    (global-visual-line-mode t))
+    :diminish
+    (visual-line-mode . " "))
+  (global-visual-line-mode t)
 
  #+END_SRC
 
@@ -583,7 +582,7 @@
         dired-listing-switches "-alh")
   (require 'ls-lisp)
   (add-hook 'dired-mode-hook
-            #'(lambda ()            
+            #'(lambda ()
                 (hl-line-mode 1)))
 
   (defun dired-back-to-top ()
@@ -637,13 +636,14 @@
 #+END_SRC
 
 
+
 * Dockerfile
 #+BEGIN_SRC emacs-lisp :tangle yes
 (use-package dockerfile-mode
   :init
   (add-hook 'dockerfile-mode-hook
             #'(lambda ()
-                (add-hook 'after-save-hook 'delete-trailing-whitespace nil t)
+                (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
                 )))
 
  #+END_SRC
@@ -1185,7 +1185,6 @@
 (diminish 'projectile-mode " ")
 (diminish 'rainbow-mode " 🌈")
 (diminish 'undo-tree-mode " ")
-(diminish 'visual-line-mode " ")
 (diminish 'guide-key-mode)
 (diminish 'sqlup-mode)
 
@@ -1212,14 +1211,6 @@
 #+END_SRC
 
 
-* Delete trailing whitespace
-#+BEGIN_SRC emacs-lisp :tangle yes
-;; Shouldn't be global since it can mess up TSV files
-;;(add-hook 'after-save-hook 'delete-trailing-whitespace)
-
- #+END_SRC
-
-
 * Whitespace mode
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package whitespace
@@ -1238,10 +1229,6 @@
   ;; -- generally these things should come last --
   (use-package atom-dark-theme)
   (load-theme 'atom-dark t)
-
-  ;; Delete trailing whitespace
-  ;; Shouldn't be global since it can mess up TSV files
-  ;; (add-hook 'after-save-hook 'delete-trailing-whitespace)
 
   (use-package hungry-delete)
 
@@ -1274,5 +1261,3 @@
    (t
     (write-region "" nil custom-file)))
 #+END_SRC
-
-
