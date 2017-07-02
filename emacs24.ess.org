@@ -140,7 +140,7 @@
                   (rainbow-mode 1)
                   (smartscan-mode 1)
                   (define-key ess-mode-map (kbd "M-\\") 'display-r-instance)
-                  (add-hook 'after-save-hook 'delete-trailing-whitespace nil t)))
+                  (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)))
 
     (add-hook 'inferior-ess-mode-hook
               #'(lambda()

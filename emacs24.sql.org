@@ -26,7 +26,7 @@
                     (smartparens-mode 1)
                     ;; (sqlup-mode 1)
                     ;; (add-hook 'before-save-hook 'sqlup-buffer nil t)
-                    (add-hook 'after-save-hook 'delete-trailing-whitespace nil t)
+                    (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
                     ))
 
       (use-package sqlup-mode
