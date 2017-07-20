@@ -5,6 +5,64 @@
     (let ((current-prefix-arg '(16)))
       (org-time-stamp-inactive current-prefix-arg)))
 
+  (defun caolan/repeated-string (n str)
+    (string-join (make-list (+ n 1) "") str))
+
+  (defun path-to-breadcrumbs (file basedir)
+    (let ((dir (expand-file-name (file-name-directory file))))
+      (if (and (string-equal dir (expand-file-name basedir))
+               (string-equal (file-name-base file) "index"))
+          ;; empty breadcrumbs to show we're at root index page
+          nil
+        (let* ((crumb-path (directory-file-name
+                            (file-relative-name dir basedir)))
+               (crumb-parts (remove-if
+                             (lambda (x) (string-equal x "."))
+                             (reverse (split-string crumb-path "/"))))
+               (crumbs (and crumb-parts
+                            (list (cons (car crumb-parts) "index.html")))))
+          ;; parent directories
+          (dotimes (i (length (cdr crumb-parts)))
+            (setq crumbs
+                  (cons (cons (nth i (cdr crumb-parts))
+                              (concat (caolan/repeated-string (+ i 1) "../")
+                                      "index.html"))
+                        crumbs)))
+          (setq crumbs
+                (cons `("NBS" . ,(if (> (length crumb-parts) 0)
+                                     (concat (caolan/repeated-string
+                                              (length crumb-parts)
+                                              "../")
+                                             "index.html")
+                                   "index.html"))
+                      crumbs))
+          (if (string-equal (file-name-base file) "index")
+              (butlast crumbs)
+            crumbs)))))
+
+  (defun my-website-preamble (plist)
+    (let* ((file (expand-file-name (plist-get plist :input-file)))
+           (basedir (file-name-as-directory (plist-get plist :base-directory)))
+           (crumbs (path-to-breadcrumbs file basedir))
+           (date (org-publish-find-date file)))
+      (concat
+       "<ol class=\"breadcrumbs\">"
+       (if crumbs
+           (mapconcat (lambda (crumb)
+                        (concat "<li>"
+                                "<a href=\"" (cdr crumb) "\">"
+                                (car crumb)
+                                "</a>"
+                                "</li>"))
+                      crumbs
+                      "")
+         "<li class=\"current\"><a href=\"index.html\">NBS</a></li>")
+       "</ol>"
+       (if date
+           (concat "<div class=\"date\">"
+                   (format-time-string "%d %b %Y" date)
+                   "</div>")
+         ""))))
 #+END_SRC
 
 
@@ -59,9 +117,11 @@
                 (define-key org-mode-map (kbd "M-#") 'er/expand-region)
                 ;; (define-key org-mode-map (kbd "s-o") 'org-open-at-point)
                 ;; (define-key org-mode-map (kbd "s-O") 'org-open-at-point-global)
+                (pyenv-mode -1)
                 (delete '("\\.pdf\\'" . default) org-file-apps)
                 ;; PDF viewer
                 (add-to-list 'org-file-apps '("\\.pdf\\'" . "open %s"))))
+
 
   ;; (add-hook 'orgstruct-mode-map
   ;;           #'(lambda ()
@@ -140,32 +200,22 @@
   ;; Import Org-Mobile changes
   ;;(org-mobile-pull)
 
-
-  ;;
-  (setq org-babel-R-command "/usr/local/bin/R --slave --no-save")
-
-
   ;; Recalculate the agenda every 5 seconds when idle
   ;; (run-with-idle-timer 5 nil (lambda () (org-agenda-list) (delete-window)))
 
   ;; org-mode HTML export
   ;; (setq org-export-html-style "<link rel=\"stylesheet\" type=\"text/css\" href=\"css/msnyder.css\">")
-  (setq org-export-html-style 'nil)
 
-  (setq org-agenda-exporter-settings
+  (use-package htmlize)
+  (use-package ox-publish
+    :ensure nil)
+
+  (setq org-export-html-style nil
+        org-agenda-exporter-settings
         '((ps-number-of-columns 2)
           (ps-landscape-mode t)
           (org-agenda-add-entry-text-maxlines 5)
           (htmlize-output-type 'css)))
-
-  ;; Use readtheorg theme for exports by default
-  (setq org-html-head "
-  <link rel=\"stylesheet\" type=\"text/css\" href=\"http://www.pirilampo.org/styles/readtheorg/css/htmlize.css\"/>
-  <link rel=\"stylesheet\" type=\"text/css\" href=\"http://www.pirilampo.org/styles/readtheorg/css/readtheorg.css\"/>
-  <script src=\"https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js\"></script>
-  <script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js\"></script>
-  <script type=\"text/javascript\" src=\"http://www.pirilampo.org/styles/lib/js/jquery.stickytableheaders.js\"></script>
-  <script type=\"text/javascript\" src=\"http://www.pirilampo.org/styles/readtheorg/js/readtheorg.js\"></script>")
 
   (add-to-list 'org-modules "org-habit")
   ;; (require 'org-bullets)
@@ -202,27 +252,29 @@
                              (match-beginning 0)
                              (min (1+ (match-end 0)) end)))
                     (unless (bolp) (insert "\n"))))))))))))
-
 #+END_SRC
 
 
 * Org Babel
 #+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package ob-async)
 
-  ;; (org-babel-do-load-languages
-  ;;  'org-babel-load-languages
-  ;;  '((python . t)
-  ;;    (sh . t)
-  ;;    (js . t)
-  ;;    (org . t)
-  ;;    (lisp . t)
-  ;;    (emacs-lisp . t)
-  ;;    (R . t)
-  ;;    (sql . t)))
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((python . t)
+     (sh . t)
+     (js . t)
+     (org . t)
+     (lisp . t)
+     (emacs-lisp . t)
+     (R . t)
+     (sql . t)))
 
   ;; (org-babel-lob-ingest "~/Dropbox/emacs/emacs24/elisp/emacs24.Babel.org")
 
   (add-to-list 'org-structure-template-alist '("el" "#+BEGIN_SRC emacs-lisp :tangle yes\n ?\n#+END_SRC"))
+
+  (setq org-babel-R-command "/usr/local/bin/R --slave --no-save")
 #+END_SRC
 
 
