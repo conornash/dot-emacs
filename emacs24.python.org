@@ -1,84 +1,90 @@
 * Helper functions
   #+BEGIN_SRC emacs-lisp :tangle yes
-  (defun display-python-instance ()
-    "Display the currently running Python instance in another window"
-    (interactive)
-    (if (eq (python-shell-get-buffer) nil)
-        (python-shell-get-or-create-process)
-      (display-buffer (python-shell-get-buffer) t)))
+    (defun display-python-instance ()
+      "Display the currently running Python instance in another window"
+      (interactive)
+      (if (eq (python-shell-get-buffer) nil)
+          (python-shell-get-or-create-process)
+        (display-buffer (python-shell-get-buffer) t)))
 
-  (defun my-python-eval-line (vis)
-    "Send the current line to the inferior ESS process.
-  Arg has same meaning as for `ess-eval-region'."
-    (interactive "P")
-    (save-excursion
-      (end-of-line)
-      (let ((end (point)))
-        (beginning-of-line)
-        (princ (concat "Loading line:...") t)
-        (conor-python-shell-send-region (point) end))))
-
-
-  (defun python-shell-send-line (&optional arg)
-    "This function will send the line that the point is on to the active python interpreter."
-    (interactive "p")
-    (save-excursion (move-beginning-of-line arg)
-                    (setq start (point))
-                    (move-end-of-line arg)
-                    (setq end (point))
-                    (python-shell-send-region start end)))
+    (defun my-python-eval-line (vis)
+      "Send the current line to the inferior ESS process.
+    Arg has same meaning as for `ess-eval-region'."
+      (interactive "P")
+      (save-excursion
+        (end-of-line)
+        (let ((end (point)))
+          (beginning-of-line)
+          (princ (concat "Loading line:...") t)
+          (conor-python-shell-send-region (point) end))))
 
 
-
-  (defun python-shell-send-block (&optional arg)
-    (interactive "p")
-    (save-excursion (backward-paragraph)
-                    (setq start (point))
-                    (forward-paragraph)
-                    (setq end (point))
-                    (python-shell-send-region start end)))
-
-  (fset 'descend-python-dict "\M-b\M-f\C-f\C-f\['")
+    (defun python-shell-send-line (&optional arg)
+      "This function will send the line that the point is on to the active python interpreter."
+      (interactive "p")
+      (save-excursion (move-beginning-of-line arg)
+                      (setq start (point))
+                      (move-end-of-line arg)
+                      (setq end (point))
+                      (python-shell-send-region start end)))
 
 
-  (defun conor-python-shell-send-string (string &optional process msg)
-    "Send STRING to inferior Python PROCESS.
-  When MSG is non-nil messages the first line of STRING."
-    (interactive "sPython command: ")
-    (let ((process (or process (python-shell-get-or-create-process)))
-          (lines (split-string string "\n" t)))
-      (when msg
-        (message (format "Sent: %s..." (nth 0 lines))))
-      (if (> (length lines) 1)
-          (let* ((temp-file-name (make-temp-file "py"))
-                 (file-name (or (buffer-file-name) temp-file-name)))
-            (with-temp-file temp-file-name
-              (insert string)
-              (delete-trailing-whitespace))
-            (python-shell-send-file file-name process temp-file-name))
-        (comint-send-string process string)
-        (when (or (not (string-match "\n$" string))
-                  (string-match "\n[ \t].*\n?$" string))
-          (comint-send-string process "\n")))))
 
-  (defun conor-python-shell-send-region (start end)
-    "Send the region delimited by START and END to inferior Python process."
-    (interactive "r")
-    (let ((deactivate-mark nil))
-      (conor-python-shell-send-string (buffer-substring start end) nil t)))
+    (defun python-shell-send-block (&optional arg)
+      (interactive "p")
+      (save-excursion (backward-paragraph)
+                      (setq start (point))
+                      (forward-paragraph)
+                      (setq end (point))
+                      (python-shell-send-region start end)))
+
+    (fset 'descend-python-dict "\M-b\M-f\C-f\C-f\['")
 
 
+    (defun conor-python-shell-send-string (string &optional process msg)
+      "Send STRING to inferior Python PROCESS.
+    When MSG is non-nil messages the first line of STRING."
+      (interactive "sPython command: ")
+      (let ((process (or process (python-shell-get-or-create-process)))
+            (lines (split-string string "\n" t)))
+        (when msg
+          (message (format "Sent: %s..." (nth 0 lines))))
+        (if (> (length lines) 1)
+            (let* ((temp-file-name (make-temp-file "py"))
+                   (file-name (or (buffer-file-name) temp-file-name)))
+              (with-temp-file temp-file-name
+                (insert string)
+                (delete-trailing-whitespace))
+              (python-shell-send-file file-name process temp-file-name))
+          (comint-send-string process string)
+          (when (or (not (string-match "\n$" string))
+                    (string-match "\n[ \t].*\n?$" string))
+            (comint-send-string process "\n")))))
+
+    (defun conor-python-shell-send-region (start end)
+      "Send the region delimited by START and END to inferior Python process."
+      (interactive "r")
+      (let ((deactivate-mark nil))
+        (conor-python-shell-send-string (buffer-substring start end) nil t)))
+
+    (defun my-add-to-multiple-hooks (func hooks)
+      (mapc (lambda (hook)
+              (add-hook hook func))
+            hooks))
   #+END_SRC
 
 
 
 * Python Mode
   #+BEGIN_SRC emacs-lisp :tangle yes
-    (use-package pyenv-mode)
-    (use-package pyenv-mode-auto
-      :mode "\\.py'")
+    (use-package pyenv-mode
+      :config
+      (use-package pyenv-mode-auto)
+      (define-key pyenv-mode-map (kbd "C-c C-s") nil)
+      (define-key pyenv-mode-map (kbd "C-c s") 'pyenv-mode-set))
 
     (use-package anaconda-mode
+      :commands (anaconda-mode)
       :bind
       (:map python-mode-map
             ("C-." . anaconda-mode-find-definitions)
@@ -108,6 +114,7 @@
                      "LC_LANG=en_US.UTF-8"))
 
                   (pyenv-mode 1)
+                  (anaconda-mode 1)
                   (flycheck-mode 1)
                   (flycheck-add-next-checker 'python-flake8 'python-pylint)
                   (flycheck-add-next-checker 'python-pylint 'python-pycompile)
