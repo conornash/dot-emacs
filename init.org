@@ -64,6 +64,9 @@
   (set-default-coding-systems 'utf-8)
   (set-terminal-coding-system 'utf-8)
   (set-keyboard-coding-system 'utf-8)
+  ;; Unicode coding
+  (set-language-environment "UTF-8")
+
   ;; backwards compatibility as default-buffer-file-coding-system
   ;; is deprecated in 23.2.
   (if (boundp 'buffer-file-coding-system)
@@ -126,16 +129,13 @@
   (when (functionp 'set-fontset-font)
     (set-fontset-font "fontset-default"
                       'unicode
-                      (font-spec :family "Droid Sans Mono"
+                      (font-spec :family "Inconsolata"
+                                 :height 120
                                  :width 'normal
-                                 :size 11
                                  :weight 'normal)))
 
   ;; Requires font to be downloaded from http://fontawesome.io/
   (use-package fontawesome)
-
-  ;; Unicode coding
-  (set-language-environment "UTF-8")
 
   ;; unicode-fonts package
   (use-package unicode-fonts
@@ -286,6 +286,7 @@
 
   ;; column-number-mode
   (column-number-mode t)
+
 #+END_SRC
 
 
@@ -450,20 +451,6 @@
  #+END_SRC
 
 
-* Automatically refresh open files if changed on disk
-#+BEGIN_SRC emacs-lisp :tangle yes
-
-(global-auto-revert-mode t)
-(setq auto-revert-interval 2
-
-;; Also auto refresh dired, but be quiet about it
-      global-auto-revert-non-file-buffers t
-      auto-revert-verbose nil)
-
-
- #+END_SRC
-
-
 * Window splitting horizontally
 #+BEGIN_SRC emacs-lisp :tangle yes
 (setq split-height-threshold 140)
@@ -599,6 +586,18 @@
  #+END_SRC
 
 
+* Automatically refresh open files if changed on disk
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  (global-auto-revert-mode t)
+  (setq auto-revert-interval 2
+        ;; Also auto refresh dired, but be quiet about it
+        global-auto-revert-non-file-buffers t
+        auto-revert-verbose nil)
+
+
+ #+END_SRC
+
 * Find file at point
 #+BEGIN_SRC emacs-lisp :tangle yes
 ;; (ffap-bindings)
@@ -726,7 +725,7 @@
      mc/add-multiple-cursors-to-region-lines
      mc/edit-ends-of-lines)
 
-    :init
+    :config
     (setq mc/list-file (expand-file-name "emacs24.mc.el" user-emacs-directory)
           mc/cmds-to-run-for-all
           '(
@@ -804,7 +803,16 @@
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package expand-region
     :commands
-    (er/expand-region))
+    (er/expand-region
+     er/contract-region)
+    :config
+    ;; Remove er/mark-word
+    (setq er/try-expand-list '(er/mark-symbol
+                               er/mark-symbol-with-prefix er/mark-next-accessor
+                               er/mark-method-call er/mark-inside-quotes
+                               er/mark-outside-quotes er/mark-inside-pairs
+                               er/mark-outside-pairs er/mark-comment er/mark-url er/mark-email
+                               er/mark-defun)))
  #+END_SRC
 
 

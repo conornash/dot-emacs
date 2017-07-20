@@ -62,7 +62,7 @@
   (use-package ess
     :mode (("\\.R$" . R-mode)
            ("\\.Rprofile$" . R-mode))
-  
+
     :bind
     (:map ess-mode-map
           ("C-\\" . ess-eval-line)
@@ -139,6 +139,7 @@
                   (company-mode 1)
                   (rainbow-mode 1)
                   (smartscan-mode 1)
+                  (ess-disable-smart-S-assign nil)
                   (define-key ess-mode-map (kbd "M-\\") 'display-r-instance)
                   (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)))
 
