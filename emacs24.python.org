@@ -105,7 +105,7 @@
                    python-shell-completion-native t
                    python-shell-prompt-regexp "In \\[[0-9]+\\]: "
                    python-shell-prompt-output-regexp "Out\\[[0-9]+\\]: "
-                   python-shell-completion-native-disabled-interpreters '("pypy" "ipython")
+                   python-shell-completion-native-disabled-interpreters '("pypy" "ipython" "jupyter")
                    ;; I don't know if this is kind of hacky since we can't control it on other systems.
                    python-shell-process-environment
                    '("PYTHONIOENCODING='utf-8'"
