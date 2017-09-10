@@ -264,7 +264,19 @@
 
 * Rainbow Delimiters
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package rainbow-delimiters)
+  (use-package rainbow-delimiters
+    :commands (rainbow-delimiters-mode rainbow-delimiters-mode-enable
+                                       rainbow-delimiters-mode-disable)
+    :config
+    (face-spec-set 'rainbow-delimiters-depth-1-face
+                   '((t :foreground "Gray79")) 'face-defface-spec)
+    (face-spec-set 'rainbow-delimiters-depth-2-face
+                   '((t :foreground "#e1ffe1")) 'face-defface-spec)
+    (face-spec-set 'rainbow-delimiters-depth-3-face
+                   '((t :foreground "#ffdfbf")) 'face-defface-spec)
+    (face-spec-set 'rainbow-delimiters-depth-4-face
+                   '((t :foreground "#efefff")) 'face-defface-spec)
+    )
 
 #+END_SRC
 
