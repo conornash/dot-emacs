@@ -1234,6 +1234,20 @@
 #+END_SRC
 
 
+* Gnus
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (setq gnus-directory (expand-file-name "gnus" user-emacs-directory)
+        gnus-startup-file (expand-file-name "newsrc.el" gnus-directory)
+        gnus-select-method '(nntp "nntp.aioe.org")
+        gnus-server-alist '(("archive" nnfolder "archive"
+                             (nnfolder-directory (expand-file-name "nnfolder/archive" gnus-directory))
+                             (nnfolder-active-file (expand-file-name "nnfolder/archive/active" gnus-directory))
+                             (nnfolder-get-new-mail nil)
+                             (nnfolder-inhibit-expiry t))))
+#+END_SRC
+
+
+
 * Eshell
 #+BEGIN_SRC emacs-lisp :tangle yes
 (org-babel-load-if-exists (expand-file-name "emacs24.eshell.org" user-emacs-directory))
