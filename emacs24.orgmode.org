@@ -279,7 +279,7 @@
   ;; (org-babel-lob-ingest "~/Dropbox/emacs/emacs24/elisp/emacs24.Babel.org")
 
   (add-to-list 'org-structure-template-alist '("el" "#+BEGIN_SRC emacs-lisp :tangle yes\n ?\n#+END_SRC"))
-  (add-to-list 'org-structure-template-alist '("rana" "#+BEGIN_SRC R :results output :exports both :cache yes\nlibrary(nbs.analysis)\n ?\n#+END_SRC"))
+  (add-to-list 'org-structure-template-alist '("rana" "#+BEGIN_SRC R :results output :exports both :cache yes\n  library(nbs.analysis)\n ?\n#+END_SRC"))
 
   (setq org-babel-R-command "/usr/local/bin/R --slave --no-save"
         org-babel-default-inline-header-args'((:session . "none")

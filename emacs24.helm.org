@@ -90,6 +90,8 @@
 
     :config
     (use-package helm-config :ensure nil)
+    (use-package helm-for-files :ensure nil)
+    (use-package helm-x-files :ensure nil)
     (use-package helm-ring :ensure nil))
 
   (use-package helm-swoop
