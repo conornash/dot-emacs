@@ -138,6 +138,7 @@
                   (flycheck-mode 1)
                   (company-mode 1)
                   (rainbow-mode 1)
+                  (rainbow-delimiters-mode 1)
                   (smartscan-mode 1)
                   (ess-disable-smart-S-assign nil)
                   (define-key ess-mode-map (kbd "M-\\") 'display-r-instance)
