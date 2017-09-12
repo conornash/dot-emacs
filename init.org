@@ -1264,6 +1264,12 @@
                              (nnfolder-active-file (expand-file-name "nnfolder/archive/active" gnus-directory))
                              (nnfolder-get-new-mail nil)
                              (nnfolder-inhibit-expiry t))))
+
+  ;; Fix for security vulnerability https://lists.gnu.org/archive/html/info-gnu/2017-09/msg00006.html
+  (eval-after-load "enriched"
+    '(defun enriched-decode-display-prop (start end &optional param)
+       (list start end)))
+
 #+END_SRC
 
 
