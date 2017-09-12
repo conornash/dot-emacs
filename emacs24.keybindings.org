@@ -34,6 +34,8 @@
   (global-set-key (kbd "<f5>") 'compile)
   (global-set-key (kbd "<f6>") 'magit-status)
   (global-set-key (kbd "<f7>") 'eshell)
+  (global-set-key (kbd "<C-f7>") 'term)
+  (global-set-key (kbd "<M-f7>") 'term-toggle-mode)
   (global-set-key (kbd "<f8>") 'ibuffer)
   (global-set-key (kbd "<f9>") 'conor-helm-files)
   (global-set-key (kbd "C--") 'text-scale-decrease)

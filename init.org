@@ -8,7 +8,6 @@
 #+PRIORITIES: A E A
 #+DRAWERS: PROPERTIES ARCHIVE
 #+LATEX_HEADER: \hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
-#+BABEL: :session *R* :cache yes :results output graphics :exports both :tangle yes
 #+STARTUP: hidestars
 #+SETUPFILE: theme-readtheorg.setup
 
@@ -23,7 +22,7 @@
   (package-initialize nil)
   ;; (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/") t)
   (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-  ;; (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t) ;; Goes down often
+  (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t) ;; Goes down often
   (add-to-list 'package-archives '("ELPA" . "http://tromey.com/elpa/") t)
   (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/") t)
   (package-refresh-contents)
@@ -106,14 +105,12 @@
             ("s-O" . org-open-at-point-global))
 
      :config
-     (require 'org-macs)
-     (require 'ob)
-
      (defun org-babel-load-if-exists (org-file)
        (when (file-exists-p org-file)
          (org-babel-load-file org-file)))
 
      (setq org-list-allow-alphabetical t))
+
 #+END_SRC
 
 
@@ -325,24 +322,24 @@
 
 * Hy
 #+BEGIN_SRC emacs-lisp :tangle yes
-(add-hook 'hy-mode-hook
-          #'(lambda ()
-              (pyenv-mode 1)
-              (rainbow-mode 1)
-              (smartparens-mode 1)
-              (turn-on-smartparens-strict-mode)
-              (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
-              (setq tab-width 4
-                    ;; jedi:complete-on-dot t              ; optional
-                    ;; flycheck-checker 'python-flake8
-                    jit-lock-defer-time 0.25)
-              (define-key hy-mode-map (kbd "M-\\") 'switch-to-lisp)
-              ))
+  (add-hook 'hy-mode-hook
+            #'(lambda ()
+                (pyenv-mode 1)
+                (rainbow-mode 1)
+                (smartparens-mode 1)
+                (turn-on-smartparens-strict-mode)
+                (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
+                (setq tab-width 4
+                      ;; jedi:complete-on-dot t              ; optional
+                      ;; flycheck-checker 'python-flake8
+                      jit-lock-defer-time 0.25)
+                (define-key hy-mode-map (kbd "M-\\") 'switch-to-lisp)
+                ))
 
-(add-hook 'inferior-lisp-mode-hook
-          #'(lambda ()
-              (define-key inferior-lisp-mode-map (kbd "C-M-p") 'backward-list)
-              (define-key inferior-lisp-mode-map (kbd "C-M-n") 'forward-list)))
+  (add-hook 'inferior-lisp-mode-hook
+            #'(lambda ()
+                (define-key inferior-lisp-mode-map (kbd "C-M-p") 'backward-list)
+                (define-key inferior-lisp-mode-map (kbd "C-M-n") 'forward-list)))
 
 #+END_SRC
 
@@ -696,10 +693,21 @@
 
 * Shell
 #+BEGIN_SRC emacs-lisp :tangle yes
-  ; Add keybindings
   (add-hook 'sh-mode-hook
             #'(lambda()
                (define-key sh-mode-map (kbd "C-\\") 'shell-eval-line)))
+
+  (defun term-toggle-mode ()
+    (interactive)
+    (if (term-in-line-mode)
+        (term-char-mode)
+      (term-line-mode)))
+
+  (use-package term
+    :commands (term)
+    :ensure nil
+    :config
+    (setq explicit-shell-file-name "/usr/local/bin/bash"))
  #+END_SRC
 
 

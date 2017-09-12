@@ -214,14 +214,12 @@
     :config
     (setq org-reveal-root "http://cdn.jsdelivr.net/reveal.js/3.0.0/"))
 
-  (setq org-export-html-style nil
-        org-agenda-exporter-settings
+  (setq org-agenda-exporter-settings
         '((ps-number-of-columns 2)
           (ps-landscape-mode t)
           (org-agenda-add-entry-text-maxlines 5)
           (htmlize-output-type 'css)))
 
-  (add-to-list 'org-modules "org-habit")
   ;; (require 'org-bullets)
   ;; (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
 
@@ -266,15 +264,15 @@
 
   (org-babel-do-load-languages
    'org-babel-load-languages
-   '((python . t)
-     (ipython . t)
-     (sh . t)
-     (js . t)
-     (org . t)
-     (lisp . t)
+   '((R          . t)
      (emacs-lisp . t)
-     (R . t)
-     (sql . t)))
+     (ipython    . t)
+     (js         . t)
+     (lisp       . t)
+     (org        . t)
+     (python     . t)
+     (shell      . t)
+     (sql        . t)))
 
   ;; (org-babel-lob-ingest "~/Dropbox/emacs/emacs24/elisp/emacs24.Babel.org")
 
@@ -282,17 +280,13 @@
   (add-to-list 'org-structure-template-alist '("rana" "#+BEGIN_SRC R :results output :exports both :cache yes\n  library(nbs.analysis)\n ?\n#+END_SRC"))
 
   (setq org-babel-R-command "/usr/local/bin/R --slave --no-save"
-        org-babel-default-inline-header-args'((:session . "none")
-                                              (:results . "replace")
-                                              (:exports . "results")
-                                              (:hlines . "yes"))
+        org-html-keep-old-src t
+        org-babel-default-inline-header-args '((:session . "none")
+                                               (:cache . "yes")
+                                               (:exports . "both")
+                                               (:tangle . "yes"))
         org-babel-default-header-args '((:session . "none")
-                                        (:results . "replace")
-                                        (:exports . "code")
-                                        (:cache . "no")
-                                        (:noweb . "no")
-                                        (:hlines . "no")
-                                        (:tangle . "no")))
+                                        (:cache . "yes")
+                                        (:exports . "both")
+                                        (:tangle . "yes")))
 #+END_SRC
-
-
