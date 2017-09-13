@@ -40,11 +40,11 @@
               (butlast crumbs)
             crumbs)))))
 
-  (defun my-website-preamble (plist)
+  (defun my-website-preamble (plist project-name)  
     (let* ((file (expand-file-name (plist-get plist :input-file)))
            (basedir (file-name-as-directory (plist-get plist :base-directory)))
            (crumbs (path-to-breadcrumbs file basedir))
-           (date (org-publish-find-date file)))
+           (date (org-publish-find-date file project-name)))
       (concat
        "<ol class=\"breadcrumbs\">"
        (if crumbs
@@ -261,6 +261,7 @@
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package ob-async)
   (use-package ob-ipython)
+  (use-package ob-sql-mode)
 
   (org-babel-do-load-languages
    'org-babel-load-languages
@@ -272,7 +273,8 @@
      (org        . t)
      (python     . t)
      (shell      . t)
-     (sql        . t)))
+     (sql        . t)
+     (sql-mode   . t)))
 
   ;; (org-babel-lob-ingest "~/Dropbox/emacs/emacs24/elisp/emacs24.Babel.org")
 
