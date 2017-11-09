@@ -4,6 +4,7 @@
     (use-package sql
       :mode
       (("\\.hql\\'" . sql-mode)
+       ("\\.bqql\\'" . sql-mode)
        ("\\.sql\\'" . sql-mode))
 
       :config

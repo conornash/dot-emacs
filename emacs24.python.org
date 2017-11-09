@@ -95,6 +95,8 @@
       (company-mode 1)
       (anaconda-eldoc-mode 1))
 
+    (use-package py-isort)
+
     (add-hook 'python-mode-hook
               #'(lambda ()
                   (setq-default
