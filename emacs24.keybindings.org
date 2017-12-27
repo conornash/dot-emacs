@@ -1,8 +1,6 @@
 * Keybindings
 #+BEGIN_SRC emacs-lisp :tangle yes
   (define-key comint-mode-map "\C-a" 'comint-bol-or-process-mark)
-  (define-key dired-mode-map (vector 'remap 'beginning-of-buffer) 'dired-back-to-top)
-  (define-key dired-mode-map (vector 'remap 'end-of-buffer) 'dired-jump-to-bottom)
   (define-key query-replace-map (kbd "C-j") 'newline)
   (global-set-key "\C-c\M-d" 'zero-pad)
   (global-set-key "\C-cg" 'goto-line)

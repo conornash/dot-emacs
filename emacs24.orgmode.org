@@ -1,5 +1,9 @@
 * Helper Functions
 #+BEGIN_SRC emacs-lisp :tangle yes
+  (defun org-babel-load-if-exists (org-file)
+    (when (file-exists-p org-file)
+      (org-babel-load-file org-file)))
+
   (defun insert-current-timestamp-inactive ()
     (interactive)
     (let ((current-prefix-arg '(16)))
@@ -68,45 +72,6 @@
 
 * Load Org-mode
 #+BEGIN_SRC emacs-lisp :tangle yes
-  ;; Startup with Agenda
-  ;; (add-hook 'after-init-hook #'(lambda () (org-todo-list 0)))
-
-  ;; This can stop emacs shutdown
-  ;; (add-hook 'kill-emacs-hook 'org-mobile-push)
-  (setq comment-start-skip "^\\s-*#\\(?: \\|$\\)"
-        org-use-speed-commands t
-        org-speed-commands-user '(("S" . widen)
-                                  ("d" . org-deadline))
-        org-enforce-todo-dependencies t
-        org-agenda-dim-blocked-tasks 'invisible
-        org-clock-out-remove-zero-time-clocks t
-        org-deadline-warning-days 28
-        org-duration-format '((special . h:mm))
-        org-agenda-deadline-faces '((1.0 . '(:foreground "#cd4740"))
-                                    (0.9 . '(:foreground "goldenrod1"))
-                                    (0.0 . default))
-        ;; We don't want to see days in the clock report
-        org-time-clocksum-format '(:hours "%d" :require-hours t :minutes ":%02d" :require-minutes t)
-        ;; In Sparse Trees, show the details below the matching entries
-        org-show-entry-below t
-        ;; Follow the point in the agenda buffer with the org file in the other buffer
-        org-agenda-start-with-follow-mode t
-
-        org-confirm-babel-evaluate nil
-        org-refile-use-outline-path 'file
-        org-outline-path-complete-in-steps nil
-        ;; don't show scheduled tasks in the TODO view of the agenda
-        org-agenda-todo-ignore-scheduled nil
-        org-src-window-setup 'current-window
-        org-src-fontify-natively t
-        org-clock-persist 'history
-        org-log-done t
-        ;; Timestamp of changes to deadline using C-c C-d/C-s
-        org-log-redeadline 'time
-        org-log-reschedule 'time
-        org-refile-targets '((org-agenda-files . (:maxlevel . 2))
-                             (org-agenda-files . (:todo . "NEXTACTION"))))
-
   (org-clock-persistence-insinuate)
 
   (add-hook 'org-mode-hook

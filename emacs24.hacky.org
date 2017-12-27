@@ -1,8 +1,5 @@
 * Hacky Functions
-
 #+BEGIN_SRC emacs-lisp :tangle yes
-
-
   ;; For reference, the difference between symbol and lambda form of the macros:
   ;; http://stackoverflow.com/questions/753459/emacs-getting-readable-keyboard-macros
   ;; You always want symbol form, i.e. name-last-kbd-macro
@@ -15,32 +12,32 @@
     (occur regexp)
     (with-current-buffer (get-buffer "*Occur*")
       (let ((inhibit-read-only t)
-	    delete-from
-	    pos)
-	(save-excursion
-	  (while (setq pos (next-property-change (point)))
-	    (goto-char pos)
-	    (if (not (or (get-text-property (point) 'occur-prefix)
-			(get-text-property (point) 'occur-match)))
-		(if delete-from
-		    (delete-region delete-from (point))
-		  (setq delete-from (point)))
-	      (when delete-from
-		(delete-region delete-from (point))
-		(if (get-text-property (point) 'occur-prefix)
-		    (insert "\n")
-		  (insert " ")))
-	      (setq delete-from nil)))))))
+            delete-from
+            pos)
+        (save-excursion
+          (while (setq pos (next-property-change (point)))
+            (goto-char pos)
+            (if (not (or (get-text-property (point) 'occur-prefix)
+                         (get-text-property (point) 'occur-match)))
+                (if delete-from
+                    (delete-region delete-from (point))
+                  (setq delete-from (point)))
+              (when delete-from
+                (delete-region delete-from (point))
+                (if (get-text-property (point) 'occur-prefix)
+                    (insert "\n")
+                  (insert " ")))
+              (setq delete-from nil)))))))
 
 
   (fset 'org-clocktable-daystep-remove-table-formula
-     [?\C-s ?# ?+ ?T ?B ?L ?F ?M ?\C-a ?\C-k ?\C-k ?\C-k ?| ?- tab])
+        [?\C-s ?# ?+ ?T ?B ?L ?F ?M ?\C-a ?\C-k ?\C-k ?\C-k ?| ?- tab])
 
   (fset 'org-clocktable-daystep-add-date-column
-     [?\C-s ?d ?a ?i ?l ?y ?  ?r ?e ?p ?o ?r ?t ?: return ?\C-a ?\C-  ?\C-\M-f ?\C-\M-f ?\C-f ?\C-f ?\C-w ?\C-  ?\C-e ?\C-w ?\C-n ?\C-f M-S-right ?\C-y tab C-down C-up])
+        [?\C-s ?d ?a ?i ?l ?y ?  ?r ?e ?p ?o ?r ?t ?: return ?\C-a ?\C-  ?\C-\M-f ?\C-\M-f ?\C-f ?\C-f ?\C-w ?\C-  ?\C-e ?\C-w ?\C-n ?\C-f M-S-right ?\C-y tab C-down C-up])
 
   (fset 'org-clocktable-daystep-remove-headline
-     [?\C-s ?h ?e ?a ?d ?l ?i ?n ?e ?\C-a ?\C-  ?\C-n ?\C-n ?\C-w])
+        [?\C-s ?h ?e ?a ?d ?l ?i ?n ?e ?\C-a ?\C-  ?\C-n ?\C-n ?\C-w])
 
 
   ;; I know that string is in my Emacs somewhere!
@@ -56,14 +53,14 @@
   prefix > 1 (i.e., if you type C-u \\[search-all-buffers]),
   searches all buffers."
     (interactive (list (grep-read-regexp)
-		       current-prefix-arg))
+                       current-prefix-arg))
     (message "Regexp is %s; prefix is %s" regexp prefix)
     (multi-occur
      (if (member prefix '(4 (4)))
-	 (buffer-list)
+         (buffer-list)
        (remove-if
-	(lambda (b) (some (lambda (rx) (string-match rx  (file-name-nondirectory (buffer-file-name b)))) search-all-buffers-ignored-files))
-	(remove-if-not 'buffer-file-name (buffer-list))))
+        (lambda (b) (some (lambda (rx) (string-match rx  (file-name-nondirectory (buffer-file-name b)))) search-all-buffers-ignored-files))
+        (remove-if-not 'buffer-file-name (buffer-list))))
      regexp))
 
 
@@ -74,30 +71,30 @@
 
   ;; Enclose a region in an anonymous function
   (fset 'javascript-region-2-anonymous-function
-	[?\C-w ?f ?u ?n ?c ?t ?i ?o ?n ?\( ?\C-f ?  ?\{ return ?\C-y return ?\C-f ?\; left ?\C-\M-p ?\C-f ?\C-f ?r ?e ?t ?u ?r ?n ?\M-  tab])
+        [?\C-w ?f ?u ?n ?c ?t ?i ?o ?n ?\( ?\C-f ?  ?\{ return ?\C-y return ?\C-f ?\; left ?\C-\M-p ?\C-f ?\C-f ?r ?e ?t ?u ?r ?n ?\M-  tab])
 
   ;; Delete matched pair of parentheses
   (fset 'unnest-enclosed-parens
-	[?\C-  ?\C-\M-n ?\C-g backspace ?\C-x ?\C-x ?\C-g ?\C-d])
+        [?\C-  ?\C-\M-n ?\C-g backspace ?\C-x ?\C-x ?\C-g ?\C-d])
 
   ;; Enclose the sexp in front of the cursor within round brackets
   (fset 'nest-outer-round-parens
-	[?\C-  ?\C-\M-f ?\( ?\C-\M-b ?\C-f])
+        [?\C-  ?\C-\M-f ?\( ?\C-\M-b ?\C-f])
 
   ;; Enclose the sexp in front of the cursor within square brackets
   (fset 'nest-outer-square-parens
-	[?\C-  ?\C-\M-n ?\[])
+        [?\C-  ?\C-\M-n ?\[])
 
   ;; Enclose the sexp in front of the cursor within curly brackets
   (fset 'nest-outer-curly-parens
-	[?\C-  ?\C-\M-n ?\{])
+        [?\C-  ?\C-\M-n ?\{])
 
   ;; Add another quoted argument (separated by comma)
   (fset 'add-quoted-argument
-	"\C-f, \"")
+        "\C-f, \"")
 
   (fset 'add-single-quoted-argument
-	"\C-f, '")
+        "\C-f, '")
 
   ;; Old version with kill-visual-line
   ;;(fset 'copy-line-and-replace
@@ -105,15 +102,15 @@
 
   ;; Copy the entire line that you're on and query replace
   (fset 'copy-line-and-replace
-	[?\C-a ?\M-x ?k ?i ?l ?l ?- ?w ?h ?o ?l ?e ?- ?l ?i ?n ?e ?\C-m ?\C-y return ?\C-y ?\C-x ?\C-x ?\M-% ?\C-u ?\C-x ?q return ?\C-u ?\C-x ?q return ?! ?\C-a])
+        [?\C-a ?\M-x ?k ?i ?l ?l ?- ?w ?h ?o ?l ?e ?- ?l ?i ?n ?e ?\C-m ?\C-y return ?\C-y ?\C-x ?\C-x ?\M-% ?\C-u ?\C-x ?q return ?\C-u ?\C-x ?q return ?! ?\C-a])
 
   ;; Version with no replace
   (fset 'copy-line
-	[?\C-a ?\M-x ?k ?i ?l ?l ?- ?w ?h ?o ?l ?e ?- ?l ?i ?n ?e ?\C-m ?\C-y return ?\C-y ?\C-x ?\C-x ?\C-a])
+        [?\C-a ?\M-x ?k ?i ?l ?l ?- ?w ?h ?o ?l ?e ?- ?l ?i ?n ?e ?\C-m ?\C-y return ?\C-y ?\C-x ?\C-x ?\C-a])
 
   ;; Eval a line in bash and print to new buffer
   (fset 'shell-eval-line
-	[?\C-a ?\C-  ?\C-e ?\M-w ?\C-a ?\M-! ?\C-y return])
+        [?\C-a ?\C-  ?\C-e ?\M-w ?\C-a ?\M-! ?\C-y return])
 
   ;; Obsolete
   ;; (fset 'unix2date
@@ -123,15 +120,15 @@
   ;; (put 'unix2date 'kmacro t)
 
   (fset 'date2unix
-	(lambda (&optional arg) "Convert simple date string to unixtime. Example: 1330588800 -> Thu Mar  1 00:00:00 PST 2012"
-	  (interactive "p")
-	  (kmacro-exec-ring-item
-	   (quote ([67108896 5 134217847 32 45 32 21 134217761 100 97 116 101 32 45 100 32 34 25 5 32 43 37 115 13 5 6 4] 0 "%d")) arg)))
+        (lambda (&optional arg) "Convert simple date string to unixtime. Example: 1330588800 -> Thu Mar  1 00:00:00 PST 2012"
+          (interactive "p")
+          (kmacro-exec-ring-item
+           (quote ([67108896 5 134217847 32 45 32 21 134217761 100 97 116 101 32 45 100 32 34 25 5 32 43 37 115 13 5 6 4] 0 "%d")) arg)))
 
   (fset 'date2unix
-	(lambda (&optional arg) "Convert simple date string to unixtime. Example: 1330588800 -> Thu Mar  1 00:00:00 PST 2012"
-	  (interactive "p")
-	  (message (current-time-string (seconds-to-time arg)))))
+        (lambda (&optional arg) "Convert simple date string to unixtime. Example: 1330588800 -> Thu Mar  1 00:00:00 PST 2012"
+          (interactive "p")
+          (message (current-time-string (seconds-to-time arg)))))
   (put 'date2unix 'kmacro t)
 
 
@@ -148,23 +145,23 @@
     (interactive "p")
     (message (current-time-string (encode-time 0 0 0  (string-to-int (substring (buffer-substring (region-beginning) (region-end)) 8 10)) (string-to-int (substring (buffer-substring (region-beginning) (region-end)) 5 7)) (string-to-int (substring (buffer-substring (region-beginning) (region-end)) 0 4))))))
 
-					  ; Older send-lin macro
-					  ;(fset 'python-shell-send-line
-					  ;   [?\C-a ?\C-  ?\C-e ?\C-c ?\C-r ?\C-g ?\C-a])
+                                          ; Older send-lin macro
+                                          ;(fset 'python-shell-send-line
+                                          ;   [?\C-a ?\C-  ?\C-e ?\C-c ?\C-r ?\C-g ?\C-a])
 
   (fset 'slime-copy-to-process
-	[?\C-a ?\C-  ?\C-e ?\M-w ?\C-\] ?\C-y return ?\C-\M-\] ?\C-a])
+        [?\C-a ?\C-  ?\C-e ?\M-w ?\C-\] ?\C-y return ?\C-\M-\] ?\C-a])
 
   (defun eval-and-replace ()
     "Replace the preceding sexp with its value."
     (interactive)
     (backward-kill-sexp)
     (prin1 (eval (read (current-kill 0)))
-	   (current-buffer)))
+           (current-buffer)))
 
-					  ; This macro is supposed to send the region but it seems to act a little dodgy.
+                                          ; This macro is supposed to send the region but it seems to act a little dodgy.
   (fset 'send-region-macro
-	[C-up ?\C-  C-down ?\C-c ?\C-r ?\C-g])
+        [C-up ?\C-  C-down ?\C-c ?\C-r ?\C-g])
 
   ;; Custom vc-git-annotate-command
   ;; original uses date=iso
@@ -174,7 +171,7 @@
   ;; can't be used properly by vc-annotate, I guess it's expecting a specific format
 
   (fset 'envelop-parentheses
-	[?\( ?\C-\)])
+        [?\( ?\C-\)])
 
   (defun save-macro (name)
     "save a macro. Take a name as argument
@@ -263,9 +260,10 @@
     "Same as zap-to-char except that it zaps to the given regexp
   instead of a char."
     (interactive "p\nsZap to regexp: ")
-    (kill-region (point) (progn
-			   (re-search-forward regexp nil nil arg)
-			   (point))))
+    (kill-region (point)
+                 (progn
+                   (re-search-forward regexp nil nil arg)
+                   (point))))
 
   (defun my-insert-file-name (filename &optional args)
     "Insert name of file FILENAME into buffer after point.
@@ -282,11 +280,11 @@
     ;; Based on insert-file in Emacs -- ashawley 20080926
     (interactive "*fInsert file name: \nP")
     (cond ((eq '- args)
-	   (insert (file-relative-name filename)))
-	  ((not (null args))
-	   (insert (expand-file-name filename)))
-	  (t
-	   (insert filename))))
+           (insert (file-relative-name filename)))
+          ((not (null args))
+           (insert (expand-file-name filename)))
+          (t
+           (insert filename))))
 
   ;; I don't like how the python-shell-send-string in python.el
   ;; makes you send the whole file (unsaved, at that) when you want to
@@ -297,9 +295,9 @@
     "Show line numbers temporarily, while prompting for the line number input"
     (interactive)
     (unwind-protect
-	(progn
-	  (linum-mode 1)
-	  (goto-line (read-number "Goto line: ")))
+        (progn
+          (linum-mode 1)
+          (goto-line (read-number "Goto line: ")))
       (linum-mode -1)))
 
   ;; Elisp go-to-definition with M-. and back again with M-,
@@ -329,40 +327,40 @@
     (save-excursion
       (end-of-line)
       (let ((end (point)))
-	(beginning-of-line)
-	(princ (concat "Loading line:") t)
-	(skewer-input-sender (skewer-repl-process) (buffer-substring (point) end)))))
+        (beginning-of-line)
+        (princ (concat "Loading line:") t)
+        (skewer-input-sender (skewer-repl-process) (buffer-substring (point) end)))))
 
   (defun my-skewer-eval-region (vis)
     (interactive "P")
     (save-excursion
       (let ((end (point)))
-	(princ (concat "Loading line:") t)
-	(skewer-input-sender (skewer-repl-process) (buffer-substring (region-beginning) (region-end))))))
+        (princ (concat "Loading line:") t)
+        (skewer-input-sender (skewer-repl-process) (buffer-substring (region-beginning) (region-end))))))
 
 
   (defun move-text-internal (arg)
     (cond
      ((and mark-active transient-mark-mode)
       (if (> (point) (mark))
-	  (exchange-point-and-mark))
+          (exchange-point-and-mark))
       (let ((column (current-column))
-	    (text (delete-and-extract-region (point) (mark))))
-	(forward-line arg)
-	(move-to-column column t)
-	(set-mark (point))
-	(insert text)
-	(exchange-point-and-mark)
-	(setq deactivate-mark nil)))
+            (text (delete-and-extract-region (point) (mark))))
+        (forward-line arg)
+        (move-to-column column t)
+        (set-mark (point))
+        (insert text)
+        (exchange-point-and-mark)
+        (setq deactivate-mark nil)))
      (t
       (let ((column (current-column)))
-	(beginning-of-line)
-	(when (or (> arg 0) (not (bobp)))
-	  (forward-line)
-	  (when (or (< arg 0) (not (eobp)))
-	    (transpose-lines arg))
-	  (forward-line -1))
-	(move-to-column column t)))))
+        (beginning-of-line)
+        (when (or (> arg 0) (not (bobp)))
+          (forward-line)
+          (when (or (< arg 0) (not (eobp)))
+            (transpose-lines arg))
+          (forward-line -1))
+        (move-to-column column t)))))
 
   (defun move-text-down (arg)
     "Move region (transient-mark-mode active) or current line
@@ -384,10 +382,10 @@
     (interactive)
     (with-isearch-suspended
      (setq isearch-new-string
-	   (substring
-	    isearch-string 0 (or (isearch-fail-pos) (1- (length isearch-string))))
-	   isearch-new-message
-	   (mapconcat 'isearch-text-char-description isearch-new-string ""))))
+           (substring
+            isearch-string 0 (or (isearch-fail-pos) (1- (length isearch-string))))
+           isearch-new-message
+           (mapconcat 'isearch-text-char-description isearch-new-string ""))))
 
   ;; This is to allow highlighting in compiliation buffers
   ;; stolen from http://stackoverflow.com/a/3072831/77298
@@ -405,7 +403,7 @@
     (split-window-vertically)
     (other-window 1 nil)
     (if (= prefix 1)
-	(switch-to-next-buffer)))
+        (switch-to-next-buffer)))
 
   (defun my/hsplit-last-buffer (prefix)
     "Split the window horizontally and display the previous buffer."
@@ -431,12 +429,12 @@
     ;; Move lines first
     (when (/= arg 1)
       (let ((line-move-visual nil))
-	(forward-line (1- arg))))
+        (forward-line (1- arg))))
 
     (let ((orig-point (point)))
       (back-to-indentation)
       (when (= orig-point (point))
-	(move-beginning-of-line 1))))
+        (move-beginning-of-line 1))))
 
 
   ;; Convert camelCase to dot.separated
@@ -468,9 +466,9 @@
   (defun conornash/say-what-im-doing-command-hook ()
     "This is the function that will be added to `post-command-hook'."
     (if (not (member this-command conornash/say-what-im-doing-common-commands))
-	(start-process "my_process"
-		       nil conornash/say-what-im-doing-shell-command
-		       (replace-regexp-in-string "-" " " (format "%s" this-command)))))
+        (start-process "my_process"
+                       nil conornash/say-what-im-doing-shell-command
+                       (replace-regexp-in-string "-" " " (format "%s" this-command)))))
 
   ;;;###autoload
   (define-minor-mode conornash/say-what-im-doing-mode
@@ -481,7 +479,7 @@
     :lighter " say"
     :global t
     (if conornash/say-what-im-doing-mode
-	(add-hook 'post-command-hook 'conornash/say-what-im-doing-command-hook)
+        (add-hook 'post-command-hook 'conornash/say-what-im-doing-command-hook)
       (remove-hook 'post-command-hook 'conornash/say-what-im-doing-command-hook)))
 
   (provide 'conornash/say-what-im-doing-mode)
@@ -491,24 +489,24 @@
   (defun org-dblock-write:rangereport (params)
     "Display day-by-day time reports."
     (let* ((ts (plist-get params :tstart))
-	   (te (plist-get params :tend))
-	   (start (time-to-seconds
-		   (apply 'encode-time (org-parse-time-string ts))))
-	   (end (time-to-seconds
-		 (apply 'encode-time (org-parse-time-string te))))
-	   day-numbers)
+           (te (plist-get params :tend))
+           (start (time-to-seconds
+                   (apply 'encode-time (org-parse-time-string ts))))
+           (end (time-to-seconds
+                 (apply 'encode-time (org-parse-time-string te))))
+           day-numbers)
       (setq params (plist-put params :tstart nil))
       (setq params (plist-put params :end nil))
       (while (<= start end)
-	(save-excursion
-	  (setq inner-time (org-clock-sum
-			    (format-time-string (car org-time-stamp-formats) (seconds-to-time start))
-			    (format-time-string (car org-time-stamp-formats) (seconds-to-time end))))
-	  (insert "\n"
-		 (concat (format-time-string (car org-time-stamp-formats)
-			      (seconds-to-time start)) " | "  (int-to-string inner-time)))
-	  (setq start (+ 86400 start)
-		inner-time 0)))))
+        (save-excursion
+          (setq inner-time (org-clock-sum
+                            (format-time-string (car org-time-stamp-formats) (seconds-to-time start))
+                            (format-time-string (car org-time-stamp-formats) (seconds-to-time end))))
+          (insert "\n"
+                  (concat (format-time-string (car org-time-stamp-formats)
+                                              (seconds-to-time start)) " | "  (int-to-string inner-time)))
+          (setq start (+ 86400 start)
+                inner-time 0)))))
 
 
   (defun conornash/org-clock-get-table-data (file params)
@@ -524,95 +522,102 @@
     (LEVEL HEADLINE TIMESTAMP TIME)
 
   LEVEL:     The level of the headline, as an integer.  This will be
-	     the reduced leve, so 1,2,3,... even if only odd levels
-	     are being used.
+         the reduced leve, so 1,2,3,... even if only odd levels
+         are being used.
   HEADLINE:  The text of the headline.  Depending on PARAMS, this may
-	     already be formatted like a link.
+         already be formatted like a link.
   TIMESTAMP: If PARAMS require it, this will be a time stamp found in the
-	     entry, any of SCHEDULED, DEADLINE, NORMAL, or first inactive,
-	     in this sequence.
+         entry, any of SCHEDULED, DEADLINE, NORMAL, or first inactive,
+         in this sequence.
   TIME:      The sum of all time spend in this tree, in minutes.  This time
-	     will of cause be restricted to the time block and tags match
-	     specified in PARAMS."
+         will of cause be restricted to the time block and tags match
+         specified in PARAMS."
     (let* ((maxlevel (or (plist-get params :maxlevel) 3))
-	   (timestamp (plist-get params :timestamp))
-	   (ts (plist-get params :tstart))
-	   (te (plist-get params :tend))
-	   (ws (plist-get params :wstart))
-	   (ms (plist-get params :mstart))
-	   (block (plist-get params :block))
-	   (link (plist-get params :link))
-	   (tags (plist-get params :tags))
-	   (properties (plist-get params :properties))
-	   (inherit-property-p (plist-get params :inherit-props))
-	   todo-only
-	   (matcher (if tags (cdr (org-make-tags-matcher tags))))
-	   cc range-text st p time level hdl props tsp tbl)
+           (timestamp (plist-get params :timestamp))
+           (ts (plist-get params :tstart))
+           (te (plist-get params :tend))
+           (ws (plist-get params :wstart))
+           (ms (plist-get params :mstart))
+           (block (plist-get params :block))
+           (link (plist-get params :link))
+           (tags (plist-get params :tags))
+           (properties (plist-get params :properties))
+           (inherit-property-p (plist-get params :inherit-props))
+           todo-only
+           (matcher (if tags (cdr (org-make-tags-matcher tags))))
+           cc range-text st p time level hdl props tsp tbl)
 
       (setq org-clock-file-total-minutes nil)
       (when block
-	(setq cc (org-clock-special-range block nil t ws ms)
-	      ts (car cc) te (nth 1 cc) range-text (nth 2 cc)))
+        (setq cc (org-clock-special-range block nil t ws ms)
+              ts (car cc) te (nth 1 cc) range-text (nth 2 cc)))
       (when (integerp ts) (setq ts (calendar-gregorian-from-absolute ts)))
       (when (integerp te) (setq te (calendar-gregorian-from-absolute te)))
       (when (and ts (listp ts))
-	(setq ts (format "%4d-%02d-%02d" (nth 2 ts) (car ts) (nth 1 ts))))
+        (setq ts (format "%4d-%02d-%02d" (nth 2 ts) (car ts) (nth 1 ts))))
       (when (and te (listp te))
-	(setq te (format "%4d-%02d-%02d" (nth 2 te) (car te) (nth 1 te))))
+        (setq te (format "%4d-%02d-%02d" (nth 2 te) (car te) (nth 1 te))))
       ;; Now the times are strings we can parse.
       (if ts (setq ts (org-matcher-time ts)))
       (if te (setq te (org-matcher-time te)))
       (save-excursion
-	(org-clock-sum ts te
-		       (unless (null matcher)
-			 (lambda ()
-			   (let* ((tags-list (org-get-tags-at))
-				  (org-scanner-tags tags-list)
-				  (org-trust-scanner-tags t))
-			     (eval matcher)))))
-	(goto-char (point-min))
-	(setq st t)
-	(while (or (and (bobp) (prog1 st (setq st nil))
-			(get-text-property (point) :org-clock-minutes)
-			(setq p (point-min)))
-		   (setq p (next-single-property-change
-			    (point) :org-clock-minutes)))
-	  (goto-char p)
-	  (when (setq time (get-text-property p :org-clock-minutes))
-	    (save-excursion
-	      (beginning-of-line 1)
-	      (when (and (looking-at (org-re "\\(\\*+\\)[ \t]+\\(.*?\\)\\([ \t]+:[[:alnum:]_@#%:]+:\\)?[ \t]*$"))
-			 (setq level (org-reduced-level
-				      (- (match-end 1) (match-beginning 1))))
-			 (<= level maxlevel))
-		(setq hdl (if (not link)
-			      (match-string 2)
-			    (org-make-link-string
-			     (format "file:%s::%s"
-				     (buffer-file-name)
-				     (save-match-data
-				       (match-string 2)))
-			     (org-make-org-heading-search-string
-			      (replace-regexp-in-string
-			       org-bracket-link-regexp
-			       (lambda (m) (or (match-string 3 m)
-					  (match-string 1 m)))
-			       (match-string 2)))))
-		      tsp (when timestamp
-			    (setq props (org-entry-properties (point)))
-			    (or (cdr (assoc "SCHEDULED" props))
-				(cdr (assoc "DEADLINE" props))
-				(cdr (assoc "TIMESTAMP" props))
-				(cdr (assoc "TIMESTAMP_IA" props))))
-		      props (when properties
-			      (remove nil
-				      (mapcar
-				       (lambda (p)
-					 (when (org-entry-get (point) p inherit-property-p)
-					   (cons p (org-entry-get (point) p inherit-property-p))))
-				       properties))))
-		(when (> time 0) (push (list level hdl tsp time props) tbl))))))
-	(setq tbl (nreverse tbl))
-	(list file org-clock-file-total-minutes tbl))))
+        (org-clock-sum ts te
+                       (unless (null matcher)
+                         (lambda ()
+                           (let* ((tags-list (org-get-tags-at))
+                                  (org-scanner-tags tags-list)
+                                  (org-trust-scanner-tags t))
+                             (eval matcher)))))
+        (goto-char (point-min))
+        (setq st t)
+        (while (or (and (bobp) (prog1 st (setq st nil))
+                        (get-text-property (point) :org-clock-minutes)
+                        (setq p (point-min)))
+                   (setq p (next-single-property-change
+                            (point) :org-clock-minutes)))
+          (goto-char p)
+          (when (setq time (get-text-property p :org-clock-minutes))
+            (save-excursion
+              (beginning-of-line 1)
+              (when (and (looking-at (org-re "\\(\\*+\\)[ \t]+\\(.*?\\)\\([ \t]+:[[:alnum:]_@#%:]+:\\)?[ \t]*$"))
+                         (setq level (org-reduced-level
+                                      (- (match-end 1) (match-beginning 1))))
+                         (<= level maxlevel))
+                (setq hdl (if (not link)
+                              (match-string 2)
+                            (org-make-link-string
+                             (format "file:%s::%s"
+                                     (buffer-file-name)
+                                     (save-match-data
+                                       (match-string 2)))
+                             (org-make-org-heading-search-string
+                              (replace-regexp-in-string
+                               org-bracket-link-regexp
+                               (lambda (m) (or (match-string 3 m)
+                                               (match-string 1 m)))
+                               (match-string 2)))))
+                      tsp (when timestamp
+                            (setq props (org-entry-properties (point)))
+                            (or (cdr (assoc "SCHEDULED" props))
+                                (cdr (assoc "DEADLINE" props))
+                                (cdr (assoc "TIMESTAMP" props))
+                                (cdr (assoc "TIMESTAMP_IA" props))))
+                      props (when properties
+                              (remove nil
+                                      (mapcar
+                                       (lambda (p)
+                                         (when (org-entry-get (point) p inherit-property-p)
+                                           (cons p (org-entry-get (point) p inherit-property-p))))
+                                       properties))))
+                (when (> time 0) (push (list level hdl tsp time props) tbl))))))
+        (setq tbl (nreverse tbl))
+        (list file org-clock-file-total-minutes tbl))))
 
+
+  ;; (defun anaconda-mode-find-definitions (arg)
+  ;;   "Find definitions for thing at point."
+  ;;   (interactive "p")
+  ;;   (if (> arg 1)
+  ;;       (display-buffer (anaconda-mode-call "goto_definitions" anaconda-mode-find-definitions-callback) t)
+  ;;     (anaconda-mode-call "goto_definitions" anaconda-mode-find-definitions-callback)))
 #+END_SRC
