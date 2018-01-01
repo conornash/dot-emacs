@@ -251,10 +251,12 @@
         org-html-keep-old-src t
         org-babel-default-inline-header-args '((:session . "none")
                                                (:cache . "yes")
+                                               (:eval . "never")
                                                (:exports . "both")
                                                (:tangle . "yes"))
         org-babel-default-header-args '((:session . "none")
                                         (:cache . "yes")
+                                        (:eval . "never")
                                         (:exports . "both")
                                         (:tangle . "yes")))
 #+END_SRC

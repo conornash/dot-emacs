@@ -37,8 +37,6 @@
   (eval-when-compile
     (require 'use-package))
   (require 'files)
-  (require 'diminish)
-  (require 'bind-key)
   (setq use-package-verbose t
         use-package-always-ensure t)
 
@@ -333,11 +331,11 @@
 
 ** Auto-compile
 #+BEGIN_SRC emacs-lisp :tangle yes
-(use-package auto-compile
-  :config
-  (auto-compile-on-load-mode 1)
-  (auto-compile-on-save-mode 1)
-  (setq load-prefer-newer t))
+  (use-package auto-compile
+    :config
+    (auto-compile-on-load-mode 1)
+    (auto-compile-on-save-mode 1)
+    (setq load-prefer-newer t))
 
  #+END_SRC
 
@@ -576,24 +574,21 @@
 
 ** Find file at point
 #+BEGIN_SRC emacs-lisp :tangle yes
-;; (ffap-bindings)
-;; (setq ffap-require-prefix t)
-;;(setq dired-at-point-require-prefix t)
-
-(setq save-abbrevs nil
-      hippie-expand-try-functions-list
-      '(try-expand-dabbrev-all-buffers
-        try-complete-file-name
-        try-complete-file-name-partially
-        try-complete-lisp-symbol
-        try-complete-lisp-symbol-partially
-        try-expand-all-abbrevs
-        try-expand-dabbrev
-        try-expand-dabbrev-from-kill
-        try-expand-dabbrev-visible
-        try-expand-line
-        try-expand-list
-        yas-hippie-try-expand))
+  (setq abbrev-file-name "~/.emacs.d/abbrev_defs"
+        save-abbrevs nil
+        hippie-expand-try-functions-list
+        '(try-expand-dabbrev-all-buffers
+          try-complete-file-name
+          try-complete-file-name-partially
+          try-complete-lisp-symbol
+          try-complete-lisp-symbol-partially
+          try-expand-all-abbrevs
+          try-expand-dabbrev
+          try-expand-dabbrev-from-kill
+          try-expand-dabbrev-visible
+          try-expand-line
+          try-expand-list
+          yas-hippie-try-expand))
 
  #+END_SRC
 
@@ -759,12 +754,28 @@
 
 ** Magit
 #+BEGIN_SRC emacs-lisp :tangle yes
-(use-package magit
-  :commands magit-status
-  :init
-  (add-hook 'with-editor-mode-hook 'turn-on-orgstruct++)
-  (setq magit-push-always-verify nil
-        magit-diff-use-overlays nil))
+  (use-package magit
+    :commands magit-status
+    :config
+    (add-hook 'with-editor-mode-hook 'turn-on-orgstruct++)
+    (setq magit-push-always-verify nil
+          magit-diff-use-overlays nil
+          magit-status-sections-hook '(magit-insert-status-headers
+                                       magit-insert-merge-log
+                                       magit-insert-rebase-sequence
+                                       magit-insert-am-sequence
+                                       magit-insert-sequencer-sequence
+                                       magit-insert-bisect-output
+                                       magit-insert-bisect-rest
+                                       magit-insert-bisect-log
+                                       magit-insert-untracked-files
+                                       magit-insert-unstaged-changes
+                                       magit-insert-staged-changes
+                                       magit-insert-stashes
+                                       magit-insert-unpulled-from-upstream
+                                       magit-insert-unpulled-from-pushremote
+                                       magit-insert-unpushed-to-upstream
+                                       magit-insert-unpushed-to-pushremote)))
 
  #+END_SRC
 

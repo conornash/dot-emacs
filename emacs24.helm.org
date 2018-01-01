@@ -76,7 +76,7 @@
      helm-ff-transformer-show-only-basename nil
      helm-follow-mode t
      helm-idle-delay 0.0 ;; update fast sources immediately (doesn't).
-     helm-input-idle-delay 0.01  ;; this actually updates things reeeelatively quickly.
+     helm-input-idle-delay 0.05  ;; this actually updates things reeeelatively quickly.
      helm-org-show-filename t
      helm-quick-update t
      helm-scroll-amount 8)
