@@ -1,0 +1,219 @@
+* Helper functions
+#+BEGIN_SRC emacs-lisp :tangle yes
+ 
+  (defun fish-path (path max-len)
+    "Return a potentially trimmed-down version of the directory PATH, replacing
+  parent directories with their initial characters to try to get the character
+  length of PATH (sans directory slashes) down to MAX-LEN."
+    (let* ((components (split-string (abbreviate-file-name path) "/"))
+           (len (+ (1- (length components))
+                   (reduce '+ components :key 'length)))
+           (str ""))
+      (while (and (> len max-len)
+                  (cdr components))
+        (setq str (concat str
+                          (cond ((= 0 (length (car components))) "/")
+                                ((= 1 (length (car components)))
+                                 (concat (car components) "/"))
+                                (t
+                                 (if (string= "."
+                                              (string (elt (car components) 0)))
+                                     (concat (substring (car components) 0 2)
+                                             "/")
+                                   (string (elt (car components) 0) ?/)))))
+              len (- len (1- (length (car components))))
+              components (cdr components)))
+      (concat str (reduce (lambda (a b) (concat a "/" b)) components))))
+
+  ;; (setq eshell-prompt-function
+  ;;   (lambda ()
+  ;;     (concat (fish-path (eshell/pwd) 3 ) (if (= (user-uid) 0) " # " " $ "))))
+
+  (defmacro with-face (str &rest properties)
+    `(propertize ,str 'face (list ,@properties)))
+
+  (defun curr-dir-git-branch-string (pwd)
+    "Returns current git branch as a string, or the empty string if
+  PWD is not in a git repo (or the git command is not found)."
+    (interactive)
+    (when (and (eshell-search-path "git")
+               (locate-dominating-file pwd ".git"))
+      (let ((git-output (shell-command-to-string (concat "git branch | grep '\\*' | sed -e 's/^\\* //'"))))
+        (concat "["
+                (if (> (length git-output) 0)
+                    (substring git-output 0 -1)
+                  "(no branch)")
+                "]"))))
+
+  (defun curr-dir-git-unstaged-changes-string (pwd)
+    "Returns current unstaged changes to the git repo as a string, or the empty string if
+  PWD is not in a git repo (or the git command is not found)."
+    (interactive)
+    (when (and (eshell-search-path "git")
+               (locate-dominating-file pwd ".git"))
+      (let ((git-output (string-trim (shell-command-to-string
+                                      (concat "git --no-pager diff --numstat | grep ^[0-9] | wc -l")))))
+        (cond ((eq (string-to-int git-output) 1)
+               "1 unstaged change")
+              ((> (string-to-int git-output) 1)
+               (format "%s unstaged changes" git-output))
+              (t "")))))
+
+
+  (defun curr-dir-git-uncommitted-changes-string (pwd)
+    "Returns current uncommitted changes in the index of the git repo as a string, or the empty string if
+  PWD is not in a git repo (or the git command is not found)."
+    (interactive)
+    (when (and (eshell-search-path "git")
+               (locate-dominating-file pwd ".git"))
+      (let ((git-output (string-trim (shell-command-to-string
+                                      (concat "git --no-pager diff --cached --numstat | grep ^[0-9] | wc -l")))))
+        (cond ((eq (string-to-int git-output) 1)
+               "1 uncommitted change")
+              ((> (string-to-int git-output) 1)
+               (format "%s uncommitted changes" git-output))
+              (t "")))))
+
+  (defun shk-eshell-prompt ()
+    (let ((header-bg "#222")
+          (shk-git-branch (curr-dir-git-branch-string (eshell/pwd)))
+          (shk-git-unstaged-changes (curr-dir-git-unstaged-changes-string (eshell/pwd)))
+          (shk-git-uncommitted-changes (curr-dir-git-uncommitted-changes-string (eshell/pwd))))
+      (concat
+       (if (boundp 'venv-current-name)
+           (with-face (if (> (length venv-current-name) 0)
+                          (concat "(" venv-current-name ") ") "") :foreground "#8592F2")
+         "")
+       (with-face (concat (eshell/pwd) " ") )
+       (with-face (format-time-string "(%Y-%m-%d %H:%M) " (current-time)) :foreground "#AAA")
+       (with-face
+        (format "%s%s%s"
+                (or shk-git-branch "")
+                (if (> (length shk-git-unstaged-changes) 0)
+                    (concat " - " shk-git-unstaged-changes) "")
+                (if (> (length shk-git-uncommitted-changes) 0)
+                    (concat " - " shk-git-uncommitted-changes) ""))
+
+        :foreground "yellow")
+       (with-face "\n" )
+       (with-face user-login-name :foreground "blue")
+       "@"
+       (with-face (first (split-string (system-name) "\\.")) :foreground "green")
+       (if (= (user-uid) 0)
+           (with-face " #" :foreground "red")
+         " $")
+       " ")))
+
+
+  (defun eshell/emacs (&rest args)
+    "Open a file in emacs. Some habits die hard."
+    (if (null args)
+        ;; If I just ran "emacs", I probably expect to be launching
+        ;; Emacs, which is rather silly since I'm already in Emacs.
+        ;; So just pretend to do what I ask.
+        (bury-buffer)
+      ;; We have to expand the file names or else naming a directory in an
+      ;; argument causes later arguments to be looked for in that directory,
+      ;; not the starting directory
+      (mapc #'find-file
+            (mapcar #'expand-file-name
+                    (eshell-flatten-list (reverse args))))))
+
+
+  ;;(add-to-list 'ac-modes 'eshell-mode)
+
+  (defun ac-pcomplete ()
+    ;; eshell uses `insert-and-inherit' to insert a \t if no completion
+    ;; can be found, but this must not happen as auto-complete source
+    (flet ((insert-and-inherit (&rest args)))
+      ;; this code is stolen from `pcomplete' in pcomplete.el
+      (let* (tramp-mode ;; do not automatically complete remote stuff
+             (pcomplete-stub)
+             (pcomplete-show-list t) ;; inhibit patterns like * being deleted
+             pcomplete-seen pcomplete-norm-func
+             pcomplete-args pcomplete-last pcomplete-index
+             (pcomplete-autolist pcomplete-autolist)
+             (pcomplete-suffix-list pcomplete-suffix-list)
+             (candidates (pcomplete-completions))
+             (beg (pcomplete-begin))
+             ;; note, buffer text and completion argument may be
+             ;; different because the buffer text may bet transformed
+             ;; before being completed (e.g. variables like $HOME may be
+             ;; expanded)
+             (buftext (buffer-substring beg (point)))
+             (arg (nth pcomplete-index pcomplete-args)))
+        ;; we auto-complete only if the stub is non-empty and matches
+        ;; the end of the buffer text
+        (when (and (not (zerop (length pcomplete-stub)))
+                   (or (string= pcomplete-stub ; Emacs 23
+                                (substring buftext
+                                           (max 0
+                                                (- (length buftext)
+                                                   (length pcomplete-stub)))))
+                       (string= pcomplete-stub ; Emacs 24
+                                (substring arg
+                                           (max 0
+                                                (- (length arg)
+                                                   (length pcomplete-stub)))))))
+          ;; Collect all possible completions for the stub. Note that
+          ;; `candidates` may be a function, that's why we use
+          ;; `all-completions`.
+          (let* ((cnds (all-completions pcomplete-stub candidates))
+                 (bnds (completion-boundaries pcomplete-stub
+                                              candidates
+                                              nil
+                                              ""))
+                 (skip (- (length pcomplete-stub) (car bnds))))
+            ;; We replace the stub at the beginning of each candidate by
+            ;; the real buffer content.
+            (mapcar #'(lambda (cand) (concat buftext (substring cand skip)))
+                    cnds))))))
+
+#+END_SRC
+
+
+* Eshell
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  ;; Add keybindings
+  (use-package eshell
+    :commands (eshell helm-info-eshell helm-eshell-history
+                      eshell-insert-buffer-name)
+    :config
+    (setq eshell-cmpl-cycle-completions nil
+          ;; eshell-banner-message "..."
+          eshell-cmpl-dir-ignore "\\`\\(\\.\\.?\\|CVS\\|\\.svn\\|\\.git\\)/\\'"
+          eshell-highlight-prompt nil
+          eshell-history-file-name "~/.bash_history"
+          eshell-history-size nil
+          eshell-prompt-function 'shk-eshell-prompt
+          eshell-review-quick-commands nil
+          eshell-save-history-on-exit t
+          eshell-smart-space-goes-to-end t
+          eshell-visual-commands '("vi" "screen" "top" "less" "more"
+          "lynx" "ncftp" "ssh" "pine" "tin" "trn" "elm" "htop")
+          eshell-where-to-jump 'begin
+          pcomplete-cycle-completions nil)
+      (use-package helm-eshell :ensure nil)
+      (use-package em-smart    :ensure nil))
+
+
+  (defvar ac-source-pcomplete
+    '((candidates . ac-pcomplete)))
+
+  (add-hook 'eshell-mode-hook
+            #'(lambda ()
+                (smartparens-strict-mode 1)
+                (rainbow-delimiters-mode 1)
+                (setenv "PAGER" "cat")
+                (smartscan-mode -1)
+                (setq ac-sources '(ac-source-pcomplete))
+                (define-key eshell-mode-map [remap eshell-pcomplete] 'helm-esh-pcomplete)
+                (define-key eshell-mode-map (kbd "<f7>") 'helm-eshell-history)
+                (define-key eshell-mode-map (kbd "<C-f7>") 'eshell-insert-buffer-name)))
+
+  (add-hook 'eshell-after-prompt-hook
+            #'(lambda ()
+                (rename-buffer (concat "eshell: " default-directory) t)))
+
+#+END_SRC
