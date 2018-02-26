@@ -52,11 +52,12 @@
   (use-package helm
     :commands helm-mode 
 
-    :init
+    :config
     (setq
      helm-ag-base-command "/usr/local/bin/ag -U -z --hidden --nocolor --nogroup --path-to-ignore=~/.agignore"
      helm-boring-buffer-regexp-list nil
      helm-buffer-max-length 40
+     helm-exit-idle-delay 0
      helm-multi-swoop-ignore-buffers-match "aaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
      ;; open helm buffer inside current window, not occupy whole other window
      helm-split-window-in-side-p 1
@@ -88,7 +89,6 @@
               #'(lambda ()
                   (setq gc-cons-percentage 0.8)))
 
-    :config
     (use-package helm-config :ensure nil)
     (use-package helm-for-files :ensure nil)
     (use-package helm-x-files :ensure nil)

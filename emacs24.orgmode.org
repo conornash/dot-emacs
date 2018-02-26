@@ -242,8 +242,9 @@
 
   ;; (org-babel-lob-ingest "~/Dropbox/emacs/emacs24/elisp/emacs24.Babel.org")
 
-  (add-to-list 'org-structure-template-alist '("el" "#+BEGIN_SRC emacs-lisp :tangle yes\n ?\n#+END_SRC"))
-  (add-to-list 'org-structure-template-alist '("rana" "#+BEGIN_SRC R :results output :exports both :cache yes\n  library(nbs.analysis)\n  ?\n#+END_SRC"))
+  (add-to-list 'org-structure-template-alist '("el" "#+BEGIN_SRC emacs-lisp :tangle yes :eval never\n ?\n#+END_SRC"))
+  (add-to-list 'org-structure-template-alist '("py" "#+BEGIN_SRC python :results output :exports both :prologue (progn (setenv \"PYENV_VERSION\" \"scheduler-as-a-service-3.6.1\") \"\") :eval never\n ?\n#+END_SRC"))
+  (add-to-list 'org-structure-template-alist '("rana" "#+BEGIN_SRC R :results output :exports both :cache yes :eval never\n  library(nbs.analysis)\n  ?\n#+END_SRC"))
 
   (setq org-babel-R-command "/usr/local/bin/R --slave --no-save"
         org-html-keep-old-src t

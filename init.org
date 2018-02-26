@@ -103,6 +103,7 @@
   ;; unicode-fonts package
   (use-package unicode-fonts
     :config
+    (use-package persistent-soft)
     (unicode-fonts-setup))
 
 #+END_SRC
@@ -230,6 +231,7 @@
           org-agenda-todo-ignore-scheduled nil
           org-src-window-setup 'current-window
           org-src-fontify-natively t
+          org-table-last-column-widths '(95 7 5)
           org-clock-persist 'history
           org-log-done t
           ;; Timestamp of changes to deadline using C-c C-d/C-s
@@ -243,6 +245,13 @@
 
 #+END_SRC
 
+
+
+* Helm
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (org-babel-load-file (expand-file-name "emacs24.helm.org" user-emacs-directory))
+
+ #+END_SRC
 
 
 * Smartparens
@@ -284,13 +293,6 @@
 
    (org-babel-load-file (expand-file-name "emacs24.python.org" user-emacs-directory))
 #+END_SRC
-
-
-* Helm
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (org-babel-load-file (expand-file-name "emacs24.helm.org" user-emacs-directory))
-
- #+END_SRC
 
 
 * Flycheck
@@ -525,9 +527,10 @@
  #+END_SRC
 
 
-** Enable downcase-region
+** Enable *case-region
 #+BEGIN_SRC emacs-lisp :tangle yes
 (put 'downcase-region 'disabled nil)
+(put 'upcase-region 'disabled nil)
 
  #+END_SRC
 
