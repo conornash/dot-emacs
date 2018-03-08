@@ -405,12 +405,11 @@
 
 ** CSS mode
 #+BEGIN_SRC emacs-lisp :tangle yes
-(use-package css-mode
-  :init
+  (use-package css-mode)
   (add-hook 'css-mode-hook
             '(lambda ()
                (skewer-html-mode 1)
-               (setq css-indent-offset 2))))
+               (setq css-indent-offset 2)))
 
 
  #+END_SRC
@@ -459,12 +458,12 @@
 
   (defun dired-back-to-top ()
     (interactive)
-    (beginning-of-buffer)
+    (goto-char (point-min))
     (dired-next-line 4))
 
   (defun dired-jump-to-bottom ()
     (interactive)
-    (end-of-buffer)
+    (goto-char (point-max))
     (dired-next-line -1))
 
   (define-key dired-mode-map (vector 'remap 'beginning-of-buffer) 'dired-back-to-top)
@@ -640,6 +639,8 @@
 
 ** Hy
 #+BEGIN_SRC emacs-lisp :tangle yes
+
+  (use-package hy-mode)
   (add-hook 'hy-mode-hook
             #'(lambda ()
                 (pyenv-mode 1)
@@ -1064,7 +1065,7 @@
 
 ** Subword mode
 #+BEGIN_SRC emacs-lisp :tangle yes
-(global-subword-mode 1)
+
 (setq subword-forward-regexp "\\W*\\(\\([[:upper:]]*\\(\\W\\)?\\)[[:lower:][:digit:]]*[_.-]*\\)"
       subword-backward-regexp "\\(\\(\\W\\|[[:lower:][:digit:]]\\)\\([[:upper:]]+\\W*\\)\\|\\W\\w+\\)")
 
@@ -1145,7 +1146,6 @@
     :ensure nil
     :diminish
     (visual-line-mode . " "))
-  (global-visual-line-mode t)
 
  #+END_SRC
 
@@ -1167,7 +1167,7 @@
 ** web-mode
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package web-mode
-    :mode "\\.html\\'" "\\.php\\'" "\\.tpl\\'" "\\.mustache\\'" "\\.erb\\'" "\\.jinja\\'" "\\.jinja2\\'"
+    :mode "\\.html\\'" "\\.php\\'" "\\.tpl\\'" "\\.mustache\\'" "\\.erb\\'" "\\.jinja\\'" "\\.jinja2\\'" "\\.twig\\'"
     :config
     (setq web-mode-markup-indent-offset 2
           web-mode-css-indent-offset 2
@@ -1177,6 +1177,11 @@
           web-mode-style-padding 1
           web-mode-script-padding 1
           web-mode-block-padding 0))
+
+  (add-hook 'web-mode-hook
+            '(lambda ()
+               (rainbow-mode 1)
+               (smartparens-mode 1)))
  #+END_SRC
 
 
@@ -1195,6 +1200,15 @@
 
  #+END_SRC
 
+
+** Man pages
+#+BEGIN_SRC emacs-lisp :tangle yes :eval never
+  (use-package woman)
+
+  (add-hook 'woman-mode-hook
+            '(lambda ()
+               (subword-mode -1)))
+#+END_SRC
 
 ** YAML
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -1227,6 +1241,8 @@
 
   (use-package hungry-delete)
 
+  ;; In case another package turns this on
+  (setq auto-window-vscroll nil)
 #+END_SRC
 
 

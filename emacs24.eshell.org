@@ -53,9 +53,9 @@
                (locate-dominating-file pwd ".git"))
       (let ((git-output (string-trim (shell-command-to-string
                                       (concat "git --no-pager diff --numstat | grep ^[0-9] | wc -l")))))
-        (cond ((eq (string-to-int git-output) 1)
+        (cond ((eq (string-to-number git-output) 1)
                "1 unstaged change")
-              ((> (string-to-int git-output) 1)
+              ((> (string-to-number git-output) 1)
                (format "%s unstaged changes" git-output))
               (t "")))))
 
@@ -68,9 +68,9 @@
                (locate-dominating-file pwd ".git"))
       (let ((git-output (string-trim (shell-command-to-string
                                       (concat "git --no-pager diff --cached --numstat | grep ^[0-9] | wc -l")))))
-        (cond ((eq (string-to-int git-output) 1)
+        (cond ((eq (string-to-number git-output) 1)
                "1 uncommitted change")
-              ((> (string-to-int git-output) 1)
+              ((> (string-to-number git-output) 1)
                (format "%s uncommitted changes" git-output))
               (t "")))))
 

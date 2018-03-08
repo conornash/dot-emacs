@@ -135,15 +135,15 @@
 
   (defun unix2date (arg)
     (interactive "p")
-    (insert (concat " - " (current-time-string (seconds-to-time (string-to-int (buffer-substring (region-beginning) (region-end))))))))
+    (insert (concat " - " (current-time-string (seconds-to-time (string-to-number (buffer-substring (region-beginning) (region-end))))))))
 
   (defun unixtime2date (arg)
     (interactive "p")
-    (message (format-time-string "%B %d, %Y %T UTC" (seconds-to-time (string-to-int (buffer-substring (region-beginning) (region-end)))))))
+    (message (format-time-string "%B %d, %Y %T UTC" (seconds-to-time (string-to-number (buffer-substring (region-beginning) (region-end)))))))
 
   (defun date2unixtime (arg)
     (interactive "p")
-    (message (current-time-string (encode-time 0 0 0  (string-to-int (substring (buffer-substring (region-beginning) (region-end)) 8 10)) (string-to-int (substring (buffer-substring (region-beginning) (region-end)) 5 7)) (string-to-int (substring (buffer-substring (region-beginning) (region-end)) 0 4))))))
+    (message (current-time-string (encode-time 0 0 0  (string-to-number (substring (buffer-substring (region-beginning) (region-end)) 8 10)) (string-to-number (substring (buffer-substring (region-beginning) (region-end)) 5 7)) (string-to-number (substring (buffer-substring (region-beginning) (region-end)) 0 4))))))
 
                                           ; Older send-lin macro
                                           ;(fset 'python-shell-send-line
