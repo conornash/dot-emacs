@@ -34,7 +34,7 @@
              (package-initialize)
              (package-refresh-contents)
              (package-install elem)))
-          '(diminish use-package))
+          '(diminish use-package bind-key))
 
   (eval-when-compile
     (require 'use-package))
@@ -82,6 +82,10 @@
   (setq enable-recursive-minibuffers t)
 
   (setq delete-active-region 'kill)
+
+  ;; For further use-package calls
+  (use-package bind-key)
+  (use-package diminish)
 #+END_SRC
 
 ** Fonts

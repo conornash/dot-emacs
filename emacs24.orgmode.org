@@ -124,6 +124,9 @@
   (setq org-export-docbook-xslt-proc-command "xsltproc --output %o %s %i")
   (setq org-export-docbook-xslt-proc-command "")
 
+  (eval-when-compile
+    (defvar org-agenda-mode-map))
+
   (add-hook 'org-agenda-mode-hook
             #'(lambda ()
                 (define-key org-agenda-mode-map (kbd ">") 'org-agenda-remove-restriction-lock)
