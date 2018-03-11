@@ -29,23 +29,25 @@
   (setq max-lisp-eval-depth 60000
         max-specpdl-size 13000)
 
-  (unless (package-installed-p 'use-package)
-    (package-initialize)
-    (package-refresh-contents)
-    (package-install 'use-package))
+  (mapc (lambda (elem)
+            (unless (package-installed-p elem)
+             (package-initialize)
+             (package-refresh-contents)
+             (package-install elem)))
+          '(diminish use-package))
 
   (eval-when-compile
     (require 'use-package))
   (require 'files)
   (setq use-package-verbose t
-        use-package-always-ensure t)
-
-  (setq inhibit-startup-screen t
+        use-package-always-ensure t
+        inhibit-startup-screen t
         ring-bell-function 'ignore
         mac-command-modifier 'control
         mac-control-modifier 'super
         mac-option-modifier 'meta
         mac-pass-command-to-system nil)
+
   (modify-frame-parameters nil '((wait-for-wm . nil)))
 
   (tool-bar-mode -1)
@@ -65,6 +67,8 @@
 
   ;; backwards compatibility as default-buffer-file-coding-system
   ;; is deprecated in 23.2.
+  (eval-when-compile
+    (defvar default-buffer-file-coding-system))
   (if (boundp 'buffer-file-coding-system)
       (setq-default buffer-file-coding-system 'utf-8)
     (setq default-buffer-file-coding-system 'utf-8))
@@ -185,6 +189,9 @@
     :mode ("\\.org$" . org-mode)
     :ensure org-plus-contrib
     :pin gnu
+    :diminish
+    ((org-src-mode . " ℹ")
+     (org-indent-mode . " ⭾"))
     :bind (("<s-tab>" . org-force-cycle-archived)
            ("<s-down>" . org-forward-element)
            ("<s-up>" . org-backward-element)
@@ -199,13 +206,13 @@
            ("s-O" . org-open-at-point-global))
 
     :config
-    (setq org-list-allow-alphabetical t)
-    ;; Startup with Agenda
-    ;; (add-hook 'after-init-hook #'(lambda () (org-todo-list 0)))
+    (setq org-list-allow-alphabetical t
+          ;; Startup with Agenda
+          ;; (add-hook 'after-init-hook #'(lambda () (org-todo-list 0)))
 
-    ;; This can stop emacs shutdown
-    ;; (add-hook 'kill-emacs-hook 'org-mobile-push)
-    (setq comment-start-skip "^\\s-*#\\(?: \\|$\\)"
+          ;; This can stop emacs shutdown
+          ;; (add-hook 'kill-emacs-hook 'org-mobile-push)
+          comment-start-skip "^\\s-*#\\(?: \\|$\\)"
           org-use-speed-commands t
           org-speed-commands-user '(("S" . widen)
                                     ("d" . org-deadline))
@@ -213,12 +220,11 @@
           org-agenda-dim-blocked-tasks 'invisible
           org-clock-out-remove-zero-time-clocks t
           org-deadline-warning-days 28
+          ;; We don't want to see days in the clock report
           org-duration-format '((special . h:mm))
           org-agenda-deadline-faces '((1.0 . '(:foreground "#cd4740"))
                                       (0.9 . '(:foreground "goldenrod1"))
                                       (0.0 . default))
-          ;; We don't want to see days in the clock report
-          org-time-clocksum-format '(:hours "%d" :require-hours t :minutes ":%02d" :require-minutes t)
           ;; In Sparse Trees, show the details below the matching entries
           org-show-entry-below t
           ;; Follow the point in the agenda buffer with the org file in the other buffer
@@ -272,6 +278,7 @@
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package company
     :bind ("\M-\t" . company-complete)
+    :diminish (company-mode . " 𝍎")
     :config
     (use-package company-anaconda)
     (setq company-tooltip-limit 20
@@ -311,6 +318,7 @@
 * Rainbow Delimiters
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package rainbow-delimiters
+    :diminish rainbow-delimiters-mode
     :commands (rainbow-delimiters-mode rainbow-delimiters-mode-enable
                                        rainbow-delimiters-mode-disable)
     :config
@@ -321,8 +329,7 @@
     (face-spec-set 'rainbow-delimiters-depth-3-face
                    '((t :foreground "#ffdfbf")) 'face-defface-spec)
     (face-spec-set 'rainbow-delimiters-depth-4-face
-                   '((t :foreground "#efefff")) 'face-defface-spec)
-    )
+                   '((t :foreground "#efefff")) 'face-defface-spec))
 
 #+END_SRC
 
@@ -340,6 +347,12 @@
     (setq load-prefer-newer t))
 
  #+END_SRC
+
+** Auto-revert
+#+BEGIN_SRC emacs-lisp :tangle yes :eval never
+  (use-package autorevert :ensure nil
+    :diminish (auto-revert-mode . " ⎌"))
+#+END_SRC
 
 
 ** Backup each save
@@ -402,6 +415,13 @@
 
  #+END_SRC
 
+
+** context-coloring
+#+BEGIN_SRC emacs-lisp :tangle yes :eval never
+(use-package context-coloring
+  :diminish (context-coloring-mode . " "))
+
+#+END_SRC
 
 ** CSS mode
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -607,11 +627,13 @@
 #+BEGIN_SRC emacs-lisp :tangle yes
 
   (use-package guide-key
+    :diminish guide-key-mode
     :config
     (setq guide-key/guide-key-sequence '("C-x r" "C-x 4" "C-x v" "C-x j" "<C-f1>" "C-;" "C-c" "<f2>")
           guide-key/idle-delay 0.5
-          guide-key/recursive-key-sequence-flag t)
-    (guide-key-mode 1))
+          guide-key/recursive-key-sequence-flag t))
+  (guide-key-mode 1)
+
 
 #+END_SRC
 
@@ -627,11 +649,13 @@
 
 ** hungry-delete
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package hungry-delete)
+  (use-package hungry-delete
+    :diminish ((hungry-delete-mode . " 𐑙"))
+    :config
+    (setq hungry-delete-chars-to-skip " \t\f\v")
+    (defalias 'delete-backward-char 'hungry-delete-backward "To delete a single character provide a numeric prefix.")
+    (defalias 'delete-forward-char 'hungry-delete-forward "To delete a single character provide a numeric prefix."))
   (global-hungry-delete-mode 1)
-  (setq hungry-delete-chars-to-skip " \t\f\v")
-  (defalias 'delete-backward-char 'hungry-delete-backward "To delete a single character provide a numeric prefix.")
-  (defalias 'delete-forward-char 'hungry-delete-forward "To delete a single character provide a numeric prefix.")
 
 
  #+END_SRC
@@ -655,6 +679,8 @@
                 (define-key hy-mode-map (kbd "M-\\") 'switch-to-lisp)
                 ))
 
+  (eval-when-compile
+    (defvar inferior-lisp-mode-map))
   (add-hook 'inferior-lisp-mode-hook
             #'(lambda ()
                 (define-key inferior-lisp-mode-map (kbd "C-M-p") 'backward-list)
@@ -907,7 +933,8 @@
 
 ** rainbow-mode
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package rainbow-mode)
+  (use-package rainbow-mode
+    :diminish (rainbow-mode . " 🌈"))
  #+END_SRC
 
 
@@ -1116,9 +1143,11 @@
 
 ** Undo Tree
 #+BEGIN_SRC emacs-lisp :tangle yes
-(use-package undo-tree
-  :config
-  (global-undo-tree-mode 1))
+  (use-package undo-tree
+    :diminish
+    (undo-tree-mode . " ")
+    :config
+    (global-undo-tree-mode 1))
 
  #+END_SRC
 
@@ -1221,6 +1250,9 @@
 ** yasnippet
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package yasnippet
+    :diminish
+    ((yas-minor-mode . " ✀")
+     (yas-global-mode . " ✀"))
     :config
     (add-to-list 'yas-snippet-dirs (expand-file-name "snippets" user-emacs-directory)))
   (yas-global-mode 1)
@@ -1322,22 +1354,6 @@
  #+END_SRC
 
 
-* Diminish
-#+BEGIN_SRC emacs-lisp :tangle yes
-(use-package diminish)
-(diminish 'context-coloring-mode " ")
-(diminish 'eldoc-mode "Ed")
-(diminish 'hungry-delete-mode " 𐑙")
-(diminish 'projectile-mode " ")
-(diminish 'rainbow-mode " 🌈")
-(diminish 'undo-tree-mode " ")
-(diminish 'guide-key-mode)
-(diminish 'sqlup-mode)
-
-
- #+END_SRC
-
-
 * Scratch buffer
 #+BEGIN_SRC emacs-lisp :tangle yes
 
@@ -1358,12 +1374,36 @@
 
 
 * End of Config
+
+** Back to usual gc-cons-percentage
 #+BEGIN_SRC emacs-lisp :tangle yes
   (setq gc-cons-percentage 0.2)
-  (helm-mode t)
 
 #+END_SRC
 
+** Declare functions for the byte-compiler
+Doesn't seem to work correctly yet
+#+BEGIN_SRC emacs-lisp :tangle yes :eval never
+  (eval-when-compile
+    (mapc
+     (lambda (elem) (declare-function elem (find-lisp-object-file-name elem 'defun)))
+     '(auto-compile-on-load-mode
+       auto-compile-on-save-mode
+       exec-path-from-shell-initialize
+       global-emojify-mode
+       global-hungry-delete-mode
+       global-undo-tree-mode
+       guide-key-mode
+       key-chord-define-global
+       key-chord-mode
+       keyfreq-autosave-mode
+       keyfreq-mode
+       org-babel-load-file
+       unicode-fonts-setup
+       window-number-meta-mode
+       yas-global-mode
+       )))
+#+END_SRC
 
 ** Private settings
 #+BEGIN_SRC emacs-lisp :tangle yes

@@ -50,8 +50,8 @@
 #+BEGIN_SRC emacs-lisp :tangle yes
 
   (use-package helm
-    :commands helm-mode 
-
+    :commands (helm-mode conor-helm-files conor-helm-ag-here)
+    :diminish (helm-mode . " ⎈")
     :config
     (setq
      helm-ag-base-command "/usr/local/bin/ag -U -z --hidden --nocolor --nogroup --path-to-ignore=~/.agignore"
@@ -60,7 +60,7 @@
      helm-exit-idle-delay 0
      helm-multi-swoop-ignore-buffers-match "aaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
      ;; open helm buffer inside current window, not occupy whole other window
-     helm-split-window-in-side-p 1
+     helm-split-window-inside-p 1
      ;; move to end or beginning of source when reaching top or bottom of source.
      helm-move-to-line-cycle-in-source nil
      ;; search for library in `require' and `declare-function' sexp.
@@ -87,18 +87,16 @@
                   (setq gc-cons-percentage 0.2)))
     (add-hook 'helm-before-initialize-hook
               #'(lambda ()
-                  (setq gc-cons-percentage 0.8)))
+                  (setq gc-cons-percentage 0.8))))
 
-    (use-package helm-config :ensure nil)
-    (use-package helm-for-files :ensure nil)
-    (use-package helm-x-files :ensure nil)
-    (use-package helm-ring :ensure nil))
+  (use-package helm-config :ensure nil)
+  (use-package helm-for-files :ensure nil)
+  (use-package helm-x-files :ensure nil)
+  (use-package helm-ring :ensure nil)
 
   (use-package helm-swoop
     :bind
-    (("<C-M-f12>" . helm-multi-swoop-org))
-    :diminish
-    (helm-mode . " 🟍"))
+    (("<C-M-f12>" . helm-multi-swoop-org)))
 
   (use-package helm-dash
     :bind (("C-c C-d" . helm-dash-at-point))

@@ -1,41 +1,41 @@
 * Scheme
 #+BEGIN_SRC emacs-lisp :tangle yes
+  (defun conor-xscheme-select-process-buffer ()
+    "Select the Scheme process buffer and move to its output point."
+    (interactive)
+    (let ((process
+           (or (get-process xscheme-process-name)
+              (error "No scheme process"))))
+      (let ((buffer (or (process-buffer process) (error "No process buffer"))))
+        (display-buffer buffer t))))
 
-(defun conor-xscheme-select-process-buffer ()
-  "Select the Scheme process buffer and move to its output point."
-  (interactive)
-  (let ((process
-         (or (get-process xscheme-process-name)
-            (error "No scheme process"))))
-    (let ((buffer (or (process-buffer process) (error "No process buffer"))))
-      (display-buffer buffer t))))
 
+  (defun my-xscheme-eval-line (vis)
+    "Send the current line to the inferior ESS process.
+  Arg has same meaning as for `ess-eval-region'."
+    (interactive "P")
+    (save-excursion
+      (end-of-line)
+      (let ((end (point)))
+        (beginning-of-line)
+        (princ (concat "Loading line:...") t)
+        (let ((deactivate-mark nil))
+          (xscheme-send-region (point) end)))))
 
-(defun my-xscheme-eval-line (vis)
-  "Send the current line to the inferior ESS process.
-Arg has same meaning as for `ess-eval-region'."
-  (interactive "P")
-  (save-excursion
-    (end-of-line)
-    (let ((end (point)))
-      (beginning-of-line)
-      (princ (concat "Loading line:...") t)
-      (let ((deactivate-mark nil))
-        (xscheme-send-region (point) end)))))
+  (use-package xscheme
+    :bind
+    (("C-c C-b" . xscheme-send-buffer)
+     ("C-c C-r" . xscheme-send-region)
+     ("C-\\" . my-xscheme-eval-line)
+     ("M-\\" . conor-xscheme-select-process-buffer))
+    :init
+    (setq scheme-program-name "/usr/local/bin/mit-scheme")
+    (add-hook 'scheme-mode-hook
+              #'(lambda ()
+                  (turn-off-smartparens-mode)
+                  (paredit-mode t)
+                  (redshank-mode 1)
+                  (context-coloring-mode 1))))
 
-(use-package xscheme
-  :bind
-  (("C-c C-b" . xscheme-send-buffer)
-   ("C-c C-r" . xscheme-send-region)
-   ("C-\\" . my-xscheme-eval-line)
-   ("M-\\" . conor-xscheme-select-process-buffer))
-  :init
-  (setq scheme-program-name "/usr/local/bin/mit-scheme")
-  (add-hook 'scheme-mode-hook
-            #'(lambda ()
-                (turn-off-smartparens-mode)
-                (paredit-mode t)
-                (redshank-mode 1)
-                (context-coloring-mode 1))))
 
  #+END_SRC

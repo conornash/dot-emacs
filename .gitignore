@@ -50,6 +50,8 @@ flycheck_*.el
 
 # End of https://www.gitignore.io/api/emacs
 
+anaconda-mode/
+bookmarks
 custom.el
 private.org
 private.el
@@ -58,7 +60,11 @@ init.el
 org-clock-save.el
 keyfreq
 recentf
-
+url/
+offlineimap-sync.py
+network-security.data
+gnus/
+.mc-lists.el
 
 # Snippets (override for specific snippets)
 snippets/antlr-mode/
@@ -134,3 +140,5 @@ snippets/typerex-mode/
 snippets/udev-mode/
 snippets/web-mode/
 snippets/yaml-mode/
+
+

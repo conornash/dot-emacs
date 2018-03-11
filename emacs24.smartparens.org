@@ -25,6 +25,10 @@
              ("s-s" . sp-split-sexp)
              ("s-p" . sp-emit-sexp))
 
+      :diminish
+      ((smartparens-mode . " ()")
+       (smartparens-global-mode . " ()")
+       (smartparens-strict-mode . " ()"))
       :config
       (require 'smartparens-config)
       (sp--populate-keymap sp-paredit-bindings)
@@ -54,7 +58,6 @@
       ;; Slows down python a lot
       (show-smartparens-global-mode -1)
       (define-key smartparens-mode-map (vector 'remap 'sp-splice-sexp-killing-forward) 'move-text-down)
-      (define-key smartparens-mode-map (vector 'remap 'sp-splice-sexp-killing-backward) 'move-text-up)
-      )
+      (define-key smartparens-mode-map (vector 'remap 'sp-splice-sexp-killing-backward) 'move-text-up))
 
   #+END_SRC

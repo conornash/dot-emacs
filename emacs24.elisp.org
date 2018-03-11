@@ -29,14 +29,14 @@
 
 * Elisp
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package paredit)
   (use-package redshank
     :diminish (redshank-mode . " 🗡"))
+
   (use-package elisp-slime-nav
     :diminish
     (elisp-slime-nav-mode . " ꖑ"))
-  (use-package eldoc)
-  (use-package company)
+  (use-package eldoc
+    :diminish (eldoc-mode . " 🕮"))
 
   (setq elisp-mode-hook-actions
         #'(lambda ()

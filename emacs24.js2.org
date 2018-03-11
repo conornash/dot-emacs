@@ -1,21 +1,9 @@
-
 * JS2 mode
 #+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package skewer-mode)
   (use-package js2-mode
     :mode "\\.js\\'"
-    :init
-    (add-hook 'js2-mode-hook
-            #'(lambda ()
-  ;; (my-js2-mode-hook 1)
-                (skewer-mode 1)
-                (rainbow-mode 1)
-                (smartparens-mode 1)
-                (define-key js2-mode-map (kbd "M-<up>") 'move-text-up)
-                (define-key js2-mode-map (kbd "M-<down>") 'move-text-down)
-                (define-key js2-mode-map (kbd "M-\\") 'display-skewer-instance)
-                (define-key js2-mode-map (kbd "C-\\") 'my-skewer-eval-line)
-                (define-key js2-mode-map (kbd "C-|") 'eval-at-cursor)
-                (define-key js2-mode-map (kbd "C-c C-r") 'my-skewer-eval-region)))
+    :config
     (setq js-indent-level 4
           js2-basic-offset 4        
           ;; Indentation size for java
@@ -79,4 +67,19 @@
     (display-buffer
      (first (-filter '(lambda (x) (s-contains? "*Skewer" x))
                      (-map 'buffer-name (buffer-list)))) t))
+
+
+  (add-hook 'js2-mode-hook
+            #'(lambda ()
+                ;; (my-js2-mode-hook 1)
+                (skewer-mode 1)
+                (rainbow-mode 1)
+                (smartparens-mode 1)
+                (define-key js2-mode-map (kbd "M-<up>") 'move-text-up)
+                (define-key js2-mode-map (kbd "M-<down>") 'move-text-down)
+                (define-key js2-mode-map (kbd "M-\\") 'display-skewer-instance)
+                (define-key js2-mode-map (kbd "C-\\") 'my-skewer-eval-line)
+                (define-key js2-mode-map (kbd "C-|") 'eval-at-cursor)
+                (define-key js2-mode-map (kbd "C-c C-r") 'my-skewer-eval-region)))
+
  #+END_SRC
