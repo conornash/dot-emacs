@@ -15,7 +15,14 @@
 * Setup system
 ** Initial requirements
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (setq gc-cons-percentage 0.8)
+  (setq gc-cons-percentage 0.8
+        gc-cons-threshold (* 500 (* 1024 1024)))
+
+  (defvar doom--file-name-handler-alist file-name-handler-alist)
+  (setq file-name-handler-alist nil)
+
+  (setq package-enable-at-startup nil
+        package--init-file-ensured t)
 
   ;;(setq debug-on-error t)
   (package-initialize nil)
@@ -248,7 +255,8 @@
           org-log-redeadline 'time
           org-log-reschedule 'time
           org-refile-targets '((org-agenda-files . (:maxlevel . 2))
-                               (org-agenda-files . (:todo . "NEXTACTION")))))
+                               (org-agenda-files . (:todo . "NEXTACTION"))
+                               (nil . (:maxlevel . 2)))))
 
 
   (org-babel-load-file (expand-file-name "emacs24.orgmode.org" user-emacs-directory))
@@ -1379,10 +1387,12 @@
 
 * End of Config
 
-** Back to usual gc-cons-percentage
+** Back to usual parameters
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (setq gc-cons-percentage 0.2)
+  (setq gc-cons-percentage 0.2
+        gc-cons-threshold 800000)
 
+  (setq file-name-handler-alist doom--file-name-handler-alist)
 #+END_SRC
 
 ** Declare functions for the byte-compiler
@@ -1426,4 +1436,9 @@ Doesn't seem to work correctly yet
     (load custom-file))
    (t
     (write-region "" nil custom-file)))
+#+END_SRC
+
+** Activate global modes that aren't required during startup
+#+BEGIN_SRC emacs-lisp :tangle yes :eval never
+  (helm-mode 1)
 #+END_SRC
