@@ -116,10 +116,9 @@
   (use-package fontawesome)
 
   ;; unicode-fonts package
-  (use-package unicode-fonts
-    :config
-    (use-package persistent-soft)
-    (unicode-fonts-setup))
+  (use-package unicode-fonts)
+  (use-package persistent-soft)
+  (unicode-fonts-setup)
 
 #+END_SRC
 

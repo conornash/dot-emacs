@@ -98,6 +98,7 @@
   (global-set-key (kbd "s-k") 'djcb-duplicate-line)
   (global-set-key (kbd "s-q") nil)
   (global-set-key (kbd "s-y") 'browse-kill-ring)
+  (global-set-key (kbd "C-s-SPC") 'insert-char)
   (global-set-key (quote [C-left]) 'back-window)
   (global-set-key (quote [C-right]) 'other-window)
   (global-set-key [remap apropos-command] 'helm-apropos)
