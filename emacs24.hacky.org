@@ -613,6 +613,10 @@
         (setq tbl (nreverse tbl))
         (list file org-clock-file-total-minutes tbl))))
 
+  (defun conornash/shell-command-do-it (pointed marked)
+    (interactive "r")
+    (shell-command (buffer-substring pointed marked)))
+
 
   ;; (defun anaconda-mode-find-definitions (arg)
   ;;   "Find definitions for thing at point."

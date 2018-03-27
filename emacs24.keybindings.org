@@ -42,6 +42,7 @@
   (global-set-key (kbd "C-<") 'rotate-frame-anticlockwise)
   (global-set-key (kbd "C->") 'rotate-frame-clockwise)
   (global-set-key (kbd "C-=") 'text-scale-increase)
+  (global-set-key (kbd "C-M-!") 'conornash/shell-command-do-it)
   (global-set-key (kbd "C-M-#") 'er/contract-region)
   (global-set-key (kbd "C-M-%") 'query-replace-regexp)
   (global-set-key (kbd "C-M-,") 'previous-buffer)
