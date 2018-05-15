@@ -18,7 +18,6 @@
         ess-smart-comma
         ess-yank
         forward-sexp
-        helm-M-x
         hungry-delete-backward
         hungry-delete-forward
         iregister-copy-to-register-kill
@@ -34,6 +33,7 @@
         org-delete-char
         org-end-of-line
         org-force-self-insert
+        org-kill-line
         org-self-insert-command
         paredit-backward
         paredit-backward-kill-word
@@ -79,6 +79,9 @@
         org-cycle
         rotate-frame-anticlockwise
         rotate-frame-clockwise
+        sql-end-of-statement
+        text-scale-decrease
+        text-scale-increase
         view-emacs-news
         wdired-finish-edit
         ))

@@ -1,3 +1,4 @@
+
 * Helper functions
 #+BEGIN_SRC emacs-lisp :tangle yes
 
@@ -160,8 +161,8 @@
                   ;;	     (define-key ess-rdired-mode-map "\C-c\C-t" 'ess-R-object-tooltip)
                   ))
 
-    (require 'ess-rutils)
+    (use-package ess-rutils :ensure nil)
     ;; (use-package ess-smart-underscore)
-    (require 'ess-eldoc)
+    (use-package ess-eldoc :ensure nil)
     (use-package helm-R))
 #+END_SRC

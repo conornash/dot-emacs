@@ -38,8 +38,6 @@
 
   (mapc (lambda (elem)
             (unless (package-installed-p elem)
-             (package-initialize)
-             (package-refresh-contents)
              (package-install elem)))
           '(diminish use-package bind-key))
 
@@ -94,6 +92,8 @@
   (use-package bind-key)
   (use-package diminish)
 #+END_SRC
+
+
 
 ** Fonts
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -195,6 +195,7 @@
 
 * Org Mode (full config)
 #+BEGIN_SRC emacs-lisp :tangle yes
+  (package-install 'org-plus-contrib)
   (use-package org
     :mode ("\\.org$" . org-mode)
     :ensure org-plus-contrib
@@ -240,6 +241,7 @@
           ;; Follow the point in the agenda buffer with the org file in the other buffer
           org-agenda-start-with-follow-mode t
 
+          org-use-property-inheritance t
           org-confirm-babel-evaluate nil
           org-refile-use-outline-path 'file
           org-outline-path-complete-in-steps nil
@@ -259,7 +261,6 @@
 
 
   (org-babel-load-file (expand-file-name "emacs24.orgmode.org" user-emacs-directory))
-
 #+END_SRC
 
 
@@ -657,6 +658,15 @@
 
  #+END_SRC
 
+
+** Helpful
+#+BEGIN_SRC emacs-lisp :tangle yes :eval never
+
+  (use-package helpful
+    :bind (("C-h k" . helpful-key)))
+
+
+#+END_SRC
 
 ** hungry-delete
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -1078,7 +1088,13 @@
 ** Smalltalk
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package shampoo
+    :commands (shampoo-connect shampoo-reconnect shampoo-disconnect)
     :mode ( "\\.st\\'" . shampoo-code-mode))
+
+  (add-hook 'shampoo-code-mode-hook
+              '(lambda ()
+                 (rainbow-mode 1)
+                 (smartparens-mode 1)))
 
  #+END_SRC
 

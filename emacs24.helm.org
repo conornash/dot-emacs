@@ -7,6 +7,7 @@
     (unless helm-source-buffers-list
       (setq helm-source-buffers-list
             (helm-make-source "Buffers" 'helm-source-buffers)))
+    (tramp-cleanup-all-connections)
     (let ((helm-ff-transformer-show-only-basename nil))
       (helm :sources '(helm-source-buffers-list
                        helm-source-recentf
