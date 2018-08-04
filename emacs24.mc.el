@@ -20,6 +20,7 @@
         forward-sexp
         hungry-delete-backward
         hungry-delete-forward
+        indent-for-tab-command
         iregister-copy-to-register-kill
         iregister-point-or-text-to-register-kill-ring-save
         jedi:dot-complete
@@ -33,7 +34,6 @@
         org-delete-char
         org-end-of-line
         org-force-self-insert
-        org-kill-line
         org-self-insert-command
         paredit-backward
         paredit-backward-kill-word

@@ -240,6 +240,8 @@
           org-show-entry-below t
           ;; Follow the point in the agenda buffer with the org file in the other buffer
           org-agenda-start-with-follow-mode t
+          org-hide-emphasis-markers t
+          org-fontify-whole-heading-line t
 
           org-use-property-inheritance t
           org-confirm-babel-evaluate nil
@@ -584,8 +586,7 @@
 
 ** ESS / R
 #+BEGIN_SRC emacs-lisp :tangle yes
-(org-babel-load-if-exists (expand-file-name "emacs24.ess.org" user-emacs-directory))
-
+  (org-babel-load-if-exists (expand-file-name "emacs24.ess.org" user-emacs-directory))
  #+END_SRC
 
 
@@ -786,6 +787,17 @@
 #+END_SRC
 
 
+
+** Keychain
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  (use-package keychain-environment)
+  (keychain-refresh-environment)
+
+
+#+END_SRC
+
+
 ** kill ring
 #+BEGIN_SRC emacs-lisp :tangle yes
 (setq kill-ring-max 200)
@@ -811,6 +823,12 @@
     (add-hook 'with-editor-mode-hook 'turn-on-orgstruct++)
     (setq magit-push-always-verify nil
           magit-diff-use-overlays nil
+          magit-revision-headers-format "Author:     %aN <%aE>
+  AuthorDate: %ad
+  Commit:     %cN <%cE>
+  CommitDate: %cd
+  Signature:  %GG
+  "
           magit-status-sections-hook '(magit-insert-status-headers
                                        magit-insert-merge-log
                                        magit-insert-rebase-sequence
