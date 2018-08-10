@@ -1,4 +1,3 @@
-
 * Helper functions
 #+BEGIN_SRC emacs-lisp :tangle yes
 
@@ -73,7 +72,7 @@
           ("C-c C-s" . ess-switch-process)
           ("C-," . xref-pop-marker-stack))
 
-    :config
+    :init
     (setq
      comint-input-ring-size 99999
      comint-move-point-for-output t
@@ -81,9 +80,8 @@
      comint-scroll-to-bottom-on-input t
      comint-scroll-to-bottom-on-output t
      ess-ask-for-ess-directory t
-     ess-continued-statement-offset 0
-     ess-eval-visibly-p nil
-     ess-first-continued-statement-offset 4
+     ess-offset-continued 4
+     ess-eval-visibly-p nil   
      ess--prettify-symbols-alist '(("ANY" . 8707)
                                    ("any" . 8707)
                                    ("ALL" . 8704)
@@ -127,42 +125,51 @@
                                    (">=" . 8805)
                                    ("<=" . 8804)
                                    ("!=" . 8800))
+     ess-smart-S-assign-key nil
      flycheck-lintr-linters "with_defaults(object_usage_linter = NULL, camel_case_linter = NULL, assignment_linter = NULL, infix_spaces_linter = NULL, line_length_linter = NULL, multiple_dots_linter = NULL, object_length_linter = NULL, absolute_paths_linter = NULL, spaces_left_parentheses_linter = NULL, single_quotes_linter = NULL)"
-     inferior-R-program-name "/usr/local/bin/R"
+     inferior-ess-r-program "/usr/local/bin/R"
      jit-lock-defer-time 0.25
      smartscan-symbol-selector "symbol")
 
-    (add-hook 'ess-mode-hook
-              #'(lambda()
-                  (smartparens-mode 1)
-                  (turn-on-smartparens-strict-mode)
-                  (flycheck-mode 1)
-                  (company-mode 1)
-                  (rainbow-mode 1)
-                  (rainbow-delimiters-mode 1)
-                  (smartscan-mode 1)
-                  (subword-mode 1)
-                  (ess-disable-smart-S-assign nil)
-                  (define-key ess-mode-map (kbd "M-\\") 'display-r-instance)
-                  (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)))
-
-    (add-hook 'inferior-ess-mode-hook
-              #'(lambda()
-                  (smartparens-mode 1)
-                  (turn-on-smartparens-strict-mode)
-                  ;; (auto-complete-mode t)
-                  (company-mode 1)
-                  (subword-mode 1)
-                  (define-key inferior-ess-mode-map (kbd "M-<up>") 'move-text-up)
-                  (define-key inferior-ess-mode-map (kbd "M-<down>") 'move-text-down)
-                  (define-key inferior-ess-mode-map "\C-ct" 'ess-R-object-tooltip)
-                  ;;	     (ess-rdired)
-                  ;;	     (define-key ess-rdired-mode-map "t" 'ess-R-object-tooltip)
-                  ;;	     (define-key ess-rdired-mode-map "\C-c\C-t" 'ess-R-object-tooltip)
-                  ))
-
+    :config
     (use-package ess-rutils :ensure nil)
     ;; (use-package ess-smart-underscore)
-    (use-package ess-eldoc :ensure nil)
-    (use-package helm-R))
+    ;; (use-package ess-eldoc :ensure nil)
+    ;; (use-package helm-R)
+    )
+
+  (add-hook 'ess-mode-hook
+            #'(lambda ()
+                (smartparens-mode 1)
+                (turn-on-smartparens-strict-mode)
+                (flycheck-mode 1)
+                (company-mode 1)
+                (rainbow-mode 1)
+                (rainbow-delimiters-mode 1)
+                (smartscan-mode 1)
+                (subword-mode 1)
+                (define-key ess-mode-map (kbd "M-\\") 'display-r-instance)
+                (define-key ess-mode-map (kbd "C-\\") 'ess-eval-line)
+                (define-key ess-mode-map (kbd "M-\\") 'display-r-instance)
+                (define-key ess-mode-map (kbd "C-|") 'eval-at-cursor)
+                (define-key ess-mode-map (kbd "C-.") 'xref-find-definitions)
+                (define-key ess-mode-map (kbd "C-c C-s") 'ess-switch-process)
+                (define-key ess-mode-map (kbd "C-,") 'xref-pop-marker-stack)
+                (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)))
+
+
+  (add-hook 'inferior-ess-mode-hook
+            #'(lambda ()
+                (smartparens-mode 1)
+                (turn-on-smartparens-strict-mode)
+                ;; (auto-complete-mode t)
+                (company-mode 1)
+                (subword-mode 1)
+                (define-key inferior-ess-mode-map (kbd "M-<up>") 'move-text-up)
+                (define-key inferior-ess-mode-map (kbd "M-<down>") 'move-text-down)
+                (define-key inferior-ess-mode-map "\C-ct" 'ess-R-object-tooltip)
+                ;;	     (ess-rdired)
+                ;;	     (define-key ess-rdired-mode-map "t" 'ess-R-object-tooltip)
+                ;;	     (define-key ess-rdired-mode-map "\C-c\C-t" 'ess-R-object-tooltip)
+                ))
 #+END_SRC
