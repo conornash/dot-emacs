@@ -37,8 +37,6 @@
     ("`va" "\\value" nil 0)
    ))
 
-(define-abbrev-table 'anaconda-view-mode-abbrev-table '())
-
 (define-abbrev-table 'apropos-mode-abbrev-table '())
 
 (define-abbrev-table 'awk-mode-abbrev-table
@@ -105,7 +103,17 @@
 
 (define-abbrev-table 'ess-julia-mode-abbrev-table '())
 
+(define-abbrev-table 'eww-bookmark-mode-abbrev-table '())
+
+(define-abbrev-table 'eww-buffers-mode-abbrev-table '())
+
+(define-abbrev-table 'eww-history-mode-abbrev-table '())
+
+(define-abbrev-table 'eww-mode-abbrev-table '())
+
 (define-abbrev-table 'flycheck-error-list-mode-abbrev-table '())
+
+(define-abbrev-table 'flymake-diagnostics-buffer-mode-abbrev-table '())
 
 (define-abbrev-table 'fundamental-mode-abbrev-table '())
 
@@ -128,6 +136,8 @@
 (define-abbrev-table 'helm-moccur-mode-abbrev-table '())
 
 (define-abbrev-table 'help-mode-abbrev-table '())
+
+(define-abbrev-table 'html-mode-abbrev-table '())
 
 (define-abbrev-table 'idl-mode-abbrev-table '())
 
@@ -185,6 +195,8 @@
 
 (define-abbrev-table 'select-tags-table-mode-abbrev-table '())
 
+(define-abbrev-table 'sgml-mode-abbrev-table '())
+
 (define-abbrev-table 'sh-mode-abbrev-table '())
 
 (define-abbrev-table 'shell-mode-abbrev-table '())
@@ -208,6 +220,8 @@
 (define-abbrev-table 'text-mode-abbrev-table '())
 
 (define-abbrev-table 'url-cookie-mode-abbrev-table '())
+
+(define-abbrev-table 'use-package-statistics-mode-abbrev-table '())
 
 (define-abbrev-table 'vc-git-log-edit-mode-abbrev-table '())
 

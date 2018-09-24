@@ -1,3 +1,16 @@
+* Helpful package
+This is a system that makes `helm-apropos` more useful
+#+BEGIN_SRC emacs-lisp :tangle yes :eval never
+
+  (use-package helpful
+    :commands (helpful-function helpful-variable)
+    :bind (("C-h k" . helpful-key)))
+
+
+#+END_SRC
+
+
+
 * Helper functions
 #+BEGIN_SRC emacs-lisp :tangle yes
 
@@ -43,6 +56,17 @@
   (defun conor-helm-ag-here ()
     (interactive)
     (helm-do-ag default-directory))
+
+  (defun helm-describe-variable (var)
+    "VAR is symbol or string."
+    (cl-letf (((symbol-function 'message) #'ignore))
+      (helpful-variable (helm-symbolify var))))
+
+
+  (defun helm-describe-function (func)
+    "FUNC is symbol or string."
+    (cl-letf (((symbol-function 'message) #'ignore))
+      (helpful-function (helm-symbolify func))))
 #+END_SRC
 
 
@@ -51,7 +75,15 @@
 #+BEGIN_SRC emacs-lisp :tangle yes
 
   (use-package helm
-    :commands (helm-mode conor-helm-files conor-helm-ag-here)
+    :commands (helm-mode helm-apropos conor-helm-files conor-helm-ag-here)
+    :bind
+    (("<f1>" . helm-M-x)
+     ("<C-f1>" . helm-command-prefix)
+     ("<f2>" . helm-command-prefix)
+     ("<f9>" . conor-helm-files)
+     ("<C-f9>" . helm-find-files)
+     ("<M-f1>" . helm-apropos)
+     ("C-M-y" . conor-helm-kill-ring-regsters))
     :diminish (helm-mode . " ⎈")
     :config
     (setq
@@ -90,25 +122,32 @@
               #'(lambda ()
                   (setq gc-cons-percentage 0.8))))
 
+  (global-set-key [remap apropos-command] 'helm-apropos)
+
   (use-package helm-config :ensure nil)
   (use-package helm-for-files :ensure nil)
   (use-package helm-x-files :ensure nil)
-  (use-package helm-ring :ensure nil)
+  (use-package helm-ring :ensure nil
+    :bind (("<C-f8>" . helm-global-mark-ring)))
 
   (use-package helm-swoop
     :bind
-    (("<C-M-f12>" . helm-multi-swoop-org)))
+    (("M-o" . helm-swoop)
+     ("<C-M-f12>" . helm-multi-swoop-org)
+     ("<C-M-f10>" . helm-multi-swoop)
+     ("<M-f10>" . helm-multi-swoop-all)))
 
   (use-package helm-dash
     :bind (("C-c C-d" . helm-dash-at-point))
     :config
     (setq helm-dash-browser-func 'eww
           helm-dash-docsets-path "~/dotfiles/.docsets"
-          helm-dash-common-docsets '("Python 2" "Python 3" "PostgreSQL" "Javascript" "Emacs Lisp" "R" "SQLAlchemy" "boto3" "Jinja"))
+          helm-dash-common-docsets '("Python 3" "PostgreSQL" "Emacs Lisp" "R" "SQLAlchemy" "boto3" "Jinja"))
     (use-package helm-pydoc))
 
   (use-package helm-ag
-    :commands (helm-do-ag helm-ag conor-helm-ag-here))
+    :bind (("<C-f10>" . helm-do-ag)
+           ("<f10>" . conor-helm-ag-here)))
 
 
   ;;(add-to-list 'helm-completing-read-handlers-alist '(find-file))

@@ -19,10 +19,22 @@
         gc-cons-threshold (* 500 (* 1024 1024)))
 
   (defvar doom--file-name-handler-alist file-name-handler-alist)
-  (setq file-name-handler-alist nil)
-
-  (setq package-enable-at-startup nil
-        package--init-file-ensured t)
+  (setq delete-active-region 'kill
+        enable-recursive-minibuffers t
+        file-name-handler-alist nil
+        inhibit-startup-screen t
+        load-prefer-newer t
+        mac-command-modifier 'control
+        mac-control-modifier 'super
+        mac-option-modifier 'meta
+        mac-pass-command-to-system nil
+        max-lisp-eval-depth 60000
+        max-specpdl-size 13000
+        package--init-file-ensured t
+        package-enable-at-startup nil
+        ring-bell-function 'ignore
+        use-package-always-ensure t
+        use-package-verbose t)
 
   ;;(setq debug-on-error t)
   (package-initialize nil)
@@ -33,9 +45,6 @@
   (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/") t)
   (package-refresh-contents)
 
-  (setq max-lisp-eval-depth 60000
-        max-specpdl-size 13000)
-
   (mapc (lambda (elem)
             (unless (package-installed-p elem)
              (package-install elem)))
@@ -44,14 +53,6 @@
   (eval-when-compile
     (require 'use-package))
   (require 'files)
-  (setq use-package-verbose t
-        use-package-always-ensure t
-        inhibit-startup-screen t
-        ring-bell-function 'ignore
-        mac-command-modifier 'control
-        mac-control-modifier 'super
-        mac-option-modifier 'meta
-        mac-pass-command-to-system nil)
 
   (modify-frame-parameters nil '((wait-for-wm . nil)))
 
@@ -84,9 +85,6 @@
   ;; (setq-default mode-line-format nil)
 
   ;; Recursive....
-  (setq enable-recursive-minibuffers t)
-
-  (setq delete-active-region 'kill)
 
   ;; For further use-package calls
   (use-package bind-key)
@@ -111,9 +109,6 @@
                                  :height 120
                                  :width 'normal
                                  :weight 'normal)))
-
-  ;; Requires font to be downloaded from http://fontawesome.io/
-  (use-package fontawesome)
 
   ;; unicode-fonts package
   (use-package unicode-fonts)
@@ -212,54 +207,49 @@
            ("M-<up>" . org-metaup)
            ("C-c l" . org-store-link)
            ("C-c C-l" . org-insert-link)
+           ("C-c C-x C-j" . org-clock-jump-to-current-clock)
            ("s-!" . insert-current-timestamp-inactive)
            ("s-o" . org-open-at-point)
            ("s-O" . org-open-at-point-global))
 
     :config
-    (setq org-list-allow-alphabetical t
-          ;; Startup with Agenda
-          ;; (add-hook 'after-init-hook #'(lambda () (org-todo-list 0)))
-
-          ;; This can stop emacs shutdown
-          ;; (add-hook 'kill-emacs-hook 'org-mobile-push)
-          comment-start-skip "^\\s-*#\\(?: \\|$\\)"
-          org-use-speed-commands t
-          org-speed-commands-user '(("S" . widen)
-                                    ("d" . org-deadline))
-          org-enforce-todo-dependencies t
-          org-agenda-dim-blocked-tasks 'invisible
-          org-clock-out-remove-zero-time-clocks t
-          org-deadline-warning-days 28
-          ;; We don't want to see days in the clock report
-          org-duration-format '((special . h:mm))
+    (setq comment-start-skip "^\\s-*#\\(?: \\|$\\)"
           org-agenda-deadline-faces '((1.0 . '(:foreground "#cd4740"))
                                       (0.9 . '(:foreground "goldenrod1"))
                                       (0.0 . default))
-          ;; In Sparse Trees, show the details below the matching entries
-          org-show-entry-below t
+          org-agenda-dim-blocked-tasks 'invisible
           ;; Follow the point in the agenda buffer with the org file in the other buffer
           org-agenda-start-with-follow-mode t
-          org-hide-emphasis-markers t
-          org-fontify-whole-heading-line t
-
-          org-use-property-inheritance t
-          org-confirm-babel-evaluate nil
-          org-refile-use-outline-path 'file
-          org-outline-path-complete-in-steps nil
           ;; don't show scheduled tasks in the TODO view of the agenda
           org-agenda-todo-ignore-scheduled nil
-          org-src-window-setup 'current-window
-          org-src-fontify-natively t
-          org-table-last-column-widths '(95 7 5)
+          org-clock-out-remove-zero-time-clocks t
           org-clock-persist 'history
+          org-confirm-babel-evaluate nil
+          org-deadline-warning-days 28
+          ;; We don't want to see days in the clock report
+          org-duration-format '((special . h:mm))
+          org-enforce-todo-dependencies t
+          org-fontify-whole-heading-line t
+          org-hide-emphasis-markers t
+          org-list-allow-alphabetical t
           org-log-done t
           ;; Timestamp of changes to deadline using C-c C-d/C-s
           org-log-redeadline 'time
           org-log-reschedule 'time
+          org-outline-path-complete-in-steps nil
           org-refile-targets '((org-agenda-files . (:maxlevel . 2))
                                (org-agenda-files . (:todo . "NEXTACTION"))
-                               (nil . (:maxlevel . 2)))))
+                               (nil . (:maxlevel . 2)))
+          org-refile-use-outline-path 'file
+          ;; In Sparse Trees, show the details below the matching entries
+          org-src-window-setup 'current-window
+          org-src-fontify-natively t
+          org-show-entry-below t
+          org-speed-commands-user '(("S" . widen) ("d" . org-deadline))
+          org-table-last-column-widths '(95 7 5)
+          org-use-property-inheritance t
+          org-use-speed-commands t
+          ))
 
 
   (org-babel-load-file (expand-file-name "emacs24.orgmode.org" user-emacs-directory))
@@ -282,21 +272,18 @@
  #+END_SRC
 
 
-* Paredit
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package paredit)
-#+END_SRC
-
-
 * Company-mode
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package company
-    :bind ("\M-\t" . company-complete)
+    :bind (("\M-\t" . company-complete))
     :diminish (company-mode . " 𝍎")
     :config
     (use-package company-anaconda)
     (setq company-tooltip-limit 20
           company-idle-delay 0.1)
+    (add-to-list 'company-backends 'company-R-args t)
+    (add-to-list 'company-backends 'company-R-objects t)
+    (add-to-list 'company-backends 'company-anaconda t)
     (define-key company-active-map (kbd "C-n") 'company-select-next)
     (define-key company-active-map (kbd "C-p") 'company-select-previous))
 
@@ -357,10 +344,11 @@
   (use-package auto-compile
     :config
     (auto-compile-on-load-mode 1)
-    (auto-compile-on-save-mode 1)
-    (setq load-prefer-newer t))
+    (auto-compile-on-save-mode 1))
 
  #+END_SRC
+
+
 
 ** Auto-revert
 #+BEGIN_SRC emacs-lisp :tangle yes :eval never
@@ -473,36 +461,44 @@
 
 ** Dired
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (setq ls-lisp-use-insert-directory-program nil
-        dired-listing-switches "-alh")
-  (use-package ls-lisp
-    :ensure nil)
+  (use-package ls-lisp :ensure nil)
 
-  (add-hook 'dired-mode-hook
-            #'(lambda ()
-                (hl-line-mode 1)))
+  (use-package dired
+    :ensure nil
+    :bind (("C-x C-j" . dired-jump)
+           ("C-x M-f" . find-name-dired))
 
-  (defun dired-open-file ()
-    "In dired, open the file named on this line."
-    (interactive)
-    (let* ((file (dired-get-filename nil t)))
-      (message "Opening %s..." file)
-      (async-shell-command (format "open %s" file))    
-      (message "Opening %s done" file)))
+    :config
+    (setq ls-lisp-use-insert-directory-program nil
+          dired-listing-switches "-alh")
 
-  (defun dired-back-to-top ()
-    (interactive)
-    (goto-char (point-min))
-    (dired-next-line 4))
+    (add-hook 'dired-mode-hook
+              #'(lambda ()
+                  (hl-line-mode 1)))
 
-  (defun dired-jump-to-bottom ()
-    (interactive)
-    (goto-char (point-max))
-    (dired-next-line -1))
+    (defun dired-open-file ()
+      "In dired, open the file named on this line."
+      (interactive)
+      (let* ((file (dired-get-filename nil t)))
+        (message "Opening %s..." file)
+        (async-shell-command (format "open %s" file))    
+        (message "Opening %s done" file)))
 
-  (define-key dired-mode-map (vector 'remap 'beginning-of-buffer) 'dired-back-to-top)
-  (define-key dired-mode-map (vector 'remap 'end-of-buffer) 'dired-jump-to-bottom)
-  (define-key dired-mode-map (kbd "s-o") 'dired-open-file)
+    (defun dired-back-to-top ()
+      (interactive)
+      (goto-char (point-min))
+      (dired-next-line 4))
+
+    (defun dired-jump-to-bottom ()
+      (interactive)
+      (goto-char (point-max))
+      (dired-next-line -1))
+
+    (define-key dired-mode-map (vector 'remap 'beginning-of-buffer) 'dired-back-to-top)
+    (define-key dired-mode-map (vector 'remap 'end-of-buffer) 'dired-jump-to-bottom)
+    (define-key dired-mode-map (kbd "s-o") 'dired-open-file)
+
+    )
  #+END_SRC
 
 
@@ -544,8 +540,24 @@
 
 ** Ediff
 #+BEGIN_SRC emacs-lisp :tangle yes
-(setq ediff-split-window-function 'split-window-horizontally
-      ediff-window-setup-function 'ediff-setup-windows-plain)
+  (use-package ediff
+    :ensure nil
+    :bind (("<C-f11>" . ediff)
+           ("<M-f11>" . ediff-buffers)
+           ("<f11>" . ediff-show-registry))
+
+    :config
+    (defun ediff-copy-both-to-C ()
+      (interactive)
+      (ediff-copy-diff ediff-current-difference nil 'C nil
+                       (concat
+                        (ediff-get-region-contents ediff-current-difference 'A ediff-control-buffer)
+                        (ediff-get-region-contents ediff-current-difference 'B ediff-control-buffer))))
+    (defun add-d-to-ediff-mode-map () (define-key ediff-mode-map "d" 'ediff-copy-both-to-C))
+    (add-hook 'ediff-keymap-setup-hook 'add-d-to-ediff-mode-map)
+
+    (setq ediff-split-window-function 'split-window-horizontally
+          ediff-window-setup-function 'ediff-setup-windows-plain))
 
 
  #+END_SRC
@@ -593,9 +605,8 @@
 ** Expand region
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package expand-region
-    :commands
-    (er/expand-region
-     er/contract-region)
+    :bind (("M-#" . er/expand-region)
+           ("C-M-#" . er/contract-region))
     :config
     ;; Remove er/mark-word
     (setq er/try-expand-list '(er/mark-symbol
@@ -606,6 +617,14 @@
                                er/mark-defun)))
  #+END_SRC
 
+
+** FontAwesome
+#+BEGIN_SRC emacs-lisp :tangle yes :eval never
+ 
+  ;; Requires font to be downloaded from http://fontawesome.io/
+  (use-package fontawesome)
+
+#+END_SRC
 
 ** Find file at point
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -660,26 +679,15 @@
  #+END_SRC
 
 
-** Helpful
-#+BEGIN_SRC emacs-lisp :tangle yes :eval never
-
-  (use-package helpful
-    :bind (("C-h k" . helpful-key)))
-
-
-#+END_SRC
-
 ** hungry-delete
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package hungry-delete
-    :diminish ((hungry-delete-mode . " 𐑙"))
+    :diminish (hungry-delete-mode . " 𐑙")
     :config
     (setq hungry-delete-chars-to-skip " \t\f\v")
     (defalias 'delete-backward-char 'hungry-delete-backward "To delete a single character provide a numeric prefix.")
     (defalias 'delete-forward-char 'hungry-delete-forward "To delete a single character provide a numeric prefix."))
   (global-hungry-delete-mode 1)
-
-
  #+END_SRC
 
 
@@ -713,7 +721,9 @@
 
 ** iBuffer
 #+BEGIN_SRC emacs-lisp :tangle yes
-(autoload 'ibuffer "ibuffer" "List buffers." t)
+  (use-package ibuffer
+    :ensure nil
+    :bind (("<f8>" . ibuffer) ("C-x C-b" . ibuffer)))
 
  #+END_SRC
 
@@ -819,6 +829,7 @@
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package magit
     :commands magit-status
+    :bind (("<f6>" . magit-status))
     :config
     (add-hook 'with-editor-mode-hook 'turn-on-orgstruct++)
     (setq magit-push-always-verify nil
@@ -868,12 +879,11 @@
 ** Multiple cursors
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package multiple-cursors
-    :commands
-    (mc/mark-next-like-this
-     mc/mark-previous-like-this
-     mc/edit-beginnings-of-lines
-     mc/add-multiple-cursors-to-region-lines
-     mc/edit-ends-of-lines)
+    :bind (("C-M-@" . mc/mark-previous-like-this)
+           ("M-@" . mc/mark-next-like-this)
+           ("s-a" . mc/edit-beginnings-of-lines)
+           ("s-c" . mc/add-multiple-cursors-to-region-lines)
+           ("s-e" . mc/edit-ends-of-lines))
 
     :config
     (setq mc/list-file (expand-file-name "emacs24.mc.el" user-emacs-directory)
@@ -955,6 +965,7 @@
     :commands paradox-list-packages
     :init
     (setq paradox-automatically-star t
+          paradox-column-width-package 25
           ;; Auth token in private.org
           paradox-execute-asynchronously t))
 
@@ -1055,11 +1066,11 @@
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package restclient
     :mode ("\\.http\\'" . restclient-mode)
-    :init
+  
+    :config
     (add-hook 'restclient-mode-hook
               '(lambda ()
                  (smartparens-mode 1)))
-    :config
     (use-package restclient-helm))
 
 
@@ -1177,11 +1188,9 @@
 
 ** Transpose-frame
 #+BEGIN_SRC emacs-lisp :tangle yes
-(use-package transpose-frame
-  :bind
-  (("C-<" . rotate-frame-anticlockwise)
-   ("C->" . rotate-frame-clockwise)))
-
+  (use-package transpose-frame
+    :bind (("C-<" . rotate-frame-anticlockwise)
+           ("C->" . rotate-frame-clockwise)))
 
  #+END_SRC
 
@@ -1189,6 +1198,8 @@
 ** Undo Tree
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package undo-tree
+    :bind (("C-/" . undo-tree-undo)
+           ("C-?" . undo-tree-redo))
     :diminish
     (undo-tree-mode . " ")
     :config
@@ -1226,7 +1237,9 @@
 
 ** visual-regexp
 #+BEGIN_SRC emacs-lisp :tangle yes
-(use-package visual-regexp)
+    (use-package visual-regexp
+      :bind (("s-:" . query-replace-regexp)
+             ("s-;" . vr/replace)))
  #+END_SRC
 
 
@@ -1298,6 +1311,7 @@
     :diminish
     ((yas-minor-mode . " ✀")
      (yas-global-mode . " ✀"))
+    :bind (("C-z" . yas-expand))
     :config
     (add-to-list 'yas-snippet-dirs (expand-file-name "snippets" user-emacs-directory)))
   (yas-global-mode 1)

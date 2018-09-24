@@ -179,6 +179,7 @@
   (use-package eshell
     :commands (eshell helm-info-eshell helm-eshell-history
                       eshell-insert-buffer-name)
+    :bind (("<f7>" . eshell))
     :config
     (setq eshell-cmpl-cycle-completions nil
           ;; eshell-banner-message "..."

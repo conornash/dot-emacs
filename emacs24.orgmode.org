@@ -229,6 +229,7 @@
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package ob-async)
   (use-package ob-ipython)
+  (use-package ob-restclient)
   (use-package ob-sql-mode)
 
   (org-babel-do-load-languages
@@ -237,6 +238,7 @@
      (emacs-lisp . t)
      (ipython    . t)
      (js         . t)
+     (restclient . t)
      (lisp       . t)
      (org        . t)
      (python     . t)
@@ -262,4 +264,8 @@
                                         (:eval . "never")
                                         (:exports . "both")
                                         (:tangle . "yes")))
+
+  (use-package org-jira
+    :config
+    (setq jiralib-url "https://nettempo.atlassian.net"))
 #+END_SRC

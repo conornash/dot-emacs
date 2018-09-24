@@ -91,7 +91,6 @@
             ("C-M-." . anaconda-mode-find-assignments)
             ("C-," . anaconda-mode-go-back))
       :config
-      (setq-local company-backends '(company-anaconda))
       (company-mode 1)
       (anaconda-eldoc-mode 1))
 
