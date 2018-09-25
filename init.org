@@ -121,10 +121,10 @@
 ** Environment Variables
 #+BEGIN_SRC emacs-lisp :tangle yes
   ;; Pull in environment variables
-  (use-package exec-path-from-shell
-    :config
-    (when (memq window-system '(mac ns))
-      (exec-path-from-shell-initialize)))
+  (use-package exec-path-from-shell)
+
+  (when (memq window-system '(mac ns))
+    (exec-path-from-shell-initialize))
 
   ;; To allow Python to be in UTF-8
   (defvar universal-coding-system-env-list '("PYTHONIOENCODING")
@@ -351,7 +351,7 @@
 
 
 ** Auto-revert
-#+BEGIN_SRC emacs-lisp :tangle yes :eval never
+#+BEGIN_SRC emacs-lisp :tangle yes
   (use-package autorevert :ensure nil
     :diminish (auto-revert-mode . " ⎌"))
 #+END_SRC
@@ -372,7 +372,7 @@
       (not matched-ignored-filename)))
 
   (use-package backup-each-save
-    :init
+    :config
     (setq backup-each-save-remote-files t
           backup-each-save-filter-function 'backup-each-save-filter
           backup-directory-alist `(("." . ,(expand-file-name "emacs-backups" user-emacs-directory)))
@@ -413,13 +413,13 @@
 
 ** Comint
 #+BEGIN_SRC emacs-lisp :tangle yes
-(require 'comint)
+  (use-package comint :ensure nil)
 
  #+END_SRC
 
 
 ** context-coloring
-#+BEGIN_SRC emacs-lisp :tangle yes :eval never
+#+BEGIN_SRC emacs-lisp :tangle yes
 (use-package context-coloring
   :diminish (context-coloring-mode . " "))
 
@@ -439,13 +439,14 @@
 
 ** CSV Mode
 #+BEGIN_SRC emacs-lisp :tangle yes
-(use-package csv-mode
-  :mode "\\.csv\\'" "\\.psv\\'" "\\.tsv\\'"
-  :init
-  (setq csv-separators '("," "\t" "|"))
+  (use-package csv-mode
+    :mode "\\.csv\\'" "\\.psv\\'" "\\.tsv\\'"
+    :config
+    (setq csv-separators '("," "\t" "|")))
+
   (add-hook 'csv-mode-hook
             #'(lambda()
-                (hl-line-mode 1))))
+                (hl-line-mode 1)))
 #+END_SRC
 
 
@@ -520,12 +521,12 @@
 
 ** Dockerfile
 #+BEGIN_SRC emacs-lisp :tangle yes
-(use-package dockerfile-mode
-  :init
+  (use-package dockerfile-mode)
+
   (add-hook 'dockerfile-mode-hook
             #'(lambda ()
                 (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
-                )))
+                ))
 
  #+END_SRC
 
@@ -565,9 +566,8 @@
 
 ** emojify
 #+BEGIN_SRC emacs-lisp :tangle yes
-(use-package emojify
-  :init
-  (global-emojify-mode -1))
+(use-package emojify)
+(global-emojify-mode -1)
 
  #+END_SRC
 
@@ -576,7 +576,9 @@
 #+BEGIN_SRC emacs-lisp :tangle yes
 (put 'downcase-region 'disabled nil)
 (put 'upcase-region 'disabled nil)
-
+(global-set-key (kbd "M-c") 'capitalize-word)
+(global-set-key (kbd "M-l") 'downcase-word)
+(global-set-key (kbd "M-u") 'upcase-word)
  #+END_SRC
 
 
@@ -589,9 +591,9 @@
 
 ** Encryption
 #+BEGIN_SRC emacs-lisp :tangle yes
-;; EasyPG
-(require 'epa-file)
-(epa-file-enable)
+  ;; EasyPG
+  (use-package epa-file :ensure nil)
+  (epa-file-enable)
 
  #+END_SRC
 
@@ -619,7 +621,7 @@
 
 
 ** FontAwesome
-#+BEGIN_SRC emacs-lisp :tangle yes :eval never
+#+BEGIN_SRC emacs-lisp :tangle yes
  
   ;; Requires font to be downloaded from http://fontawesome.io/
   (use-package fontawesome)
@@ -755,12 +757,11 @@
 ** JSON
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package json-mode
-    :mode "\\.json\\'"
-    :init
-    (add-hook 'json-mode-hook
-              #'(lambda ()
-                  (smartparens-mode 1))))
+    :mode "\\.json\\'")
 
+  (add-hook 'json-mode-hook
+            #'(lambda ()
+                (smartparens-mode 1)))
  #+END_SRC
 
 
@@ -1055,7 +1056,7 @@
 ** Recentf
 #+BEGIN_SRC emacs-lisp :tangle yes
 (use-package recentf
-  :init
+  :config
   (setq recentf-max-saved-items nil))
 
 (require 'prog-mode)
@@ -1066,12 +1067,12 @@
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package restclient
     :mode ("\\.http\\'" . restclient-mode)
-  
     :config
-    (add-hook 'restclient-mode-hook
-              '(lambda ()
-                 (smartparens-mode 1)))
     (use-package restclient-helm))
+
+  (add-hook 'restclient-mode-hook
+            '(lambda ()
+               (smartparens-mode 1)))
 
 
  #+END_SRC
@@ -1210,8 +1211,10 @@
 
 ** Uniquify
 #+BEGIN_SRC emacs-lisp :tangle yes
-(require 'uniquify)
-(setq uniquify-buffer-name-style 'post-forward-angle-brackets)
+  (use-package uniquify
+    :ensure nil
+    :config
+    (setq uniquify-buffer-name-style 'post-forward-angle-brackets))
 
  #+END_SRC
 
@@ -1219,7 +1222,7 @@
 ** VC settings
 #+BEGIN_SRC emacs-lisp :tangle yes
 (use-package vc
-  :init
+  :config
   (setq vc-follow-symlinks t))
 
  #+END_SRC
@@ -1289,7 +1292,7 @@
 
 
 ** Man pages
-#+BEGIN_SRC emacs-lisp :tangle yes :eval never
+#+BEGIN_SRC emacs-lisp :tangle yes
   (use-package woman)
 
   (add-hook 'woman-mode-hook
@@ -1322,9 +1325,7 @@
 ** Misc
 #+BEGIN_SRC emacs-lisp :tangle yes
 
-  (use-package docker)
-
-  (require 'prog-mode)
+  (use-package docker)  
 
   ;; -- generally these things should come last --
   (use-package atom-dark-theme)
@@ -1444,7 +1445,7 @@
 
 ** Declare functions for the byte-compiler
 Doesn't seem to work correctly yet
-#+BEGIN_SRC emacs-lisp :tangle yes :eval never
+#+BEGIN_SRC emacs-lisp :tangle yes
   (eval-when-compile
     (mapc
      (lambda (elem) (declare-function elem (find-lisp-object-file-name elem 'defun)))
@@ -1486,6 +1487,6 @@ Doesn't seem to work correctly yet
 #+END_SRC
 
 ** Activate global modes that aren't required during startup
-#+BEGIN_SRC emacs-lisp :tangle yes :eval never
+#+BEGIN_SRC emacs-lisp :tangle yes
   (helm-mode 1)
 #+END_SRC
