@@ -81,7 +81,23 @@
       :config
       (use-package pyenv-mode-auto)
       (define-key pyenv-mode-map (kbd "C-c C-s") nil)
-      (define-key pyenv-mode-map (kbd "C-c s") 'pyenv-mode-set))
+      (define-key pyenv-mode-map (kbd "C-c s") 'pyenv-mode-set)
+      (setq-default tab-width 4
+                    jit-lock-defer-time 0.25
+                    python-indent-offset 4
+                    python-shell-interpreter "ipython"
+                    python-shell-interpreter-args "--simple-prompt -i --"
+                    python-shell-prompt-detect-failure-warning t
+                    python-shell-completion-native t
+                    python-shell-prompt-regexp "In \\[[0-9]+\\]: "
+                    python-shell-prompt-output-regexp "Out\\[[0-9]+\\]: "
+                    python-shell-completion-native-disabled-interpreters '("pypy" "ipython" "jupyter")
+                    ;; I don't know if this is kind of hacky since we can't control it on other systems.
+                    python-shell-process-environment
+                    '("PYTHONIOENCODING='utf-8'"
+                      "LANG=en_US.UTF-8"
+                      "LC_ALL=en_US.UTF-8"
+                      "LC_LANG=en_US.UTF-8")))
 
     (use-package anaconda-mode
       :commands (anaconda-mode)
@@ -98,22 +114,6 @@
 
     (add-hook 'python-mode-hook
               #'(lambda ()
-                  (setq-default
-                   python-indent-offset 4
-                   python-shell-interpreter "ipython"
-                   python-shell-interpreter-args "--simple-prompt -i --"
-                   python-shell-prompt-detect-failure-warning t
-                   python-shell-completion-native t
-                   python-shell-prompt-regexp "In \\[[0-9]+\\]: "
-                   python-shell-prompt-output-regexp "Out\\[[0-9]+\\]: "
-                   python-shell-completion-native-disabled-interpreters '("pypy" "ipython" "jupyter")
-                   ;; I don't know if this is kind of hacky since we can't control it on other systems.
-                   python-shell-process-environment
-                   '("PYTHONIOENCODING='utf-8'"
-                     "LANG=en_US.UTF-8"
-                     "LC_ALL=en_US.UTF-8"
-                     "LC_LANG=en_US.UTF-8"))
-
                   (pyenv-mode 1)
                   (anaconda-mode 1)
                   (flycheck-mode 1)
@@ -121,10 +121,7 @@
                   (flycheck-add-next-checker 'python-pylint 'python-pycompile)
                   (flycheck-add-next-checker 'python-pycompile 'python-mypy)
 
-                  (setq tab-width 4
-                        ;; jedi:complete-on-dot t              ; optional
-                        ;; flycheck-checker 'python-flake8
-                        jit-lock-defer-time 0.25)
+                  (setq-local helm-dash-common-docsets '("Python 3"))
                   (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
 
                   (rainbow-mode 1)

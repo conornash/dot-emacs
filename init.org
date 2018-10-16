@@ -388,18 +388,10 @@
 
 ** Browse at remote
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package browse-at-remote)
+  (use-package browse-at-remote
+    :bind (("s-b" . browse-at-remote)))
 
  #+END_SRC
-
-
-** Buffer Move
-#+BEGIN_SRC emacs-lisp :tangle yes
-(use-package buffer-move)
-
- #+END_SRC
-
-
 
 
 ** Column Number Mode
@@ -424,17 +416,6 @@
   :diminish (context-coloring-mode . " "))
 
 #+END_SRC
-
-** CSS mode
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package css-mode)
-  (add-hook 'css-mode-hook
-            '(lambda ()
-               (skewer-html-mode 1)
-               (setq css-indent-offset 2)))
-
-
- #+END_SRC
 
 
 ** CSV Mode
@@ -513,6 +494,8 @@
 
 ** Docker
 #+BEGIN_SRC emacs-lisp :tangle yes
+
+  (use-package docker)
   (use-package docker-tramp)
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
 #+END_SRC
@@ -749,7 +732,7 @@
 
 ** js2 stuff
 #+BEGIN_SRC emacs-lisp :tangle yes
-(org-babel-load-if-exists (expand-file-name "emacs24.js2.org" user-emacs-directory))
+;; (org-babel-load-if-exists (expand-file-name "emacs24.js2.org" user-emacs-directory))
 
  #+END_SRC
 
@@ -1115,6 +1098,11 @@
  #+END_SRC
 
 
+** Show-paren
+#+BEGIN_SRC emacs-lisp :tangle yes
+(show-paren-mode 1)
+#+END_SRC
+
 ** Smalltalk
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package shampoo
@@ -1188,14 +1176,6 @@
 
  #+END_SRC
 
-
-** Transpose-frame
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package transpose-frame
-    :bind (("C-<" . rotate-frame-anticlockwise)
-           ("C->" . rotate-frame-clockwise)))
-
- #+END_SRC
 
 
 ** Undo Tree
@@ -1277,25 +1257,64 @@
  #+END_SRC
 
 
-** Window splitting horizontally
+** Buffer/Window/Frame navigation
 #+BEGIN_SRC emacs-lisp :tangle yes
-(setq split-height-threshold 140)
-(setq split-width-threshold 140)
+  (setq split-height-threshold 140
+        split-width-threshold 140)
 
- #+END_SRC
+  (use-package buffer-move
+    :bind (("<C-s-down>" . buf-move-down)
+           ("<C-s-left>" . buf-move-left)
+           ("<C-s-right>" . buf-move-right)
+           ("<C-s-up>" . buf-move-up)))
+
+  (use-package window-number)
+  (window-number-meta-mode 1)
+
+  (defun back-window (&optional arg)
+    (interactive "P")
+    (other-window -1))
+
+  (defun my/vsplit-last-buffer (prefix)
+    "Split the window vertically and display the previous buffer."
+    (interactive "p")
+    (split-window-vertically)
+    (other-window 1 nil)
+    (if (= prefix 1)
+        (switch-to-next-buffer)))
+
+  (defun my/hsplit-last-buffer (prefix)
+    "Split the window horizontally and display the previous buffer."
+    (interactive "p")
+    (split-window-horizontally)
+    (other-window 1 nil)
+    (if (= prefix 1) (switch-to-next-buffer)))
+
+  (global-set-key (kbd "C-\]") 'other-window)
+  (global-set-key (kbd "C-M-\]") 'back-window)
+
+  (global-set-key (kbd "s-2") 'my/vsplit-last-buffer)
+  (global-set-key (kbd "s-3") 'my/hsplit-last-buffer)
+
+  (use-package transpose-frame
+    :bind (("C-<" . rotate-frame-anticlockwise)
+           ("C->" . rotate-frame-clockwise)))
+
+  (global-set-key (kbd "<M-f8>") 'kill-buffer-and-window)
+  (global-set-key (kbd "C-`") 'other-frame)
+  (global-set-key (kbd "C-s-]") 'other-frame)
+  (global-set-key (kbd "s-0") 'delete-window)
+  (global-set-key (kbd "s-1") 'delete-other-windows)
+  (global-set-key (kbd "s-\\") 'other-frame)
 
 
-** window-number
-#+BEGIN_SRC emacs-lisp :tangle yes
-(use-package window-number)
-(window-number-meta-mode 1)
-
- #+END_SRC
+#+END_SRC
 
 
 ** Man pages
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package woman)
+  (use-package woman
+    :commands (helm-man-woman))
 
   (add-hook 'woman-mode-hook
             '(lambda ()
@@ -1322,22 +1341,6 @@
   (yas-global-mode 1)
 
  #+END_SRC
-
-
-** Misc
-#+BEGIN_SRC emacs-lisp :tangle yes
-
-  (use-package docker)  
-
-  ;; -- generally these things should come last --
-  (use-package atom-dark-theme)
-  (load-theme 'atom-dark t)
-
-  (use-package hungry-delete)
-
-  ;; In case another package turns this on
-  (setq auto-window-vscroll nil)
-#+END_SRC
 
 
 ** Whitespace mode
@@ -1442,7 +1445,9 @@
   (setq gc-cons-percentage 0.2
         gc-cons-threshold 800000)
 
-  (setq file-name-handler-alist doom--file-name-handler-alist)
+  (setq file-name-handler-alist doom--file-name-handler-alist
+        ;; In case another package turns this on
+        auto-window-vscroll nil)
 #+END_SRC
 
 ** Declare functions for the byte-compiler
@@ -1490,5 +1495,7 @@ Doesn't seem to work correctly yet
 
 ** Activate global modes that aren't required during startup
 #+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package atom-dark-theme)
+  (load-theme 'atom-dark t)
   (helm-mode 1)
 #+END_SRC

@@ -142,7 +142,7 @@ This is a system that makes `helm-apropos` more useful
     :config
     (setq helm-dash-browser-func 'eww
           helm-dash-docsets-path "~/dotfiles/.docsets"
-          helm-dash-common-docsets '("Python 3" "PostgreSQL" "Emacs Lisp" "R" "SQLAlchemy" "boto3" "Jinja"))
+          helm-dash-common-docsets '("Python 3" "PostgreSQL" "Emacs Lisp" "R" "SQLAlchemy" "boto3" "Jinja" "Common Lisp"))
     (use-package helm-pydoc))
 
   (use-package helm-ag
