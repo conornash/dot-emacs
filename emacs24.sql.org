@@ -1,17 +1,20 @@
 
 * SQL
   #+BEGIN_SRC emacs-lisp :tangle yes
+    (use-package sql-indent)
+    (use-package sqlup-mode
+      :diminish (sqlup-mode . " 🡅"))
+
     (use-package sql
       :mode
       (("\\.hql\\'" . sql-mode)
        ("\\.bqql\\'" . sql-mode)
+       ("\\.psql\\'" . sql-mode)
        ("\\.sql\\'" . sql-mode))
 
       :config
-      (make-local-variable 'indent-line-function)
       (setq sql-pop-to-buffer-after-send-region t
             sql-send-terminator t
-            indent-line-function 'sql-indent-line
             sql-postgres-program "/usr/local/bin/psql"
             sql-postgres-options '("-P" "pager=off"))
 
@@ -25,16 +28,11 @@
       (add-hook 'sql-mode-hook
                 #'(lambda ()
                     (smartparens-mode 1)
-                    ;; (sqlup-mode 1)
+                    (sqlind-minor-mode 1)
+                    (sqlup-mode 1)
                     ;; (add-hook 'before-save-hook 'sqlup-buffer nil t)
                     (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
-                    ))
-
-      (use-package sqlup-mode
-        :diminish (sqlup-mode . " 🡅"))
-      ;; SQL Indent
-      (use-package sql-indent)
-      )
+                    )))
 
   #+END_SRC
 

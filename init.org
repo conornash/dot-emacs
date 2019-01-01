@@ -272,31 +272,13 @@
  #+END_SRC
 
 
-* Company-mode
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package company
-    :bind (("\M-\t" . company-complete))
-    :diminish (company-mode . " 𝍎")
-    :config
-    (use-package company-anaconda)
-    (setq company-tooltip-limit 20
-          company-idle-delay 0.1)
-    (add-to-list 'company-backends 'company-R-args t)
-    (add-to-list 'company-backends 'company-R-objects t)
-    (add-to-list 'company-backends 'company-anaconda t)
-    (define-key company-active-map (kbd "C-n") 'company-select-next)
-    (define-key company-active-map (kbd "C-p") 'company-select-previous))
-
- #+END_SRC
-
-
 * Smartscan
  #+BEGIN_SRC emacs-lisp :tangle yes
 (use-package smartscan)
 #+END_SRC
 
 
-* Load Python
+* Python
  #+BEGIN_SRC emacs-lisp :tangle yes
 
    (org-babel-load-file (expand-file-name "emacs24.python.org" user-emacs-directory))
@@ -410,13 +392,23 @@
  #+END_SRC
 
 
+** Company-mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package company
+    :bind (("\M-\t" . company-complete))
+    :diminish (company-mode . " 𝍎")
+    (define-key company-active-map (kbd "C-n") 'company-select-next)
+    (define-key company-active-map (kbd "C-p") 'company-select-previous))
+
+ #+END_SRC
+
+
 ** context-coloring
 #+BEGIN_SRC emacs-lisp :tangle yes
 (use-package context-coloring
   :diminish (context-coloring-mode . " "))
 
 #+END_SRC
-
 
 ** CSV Mode
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -433,10 +425,11 @@
 
 ** cua-mode
 #+BEGIN_SRC emacs-lisp :tangle yes
-(cua-mode t)
-(setq cua-enable-cua-keys nil)
-(setq cua-delete-selection nil)
-(setq delete-active-region nil)
+  (cua-mode t)
+  (setq cua-enable-cua-keys nil)
+  (setq cua-delete-selection nil)
+  (setq delete-active-region nil)
+  (delete-selection-mode -1)
 
  #+END_SRC
 
@@ -662,6 +655,15 @@
                               (define-key help-mode-map (kbd "f") 'help-go-forward)))
 
  #+END_SRC
+
+** Helpful package
+This is a system that makes `helm-apropos` more useful
+#+BEGIN_SRC emacs-lisp :tangle yes :eval never
+  (use-package helpful
+    :commands (helpful-function helpful-variable)
+    :bind (("C-h k" . helpful-key)))
+
+#+END_SRC
 
 
 ** hungry-delete

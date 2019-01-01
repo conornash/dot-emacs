@@ -618,10 +618,4 @@
     (shell-command (buffer-substring pointed marked)))
 
 
-  ;; (defun anaconda-mode-find-definitions (arg)
-  ;;   "Find definitions for thing at point."
-  ;;   (interactive "p")
-  ;;   (if (> arg 1)
-  ;;       (display-buffer (anaconda-mode-call "goto_definitions" anaconda-mode-find-definitions-callback) t)
-  ;;     (anaconda-mode-call "goto_definitions" anaconda-mode-find-definitions-callback)))
 #+END_SRC

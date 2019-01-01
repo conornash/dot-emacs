@@ -99,23 +99,16 @@
                       "LC_ALL=en_US.UTF-8"
                       "LC_LANG=en_US.UTF-8")))
 
-    (use-package anaconda-mode
-      :commands (anaconda-mode)
-      :bind
-      (:map python-mode-map
-            ("C-." . anaconda-mode-find-definitions)
-            ("C-M-." . anaconda-mode-find-assignments)
-            ("C-," . anaconda-mode-go-back))
-      :config
-      (company-mode 1)
-      (anaconda-eldoc-mode 1))
-
     (use-package py-isort)
 
     (add-hook 'python-mode-hook
               #'(lambda ()
                   (pyenv-mode 1)
-                  (anaconda-mode 1)
+                  (rainbow-delimiters-mode 1)
+                  (rainbow-mode 1)
+                  (smartscan-mode 1)
+                  (turn-on-smartparens-strict-mode)
+
                   (flycheck-mode 1)
                   (flycheck-add-next-checker 'python-flake8 'python-pylint)
                   (flycheck-add-next-checker 'python-pylint 'python-pycompile)
@@ -124,10 +117,6 @@
                   (setq-local helm-dash-common-docsets '("Python 3"))
                   (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
 
-                  (rainbow-mode 1)
-                  (rainbow-delimiters-mode 1)
-                  (turn-on-smartparens-strict-mode)
-                  (smartscan-mode 1)
                   (guide-key/add-local-guide-key-sequence "C-c")
 
                   (define-key python-mode-map (kbd "<M-up>") 'move-text-up)
@@ -144,55 +133,6 @@
 
                   (local-unset-key (kbd "C-c C-d"))
 
-                  (define-key python-mode-map (kbd "C-c C-r") 'conor-python-shell-send-region)))
-
-    (add-hook 'inferior-python-mode-hook
-              #'(lambda ()
-                  (define-key inferior-python-mode-map (kbd "C-M-p") 'backward-list)
-                  (define-key inferior-python-mode-map (kbd "C-M-n") 'forward-list)))
-
-
-
-
-    ;; (venv-initialize-interactive-shells) ;; if you want interactive shell support
-    ;; (venv-initialize-eshell) ;; if you want eshell support
-
-    ;; Jedi
-    ;; (autoload 'jedi:setup "jedi" nil t)
-
-    ;; Elpy
-    ;; (elpy-enable)
-
-    ;; (flycheck-define-checker python-prospector
-    ;;   "A Python syntax and style checker using Prospector.
-    ;; See URL `http://prospector.readthedocs.org/en/latest/index.html'."
-    ;;   :command ("prospector" "-s" "medium" "-M" "-o" "emacs"
-    ;;             source)
-    ;;   :error-patterns
-    ;;   ((error line-start
-    ;;           (file-name) ":" (one-or-more digit) " :" (optional "\r") "\n"
-    ;;           (one-or-more " ") "L" line ":" column
-    ;;           (message (minimal-match (one-or-more not-newline)) "E" (one-or-more digit) (optional "\r") "\n"
-    ;;                    (one-or-more not-newline)) (optional "\r") "\n" line-end)
-    ;;    (warning line-start
-    ;;             (file-name) ":" (one-or-more digit) " :" (optional "\r") "\n"
-    ;;             (one-or-more " ") "L" line ":" column
-    ;;             (message (minimal-match (one-or-more not-newline)) "W" (one-or-more digit) (optional "\r") "\n"
-    ;;                      (one-or-more not-newline)) (optional "\r") "\n" line-end)
-    ;;    (warning line-start
-    ;;             (file-name) ":" (one-or-more digit) " :" (optional "\r") "\n"
-    ;;             (one-or-more " ") "L" line ":" column
-    ;;             (message (minimal-match (one-or-more not-newline)) (not digit) (one-or-more digit) (optional "\r") "\n"
-    ;;                      (one-or-more not-newline)) (optional "\r") "\n" line-end))
-    ;;   :modes python-mode)
-
-
-    ;; (define-key python-mode-map (kbd "<s-up>") 'elpy-nav-backward-block)
-    ;; (define-key python-mode-map (kbd "<s-down>") 'elpy-nav-forward-block)
-    ;; (define-key python-mode-map (kbd "<s-left>") 'elpy-nav-backward-indent)
-    ;; (define-key python-mode-map (kbd "<s-right>") 'elpy-nav-forward-indent)
-    ;; (define-key python-mode-map (kbd "<M-up>") 'elpy-nav-move-line-or-region-up)
-    ;; (define-key python-mode-map (kbd "<M-down>") 'elpy-nav-move-line-or-region-down)
-    ;; (define-key python-mode-map (kbd "<M-left>") 'python-indent-shift-left)
-    ;; (define-key python-mode-map (kbd "<M-right>") 'python-indent-shift-right)
+                  (define-key python-mode-map (kbd "C-c C-r") 'conor-python-shell-send-region)
+                  ))
   #+END_SRC

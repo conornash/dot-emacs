@@ -265,7 +265,5 @@
                                         (:exports . "both")
                                         (:tangle . "yes")))
 
-  (use-package org-jira
-    :config
-    (setq jiralib-url "https://nettempo.atlassian.net"))
+  (use-package org-jira)
 #+END_SRC
