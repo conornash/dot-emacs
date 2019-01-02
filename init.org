@@ -397,9 +397,9 @@
   (use-package company
     :bind (("\M-\t" . company-complete))
     :diminish (company-mode . " 𝍎")
+    :config
     (define-key company-active-map (kbd "C-n") 'company-select-next)
     (define-key company-active-map (kbd "C-p") 'company-select-previous))
-
  #+END_SRC
 
 
@@ -742,11 +742,14 @@ This is a system that makes `helm-apropos` more useful
 ** JSON
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package json-mode
-    :mode "\\.json\\'")
+    :mode "\\.json\\'"
+    :config
+    (setq json-reformat:indent-width 2))
 
   (add-hook 'json-mode-hook
             #'(lambda ()
-                (smartparens-mode 1)))
+                (smartparens-strict-mode 1)
+                (define-key json-mode-map (kbd "C-M-\\") 'json-pretty-print)))
  #+END_SRC
 
 
