@@ -1,4 +1,3 @@
-
 * SQL
   #+BEGIN_SRC emacs-lisp :tangle yes
     (use-package sql-indent)

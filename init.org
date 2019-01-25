@@ -207,7 +207,7 @@
            ("M-<up>" . org-metaup)
            ("C-c l" . org-store-link)
            ("C-c C-l" . org-insert-link)
-           ("C-c C-x C-j" . org-clock-jump-to-current-clock)
+           ("C-c C-x C-j" . org-clock-goto)
            ("s-!" . insert-current-timestamp-inactive)
            ("s-o" . org-open-at-point)
            ("s-O" . org-open-at-point-global))
@@ -820,7 +820,9 @@ This is a system that makes `helm-apropos` more useful
     :commands magit-status
     :bind (("<f6>" . magit-status))
     :config
-    (add-hook 'with-editor-mode-hook 'turn-on-orgstruct++)
+    (add-hook 'with-editor-mode-hook
+              '(lambda ()
+                 (orgalist-mode 1)))
     (setq magit-push-always-verify nil
           magit-diff-use-overlays nil
           magit-revision-headers-format "Author:     %aN <%aE>
