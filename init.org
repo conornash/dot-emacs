@@ -19,7 +19,8 @@
         gc-cons-threshold (* 500 (* 1024 1024)))
 
   (defvar doom--file-name-handler-alist file-name-handler-alist)
-  (setq delete-active-region 'kill
+  (setq apropos-do-all t
+        delete-active-region 'kill
         enable-recursive-minibuffers t
         file-name-handler-alist nil
         inhibit-startup-screen t
@@ -33,6 +34,7 @@
         package--init-file-ensured t
         package-enable-at-startup nil
         ring-bell-function 'ignore
+        save-interprogram-paste-before-kill t
         use-package-always-ensure t
         use-package-verbose t)
 
@@ -418,8 +420,9 @@
     (setq csv-separators '("," "\t" "|")))
 
   (add-hook 'csv-mode-hook
-            #'(lambda()
-                (hl-line-mode 1)))
+            '(lambda ()
+               (setq-local isearch-lazy-highlight nil)
+               (hl-line-mode 1)))
 #+END_SRC
 
 

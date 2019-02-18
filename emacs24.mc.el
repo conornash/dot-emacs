@@ -20,6 +20,7 @@
         forward-sexp
         hungry-delete-backward
         hungry-delete-forward
+        indent-for-tab-command
         iregister-copy-to-register-kill
         iregister-point-or-text-to-register-kill-ring-save
         jedi:dot-complete
@@ -33,7 +34,6 @@
         org-delete-char
         org-end-of-line
         org-force-self-insert
-        org-metaleft
         org-self-insert-command
         paredit-backward
         paredit-backward-kill-word
@@ -73,9 +73,12 @@
 
 (setq mc/cmds-to-run-once
       '(
+        buf-move-left
         conor-helm-files
         ess-eval-region-or-function-or-paragraph-and-step
+        helm-M-x
         helm-apropos
+        my/vsplit-last-buffer
         org-cycle
         rotate-frame-anticlockwise
         rotate-frame-clockwise
