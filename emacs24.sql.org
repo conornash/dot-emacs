@@ -10,6 +10,7 @@
        ("\\.bqql\\'" . sql-mode)
        ("\\.psql\\'" . sql-mode)
        ("\\.mysql\\'" . sql-mode)
+       ("\\.mssql\\'" . sql-mode)
        ("\\.sql\\'" . sql-mode))
 
       :config

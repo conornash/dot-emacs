@@ -81,7 +81,6 @@
                 (org-defkey org-mode-map [remap backward-paragraph] 'backward-paragraph)
                 (define-key org-mode-map (kbd "C-z") 'yas/expand)
                 (define-key org-mode-map (kbd "M-#") 'er/expand-region)
-                (pyenv-mode -1)
                 (visual-line-mode 1)
                 (delete '("\\.pdf\\'" . default) org-file-apps)
                 ;; PDF viewer

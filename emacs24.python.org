@@ -109,12 +109,12 @@
                   (smartscan-mode 1)
                   (turn-on-smartparens-strict-mode)
 
+                  (anaconda-mode 1)
+
                   (flycheck-mode 1)
                   (flycheck-add-next-checker 'python-flake8 'python-pylint)
                   (flycheck-add-next-checker 'python-pylint 'python-pycompile)
                   (flycheck-add-next-checker 'python-pycompile 'python-mypy)
-
-                  (setq-local helm-dash-common-docsets '("Python 3"))
                   (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
 
                   (guide-key/add-local-guide-key-sequence "C-c")

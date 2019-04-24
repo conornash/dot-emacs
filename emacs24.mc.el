@@ -20,7 +20,6 @@
         forward-sexp
         hungry-delete-backward
         hungry-delete-forward
-        indent-for-tab-command
         iregister-copy-to-register-kill
         iregister-point-or-text-to-register-kill-ring-save
         jedi:dot-complete
@@ -30,6 +29,7 @@
         move-text-down
         move-text-up
         my-python-eval-line
+        my/smarter-move-beginning-of-line
         org-beginning-of-line
         org-delete-char
         org-end-of-line
@@ -76,12 +76,12 @@
         buf-move-left
         conor-helm-files
         ess-eval-region-or-function-or-paragraph-and-step
-        helm-M-x
         helm-apropos
         my/vsplit-last-buffer
         org-cycle
         rotate-frame-anticlockwise
         rotate-frame-clockwise
+        sp-down-sexp
         sql-end-of-statement
         text-scale-decrease
         text-scale-increase
