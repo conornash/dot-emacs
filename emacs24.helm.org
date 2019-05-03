@@ -1,16 +1,3 @@
-* Helpful package
-This is a system that makes `helm-apropos` more useful
-#+BEGIN_SRC emacs-lisp :tangle yes :eval never
-
-  (use-package helpful
-    :commands (helpful-function helpful-variable)
-    :bind (("C-h k" . helpful-key)))
-
-
-#+END_SRC
-
-
-
 * Helper functions
 #+BEGIN_SRC emacs-lisp :tangle yes
 
@@ -151,5 +138,7 @@ This is a system that makes `helm-apropos` more useful
     :bind (("<C-f10>" . helm-do-ag)
            ("<f10>" . conor-helm-ag-here)))
 
+  (use-package helm-unicode
+    :bind (("C-x 8 RET" . helm-unicode)))
 
 #+END_SRC

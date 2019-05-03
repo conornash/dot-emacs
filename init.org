@@ -94,7 +94,6 @@
 #+END_SRC
 
 
-
 ** Fonts
 #+BEGIN_SRC emacs-lisp :tangle yes
   ;; Requires font to be downloaded from https://www.fontsquirrel.com/fonts/inconsolata
@@ -258,7 +257,6 @@
 #+END_SRC
 
 
-
 * Helm
 #+BEGIN_SRC emacs-lisp :tangle yes
   (org-babel-load-file (expand-file-name "emacs24.helm.org" user-emacs-directory))
@@ -321,8 +319,6 @@
 
 * Other Packages
 
-
-
 ** Auto-compile
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package auto-compile
@@ -331,7 +327,6 @@
     (auto-compile-on-save-mode 1))
 
  #+END_SRC
-
 
 
 ** Auto-revert
@@ -398,19 +393,12 @@
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package company
     :bind (("\M-\t" . company-complete))
-    :diminish (company-mode . " 𝍎")
+    :diminish (company-mode . " 🕴")
     :config
     (define-key company-active-map (kbd "C-n") 'company-select-next)
     (define-key company-active-map (kbd "C-p") 'company-select-previous))
  #+END_SRC
 
-
-** context-coloring
-#+BEGIN_SRC emacs-lisp :tangle yes
-(use-package context-coloring
-  :diminish (context-coloring-mode . " "))
-
-#+END_SRC
 
 ** CSV Mode
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -497,7 +485,6 @@
 #+END_SRC
 
 
-
 ** Dockerfile
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package dockerfile-mode)
@@ -545,13 +532,13 @@
 
 ** emojify
 #+BEGIN_SRC emacs-lisp :tangle yes
-(use-package emojify)
-(global-emojify-mode -1)
+  (use-package emojify)
+  (global-emojify-mode -1)
 
  #+END_SRC
 
 
-** Enable *case-region
+** Enable case-region
 #+BEGIN_SRC emacs-lisp :tangle yes
 (put 'downcase-region 'disabled nil)
 (put 'upcase-region 'disabled nil)
@@ -607,6 +594,7 @@
 
 #+END_SRC
 
+
 ** Find file at point
 #+BEGIN_SRC emacs-lisp :tangle yes
   (setq abbrev-file-name "~/.emacs.d/abbrev_defs"
@@ -624,14 +612,6 @@
           try-expand-line
           try-expand-list
           yas-hippie-try-expand))
-
- #+END_SRC
-
-
-** Gist
-#+BEGIN_SRC emacs-lisp :tangle yes
-(use-package gist
-  :commands gist-list)
 
  #+END_SRC
 
@@ -658,6 +638,7 @@
                               (define-key help-mode-map (kbd "f") 'help-go-forward)))
 
  #+END_SRC
+
 
 ** Helpful package
 This is a system that makes `helm-apropos` more useful
@@ -789,7 +770,6 @@ This is a system that makes `helm-apropos` more useful
 #+END_SRC
 
 
-
 ** Keychain
 #+BEGIN_SRC emacs-lisp :tangle yes
 
@@ -867,7 +847,6 @@ This is a system that makes `helm-apropos` more useful
     :mode "\\.md\\'")
 
  #+END_SRC
-
 
 
 ** Multiple cursors
@@ -1071,16 +1050,6 @@ This is a system that makes `helm-apropos` more useful
  #+END_SRC
 
 
-** Scala
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (add-hook 'scala-mode-hook
-            #'(lambda ()
-                (smartparens-mode 1)
-                ))
-
- #+END_SRC
-
-
 ** Scheme
 #+BEGIN_SRC emacs-lisp :tangle yes
 (org-babel-load-if-exists (expand-file-name "emacs24.scheme.org" user-emacs-directory))
@@ -1112,6 +1081,7 @@ This is a system that makes `helm-apropos` more useful
 #+BEGIN_SRC emacs-lisp :tangle yes
 (show-paren-mode 1)
 #+END_SRC
+
 
 ** Smalltalk
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -1185,7 +1155,6 @@ This is a system that makes `helm-apropos` more useful
     (defalias 'tcac 'tramp-cleanup-all-connections))
 
  #+END_SRC
-
 
 
 ** Undo Tree
@@ -1331,6 +1300,7 @@ This is a system that makes `helm-apropos` more useful
                (subword-mode -1)))
 #+END_SRC
 
+
 ** YAML
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package yaml-mode
@@ -1389,20 +1359,6 @@ This is a system that makes `helm-apropos` more useful
 #+END_SRC
 
 
-* Floobits
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package floobits
-    :commands (floobits-delete-workspace
-    floobits-follow-mode-toggle floobits-complete-signup
-    floobits-clear-highlights floobits-summon
-    floobits-workspace-settings floobits-add-to-workspace
-    floobits-open-workspace-in-browser floobits-share-dir-public
-    floobits-leave-workspace floobits-share-dir-private
-    floobits-join-workspace floobits-debug-output floobits-debug
-    floobits-follow-user floobits-remove-from-workspace))
-#+END_SRC
-
-
 * Elisp functions
 #+BEGIN_SRC emacs-lisp :tangle yes
   ;; Emacs Lisp
@@ -1412,7 +1368,6 @@ This is a system that makes `helm-apropos` more useful
   (org-babel-load-if-exists (expand-file-name "emacs24.hacky.org" user-emacs-directory))
 
 #+END_SRC
-
 
 
 * Eshell
@@ -1460,6 +1415,7 @@ This is a system that makes `helm-apropos` more useful
         auto-window-vscroll nil)
 #+END_SRC
 
+
 ** Declare functions for the byte-compiler
 Doesn't seem to work correctly yet
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -1484,6 +1440,7 @@ Doesn't seem to work correctly yet
        )))
 #+END_SRC
 
+
 ** Private settings
 #+BEGIN_SRC emacs-lisp :tangle yes
   (when (file-exists-p (expand-file-name "private.org" user-emacs-directory))
@@ -1502,6 +1459,7 @@ Doesn't seem to work correctly yet
    (t
     (write-region "" nil custom-file)))
 #+END_SRC
+
 
 ** Activate global modes that aren't required during startup
 #+BEGIN_SRC emacs-lisp :tangle yes
