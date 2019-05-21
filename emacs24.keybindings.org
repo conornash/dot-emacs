@@ -5,8 +5,6 @@
   (global-set-key "\C-c\M-d" 'zero-pad)
   (global-set-key "\C-cg" 'goto-line)
   (global-set-key "\M-/" 'hippie-expand)
-  (global-set-key (kbd "<C-f7>") 'term)
-  (global-set-key (kbd "<M-f7>") 'term-toggle-mode)
   (global-set-key (kbd "<M-f9>") 'ffap-next)
   (global-set-key (kbd "<f5>") 'compile)
   (global-set-key (kbd "C-'") 'add-single-quoted-argument)

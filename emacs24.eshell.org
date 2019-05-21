@@ -179,7 +179,6 @@
   (use-package eshell
     :commands (eshell helm-info-eshell helm-eshell-history
                       eshell-insert-buffer-name)
-    :bind (("<f7>" . eshell))
     :config
     (setq eshell-cmpl-cycle-completions nil
           ;; eshell-banner-message "..."
@@ -209,9 +208,7 @@
                 (setenv "PAGER" "cat")
                 (smartscan-mode -1)
                 (setq ac-sources '(ac-source-pcomplete))
-                (define-key eshell-mode-map [remap eshell-pcomplete] 'helm-esh-pcomplete)
-                (define-key eshell-mode-map (kbd "<f7>") 'helm-eshell-history)
-                (define-key eshell-mode-map (kbd "<C-f7>") 'eshell-insert-buffer-name)))
+                (define-key eshell-mode-map [remap eshell-pcomplete] 'helm-esh-pcomplete)))
 
   (add-hook 'eshell-after-prompt-hook
             #'(lambda ()

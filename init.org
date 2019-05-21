@@ -479,7 +479,9 @@
 ** Docker
 #+BEGIN_SRC emacs-lisp :tangle yes
 
-  (use-package docker)
+  (use-package docker
+    :bind (("<C-f7>" . docker-containers)
+           ("<M-f7>" . docker-images)))
   (use-package docker-tramp)
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
 #+END_SRC
