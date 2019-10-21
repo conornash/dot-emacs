@@ -80,6 +80,8 @@
     (use-package pyenv-mode
       :config
       (use-package pyenv-mode-auto)
+      (use-package py-isort)
+      (use-package anaconda-mode)
       (define-key pyenv-mode-map (kbd "C-c C-s") nil)
       (define-key pyenv-mode-map (kbd "C-c s") 'pyenv-mode-set)
       (setq-default tab-width 4
@@ -98,8 +100,6 @@
                       "LANG=en_US.UTF-8"
                       "LC_ALL=en_US.UTF-8"
                       "LC_LANG=en_US.UTF-8")))
-
-    (use-package py-isort)
 
     (add-hook 'python-mode-hook
               #'(lambda ()

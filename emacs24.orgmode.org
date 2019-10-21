@@ -67,6 +67,15 @@
                    (format-time-string "%d %b %Y" date)
                    "</div>")
          ""))))
+
+  (defun endless/filter-timestamp (trans back _comm)
+    "Remove <> around time-stamps."
+    (pcase back
+      ((or `jekyll `html)
+       (progn
+         (replace-regexp-in-string "&[lg]t;" "" trans)))
+      (`latex
+       (replace-regexp-in-string "[<>]" "" trans))))
 #+END_SRC
 
 
@@ -84,7 +93,9 @@
                 (visual-line-mode 1)
                 (delete '("\\.pdf\\'" . default) org-file-apps)
                 ;; PDF viewer
-                (add-to-list 'org-file-apps '("\\.pdf\\'" . "open %s"))))
+                (add-to-list 'org-file-apps '("\\.pdf\\'" . "open %s"))
+                (add-to-list 'org-export-filter-timestamp-functions
+                             #'endless/filter-timestamp)))
 
   (use-package orgalist)
   ;; (add-hook 'orgalist-mode-map
@@ -227,15 +238,15 @@
 * Org Babel
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package ob-async)
-  (use-package ob-ipython)
   (use-package ob-restclient)
   (use-package ob-sql-mode)
+  (use-package ein)
 
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((R          . t)
-     (emacs-lisp . t)
-     (ipython    . t)
+     (ein        . t)
+     (emacs-lisp . t)   
      (js         . t)
      (restclient . t)
      (lisp       . t)

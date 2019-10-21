@@ -38,12 +38,14 @@
         use-package-always-ensure t
         use-package-verbose t)
 
+  ;; Emacs bug
+  (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
   ;;(setq debug-on-error t)
   (package-initialize nil)
   ;; (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/") t)
-  (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-  (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t) ;; Goes down often
-  (add-to-list 'package-archives '("ELPA" . "http://tromey.com/elpa/") t)
+  (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
+  (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/")) ;; Goes down often
+  ;; (add-to-list 'package-archives '("gnu" . "http://mirrors.163.com/elpa/gnu/"))
   (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/") t)
   (package-refresh-contents)
 
@@ -218,7 +220,7 @@
           org-agenda-deadline-faces '((1.0 . '(:foreground "#cd4740"))
                                       (0.9 . '(:foreground "goldenrod1"))
                                       (0.0 . default))
-          org-agenda-dim-blocked-tasks 'invisible
+          org-agenda-dim-blocked-tasks nil
           ;; Follow the point in the agenda buffer with the org file in the other buffer
           org-agenda-start-with-follow-mode t
           ;; don't show scheduled tasks in the TODO view of the agenda
@@ -447,7 +449,7 @@
       (interactive)
       (let* ((file (dired-get-filename nil t)))
         (message "Opening %s..." file)
-        (async-shell-command (format "open %s" file))    
+        (async-shell-command (format "open \"%s\"" file))    
         (message "Opening %s done" file)))
 
     (defun dired-back-to-top ()
@@ -727,15 +729,26 @@ This is a system that makes `helm-apropos` more useful
 
 ** JSON
 #+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package json-navigator)
+  (use-package origami)
   (use-package json-mode
+    :after origami
     :mode "\\.json\\'"
     :config
     (setq json-reformat:indent-width 2))
 
   (add-hook 'json-mode-hook
             #'(lambda ()
-                (smartparens-strict-mode 1)
-                (define-key json-mode-map (kbd "C-M-\\") 'json-pretty-print)))
+                (origami-mode 1)
+                (electric-pair-mode 1)
+                (define-key json-mode-map (kbd "C-M-\\") 'json-pretty-print)
+                (define-key json-mode-map (kbd "<M-tab>") 'origami-recursively-toggle-node)
+                (define-key json-mode-map (kbd "<S-tab>") 'origami-toggle-all-nodes)
+                (define-key json-mode-map (kbd "C-M-n") 'origami-next-fold)
+                (define-key json-mode-map (kbd "C-M-p") 'origami-previous-fold)
+                (define-key json-mode-map (kbd "C-M-b") 'origami-backward-fold-same-level)
+                (define-key json-mode-map (kbd "C-M-f") 'origami-forward-fold-same-level)
+                ))
  #+END_SRC
 
 
@@ -833,6 +846,8 @@ This is a system that makes `helm-apropos` more useful
                                        magit-insert-unpushed-to-upstream
                                        magit-insert-unpushed-to-pushremote)))
 
+  (use-package forge
+    :after magit)
  #+END_SRC
 
 
@@ -934,6 +949,21 @@ This is a system that makes `helm-apropos` more useful
  #+END_SRC
 
 
+** Nov.el
+#+begin_src emacs-lisp :tangle yes :eval never
+  (use-package olivetti
+    :config
+    (setq olivetti-body-width 0.85))
+
+  (use-package nov
+    :mode ("\\.epub\\'" . nov-mode))
+
+  (add-hook 'nov-mode-hook
+            #'(lambda ()
+                (olivetti-mode 1)
+                (define-key nov-mode-map (kbd "u") 'nov-goto-toc)
+                (set-window-margins (current-buffer) 1 1)))
+#+end_src
 ** Paradox Package Manager
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package paradox
@@ -1146,7 +1176,9 @@ This is a system that makes `helm-apropos` more useful
     :config
     (setq tramp-default-method "ssh"
           tramp-copy-size-limit -1
-          tramp-use-ssh-controlmaster-options t
+          tramp-completion-reread-directory-timeout 600
+          tramp-use-ssh-controlmaster-options nil
+          remote-file-name-inhibit-cache 600
           tramp-ssh-controlmaster-options
           (concat
            "-o ControlPath=/tmp/ssh-ControlPath-%%r@%%h:%%p "
@@ -1302,6 +1334,17 @@ This is a system that makes `helm-apropos` more useful
                (subword-mode -1)))
 #+END_SRC
 
+
+** vterm
+#+BEGIN_SRC  emacs-lisp :tangle yes
+  (use-package vterm
+    :commands (vterm)
+    :config
+    (add-hook 'vterm-mode-hook
+              '(lambda ()
+                 (define-key vterm-mode-map (kbd "C-y") 'vterm-yank))))
+
+#+END_SRC
 
 ** YAML
 #+BEGIN_SRC emacs-lisp :tangle yes

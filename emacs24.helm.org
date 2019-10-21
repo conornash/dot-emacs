@@ -116,6 +116,8 @@
   (use-package helm-for-files :ensure nil)
   (use-package helm-x-files :ensure nil)
   (use-package helm-ring :ensure nil)
+  (use-package helm-pass :ensure nil)
+  (use-package password-generator :ensure nil)
 
   (use-package helm-swoop
     :bind

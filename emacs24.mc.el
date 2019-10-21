@@ -29,12 +29,13 @@
         move-text-down
         move-text-up
         my-python-eval-line
-        my/smarter-move-beginning-of-line
         org-beginning-of-line
         org-delete-char
         org-end-of-line
         org-force-self-insert
         org-self-insert-command
+        org-shiftleft
+        org-shiftright
         paredit-backward
         paredit-backward-kill-word
         paredit-close-round
