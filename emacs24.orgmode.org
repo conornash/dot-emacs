@@ -192,7 +192,11 @@
     :config
     (setq org-reveal-root "http://cdn.jsdelivr.net/reveal.js/3.0.0/"))
 
-  (setq org-agenda-exporter-settings
+  (use-package ox-taskjuggler
+    :ensure nil)
+
+  (setq org-export-backends '('ascii 'html 'icalendar 'latex 'odt 'taskjuggler)
+        org-agenda-exporter-settings
         '((ps-number-of-columns 2)
           (ps-landscape-mode t)
           (org-agenda-add-entry-text-maxlines 5)

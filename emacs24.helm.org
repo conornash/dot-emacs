@@ -118,6 +118,7 @@
   (use-package helm-ring :ensure nil)
   (use-package helm-pass :ensure nil)
   (use-package password-generator :ensure nil)
+  (use-package helm-lsp :ensure nil)
 
   (use-package helm-swoop
     :bind
@@ -133,7 +134,7 @@
           helm-dash-docsets-path "~/dotfiles/.docsets"
           helm-dash-common-docsets '("Python 3" "PostgreSQL" "Emacs Lisp" "R"
                                      "SQLAlchemy" "boto3" "Jinja" "Common Lisp"
-                                     "Airflow" "BigQuery_Standard_SQL"))
+                                     "Airflow" "BigQuery_Standard_SQL" "Flask"))
     (use-package helm-pydoc))
 
   (use-package helm-ag

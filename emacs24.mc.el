@@ -12,6 +12,7 @@
         djcb-duplicate-line
         downcase-region
         electric-newline-and-maybe-indent
+        electric-pair-delete-pair
         end-of-buffer
         end-of-visual-line
         ess-smart-S-assign

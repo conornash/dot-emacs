@@ -46,7 +46,7 @@
   (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
   (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/")) ;; Goes down often
   ;; (add-to-list 'package-archives '("gnu" . "http://mirrors.163.com/elpa/gnu/"))
-  (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/") t)
+  (add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/") t)
   (package-refresh-contents)
 
   (mapc (lambda (elem)
@@ -197,7 +197,6 @@
   (use-package org
     :mode ("\\.org$" . org-mode)
     :ensure org-plus-contrib
-    :pin gnu
     :diminish
     ((org-src-mode . " ℹ")
      (org-indent-mode . " ⭾"))
@@ -259,6 +258,38 @@
 #+END_SRC
 
 
+* Language Server Protocol (LSP) / Flycheck
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package lsp-mode
+    :hook (python-mode . lsp)
+    :commands lsp
+    :config
+    (setq
+     lsp-prefer-flymake nil
+     lsp-pyls-server-command '("pipenv" "run" "pyls"))
+    (lsp-register-client
+     (make-lsp-client :new-connection (lsp-tramp-connection '("pipenv" "run" "pyls"))
+                      :major-modes '(python-mode)
+                      :remote? t
+                      :server-id 'pyls-remote)))
+
+  (use-package lsp-ui :commands lsp-ui-mode)
+  (use-package company-lsp :commands company-lsp)
+  (use-package helm-lsp :commands helm-lsp-workspace-symbol)
+  (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
+  ;; optionally if you want to use debugger
+  (use-package dap-mode)
+  ;; (use-package dap-LANGUAGE) to load the dap adapter for your language
+
+  (use-package flycheck
+    :bind (("s-[" . flycheck-previous-error)
+           ("s-]" . flycheck-next-error))
+    :config
+    (add-to-list 'flycheck-checkers 'lsp-ui))
+
+#+END_SRC
+
+
 * Helm
 #+BEGIN_SRC emacs-lisp :tangle yes
   (org-babel-load-file (expand-file-name "emacs24.helm.org" user-emacs-directory))
@@ -284,19 +315,6 @@
  #+BEGIN_SRC emacs-lisp :tangle yes
 
    (org-babel-load-file (expand-file-name "emacs24.python.org" user-emacs-directory))
-#+END_SRC
-
-
-* Flycheck
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package flycheck
-    :bind (("s-[" . flycheck-previous-error)
-           ("s-]" . flycheck-next-error)))
-  (use-package flycheck-mypy
-    :config
-    (setq flycheck-python-mypy-args "--ignore-missing-imports"))
-
-
 #+END_SRC
 
 
@@ -733,14 +751,14 @@ This is a system that makes `helm-apropos` more useful
   (use-package origami)
   (use-package json-mode
     :after origami
-    :mode "\\.json\\'"
+    :mode "\\.json\\'" "\\.jsonl\\'"
     :config
     (setq json-reformat:indent-width 2))
 
   (add-hook 'json-mode-hook
             #'(lambda ()
                 (origami-mode 1)
-                (electric-pair-mode 1)
+                (smartparens-strict-mode 1)
                 (define-key json-mode-map (kbd "C-M-\\") 'json-pretty-print)
                 (define-key json-mode-map (kbd "<M-tab>") 'origami-recursively-toggle-node)
                 (define-key json-mode-map (kbd "<S-tab>") 'origami-toggle-all-nodes)
@@ -1173,19 +1191,9 @@ This is a system that makes `helm-apropos` more useful
 ** Tramp
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package tramp
+    :init
+    (setq tramp-use-ssh-controlmaster-options nil)
     :config
-    (setq tramp-default-method "ssh"
-          tramp-copy-size-limit -1
-          tramp-completion-reread-directory-timeout 600
-          tramp-use-ssh-controlmaster-options nil
-          remote-file-name-inhibit-cache 600
-          tramp-ssh-controlmaster-options
-          (concat
-           "-o ControlPath=/tmp/ssh-ControlPath-%%r@%%h:%%p "
-           "-o ControlMaster=auto -o ControlPersist=yes"))
-  ;; allow sudo access to hosts
-  ;; (add-to-list 'tramp-default-proxies-alist '(".*" "\\`root\\'" "/ssh:%h:"))
-  ;; It's just too long to type
     (defalias 'tcac 'tramp-cleanup-all-connections))
 
  #+END_SRC
