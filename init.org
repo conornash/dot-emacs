@@ -266,14 +266,22 @@
     :config
     (setq
      lsp-prefer-flymake nil
-     lsp-pyls-server-command '("pipenv" "run" "pyls"))
+     lsp-pyls-server-command '("pipenv" "run" "pyls")
+     lsp-restart 'ignore)
     (lsp-register-client
      (make-lsp-client :new-connection (lsp-tramp-connection '("pipenv" "run" "pyls"))
                       :major-modes '(python-mode)
                       :remote? t
                       :server-id 'pyls-remote)))
 
-  (use-package lsp-ui :commands lsp-ui-mode)
+  (use-package lsp-ui
+    :commands lsp-ui-mode
+    :config
+    (add-hook 'lsp-ui-doc-frame-hook
+              '(lambda ()
+                 (setq-local window-number-skip t)))
+    )
+
   (use-package company-lsp :commands company-lsp)
   (use-package helm-lsp :commands helm-lsp-workspace-symbol)
   (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
