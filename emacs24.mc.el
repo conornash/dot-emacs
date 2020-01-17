@@ -21,6 +21,7 @@
         forward-sexp
         hungry-delete-backward
         hungry-delete-forward
+        indent-for-tab-command
         iregister-copy-to-register-kill
         iregister-point-or-text-to-register-kill-ring-save
         jedi:dot-complete

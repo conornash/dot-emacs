@@ -15,29 +15,6 @@
     :mode (("\\.R$" . R-mode)
            ("\\.Rprofile$" . R-mode))
 
-    :bind
-    (:map ess-mode-map
-          ("C-\\" . ess-eval-line)
-          ("M-\\" . display-r-instance)
-          ("C-|" . eval-at-cursor)
-          ("C-." . xref-find-definitions)
-          ("C-c C-s" . ess-switch-process)
-          ("C-," . xref-pop-marker-stack)
-          ("M-\\" . display-r-instance)
-          ("C-\\" . ess-eval-line)
-          ("M-\\" . display-r-instance)
-          ("C-|" . eval-at-cursor)
-          ("C-." . xref-find-definitions)
-          ("C-c C-s" . ess-switch-process)
-          ("C-," . xref-pop-marker-stack)
-          )
-
-    (:map inferior-ess-mode-map
-          ("M-<up>" . move-text-up)
-          ("M-<down>" . move-text-down)
-          ("\C-ct" . ess-R-object-tooltip)
-          )
-
     :hook ((ess-mode . (lambda ()
                          (smartparens-mode 1)
                          (turn-on-smartparens-strict-mode)
@@ -47,7 +24,23 @@
                          (rainbow-delimiters-mode 1)
                          (smartscan-mode 1)
                          (subword-mode 1)
-                         (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)))
+                         (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
+
+                         (define-key ess-mode-map (kbd "C-\\") 'ess-eval-line)
+                         (define-key ess-mode-map (kbd "M-\\") 'display-r-instance)
+                         (define-key ess-mode-map (kbd "C-|") 'eval-at-cursor)
+                         (define-key ess-mode-map (kbd "C-.") 'xref-find-definitions)
+                         (define-key ess-mode-map (kbd "C-c C-s") 'ess-switch-process)
+                         (define-key ess-mode-map (kbd "C-,") 'xref-pop-marker-stack)
+                         (define-key ess-mode-map (kbd "M-\\") 'display-r-instance)
+                         (define-key ess-mode-map (kbd "C-\\") 'ess-eval-line)
+                         (define-key ess-mode-map (kbd "M-\\") 'display-r-instance)
+                         (define-key ess-mode-map (kbd "C-|") 'eval-at-cursor)
+                         (define-key ess-mode-map (kbd "C-.") 'xref-find-definitions)
+                         (define-key ess-mode-map (kbd "C-c C-s") 'ess-switch-process)
+                         (define-key ess-mode-map (kbd "C-,") 'xref-pop-marker-stack)
+
+                         ))
 
            (inferior-ess-mode . (lambda ()
                                   (smartparens-mode 1)
@@ -55,6 +48,11 @@
                                   ;; (auto-complete-mode t)
                                   (company-mode 1)
                                   (subword-mode 1)
+
+                                  (define-key inferior-ess-mode-map (kbd "M-<up>") 'move-text-up)
+                                  (define-key inferior-ess-mode-map (kbd "M-<down>") 'move-text-down)
+                                  (define-key inferior-ess-mode-map (kbd "\C-ct") 'ess-R-object-tooltip)
+
                                   ;;	     (ess-rdired)
                                   ;;	     (define-key ess-rdired-mode-map "t" 'ess-R-object-tooltip)
                                   ;;	     (define-key ess-rdired-mode-map "\C-c\C-t" 'ess-R-object-tooltip)
@@ -112,7 +110,6 @@
                                         (">=" . 8805)
                                         ("<=" . 8804)
                                         ("!=" . 8800))
-          ess-smart-S-assign-key nil
           flycheck-lintr-linters "with_defaults(object_usage_linter = NULL, camel_case_linter = NULL, assignment_linter = NULL, infix_spaces_linter = NULL, line_length_linter = NULL, multiple_dots_linter = NULL, object_length_linter = NULL, absolute_paths_linter = NULL, spaces_left_parentheses_linter = NULL, single_quotes_linter = NULL)"
           inferior-ess-r-program "/usr/local/bin/R"
           jit-lock-defer-time 0.25

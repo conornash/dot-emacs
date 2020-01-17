@@ -41,12 +41,13 @@
   ;; Emacs bug
   (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
   ;;(setq debug-on-error t)
-  (package-initialize nil)
+  (package-initialize t)
   ;; (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/") t)
   (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
   (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/")) ;; Goes down often
   ;; (add-to-list 'package-archives '("gnu" . "http://mirrors.163.com/elpa/gnu/"))
   (add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/") t)
+  (package-initialize nil)
   (package-refresh-contents)
 
   (mapc (lambda (elem)
@@ -232,6 +233,7 @@
           org-duration-format '((special . h:mm))
           org-enforce-todo-dependencies t
           org-fontify-whole-heading-line t
+          org-goto-interface 'outline-path-completion
           org-hide-emphasis-markers t
           org-list-allow-alphabetical t
           org-log-done t
@@ -508,8 +510,8 @@
 #+BEGIN_SRC emacs-lisp :tangle yes
 
   (use-package docker
-    :bind (("<C-f7>" . docker-containers)
-           ("<M-f7>" . docker-images)))
+    :bind (("<f7>" . docker-containers)
+           ("<C-f7>" . docker-images)))
   (use-package docker-tramp)
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
 #+END_SRC
@@ -877,13 +879,6 @@ This is a system that makes `helm-apropos` more useful
  #+END_SRC
 
 
-** manage-minor-mode
-#+BEGIN_SRC emacs-lisp :tangle yes
-(use-package manage-minor-mode)
-
- #+END_SRC
-
-
 ** Markdown
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package markdown-mode
@@ -1196,14 +1191,24 @@ This is a system that makes `helm-apropos` more useful
  #+END_SRC
 
 
+** Toml
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package toml)
+ #+END_SRC
+
+
 ** Tramp
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package tramp
     :init
-    (setq tramp-use-ssh-controlmaster-options nil)
+    (setq tramp-use-ssh-controlmaster-options t)
     :config
+    (setq tramp-default-method "ssh"
+          tramp-connection-timeout 5
+          tramp-use-ssh-controlmaster-options t
+          remote-file-name-inhibit-cache nil
+          tramp-completion-reread-directory-timeout nil)
     (defalias 'tcac 'tramp-cleanup-all-connections))
-
  #+END_SRC
 
 

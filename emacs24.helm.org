@@ -7,7 +7,6 @@
     (unless helm-source-buffers-list
       (setq helm-source-buffers-list
             (helm-make-source "Buffers" 'helm-source-buffers)))
-    (tramp-cleanup-all-connections)
     (let ((helm-ff-transformer-show-only-basename nil))
       (helm :sources '(helm-source-buffers-list
                        helm-source-recentf
@@ -75,7 +74,6 @@
     :diminish (helm-mode . " ⎈")
     :config
     (setq
-     helm-ag-base-command "/usr/local/bin/ag -U -z --hidden --nocolor --nogroup --path-to-ignore=~/.agignore"
      helm-boring-buffer-regexp-list nil
      helm-buffer-max-length 40
      helm-exit-idle-delay 0
@@ -138,8 +136,16 @@
     (use-package helm-pydoc))
 
   (use-package helm-ag
-    :bind (("<C-f10>" . helm-do-ag)
-           ("<f10>" . conor-helm-ag-here)))
+    :bind
+    (("<f10>" . conor-helm-ag-here))
+    :config
+    (setq helm-ag-base-command "/usr/local/bin/ag -U -z --hidden --nocolor --nogroup --path-to-ignore=~/.agignore "))
+
+  (use-package helm-rg
+    :bind
+    (("<C-f10>" . helm-rg))
+    :config
+    (setq helm-rg-default-extra-args "-z"))
 
   (use-package helm-unicode
     :bind (("C-x 8 RET" . helm-unicode)))
