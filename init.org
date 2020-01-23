@@ -47,7 +47,6 @@
   (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/")) ;; Goes down often
   ;; (add-to-list 'package-archives '("gnu" . "http://mirrors.163.com/elpa/gnu/"))
   (add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/") t)
-  (package-initialize nil)
   (package-refresh-contents)
 
   (mapc (lambda (elem)
@@ -60,6 +59,9 @@
   (require 'files)
 
   (modify-frame-parameters nil '((wait-for-wm . nil)))
+  (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
+  (add-to-list 'default-frame-alist '(ns-appearance . dark))
+
 
   (tool-bar-mode -1)
   ;; (menu-bar-mode -1)
@@ -148,6 +150,8 @@
         (setenv extra-env (symbol-name (ad-get-arg 0))))
       ad-do-it))
 
+  (setenv "LC_ALL" "en_US.UTF-8")
+  (setenv "LANG" "en_US.UTF-8")
 #+END_SRC
 
 

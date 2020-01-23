@@ -41,7 +41,8 @@
 
 
   ;; I know that string is in my Emacs somewhere!
-  (use-package cl)
+  (use-package cl
+    :ensure nil)
   (defcustom search-all-buffers-ignored-files (list (rx-to-string '(and bos (or ".bash_history" "TAGS") eos)))
     "Files to ignore when searching buffers via \\[search-all-buffers]."
     :type 'editable-list)
