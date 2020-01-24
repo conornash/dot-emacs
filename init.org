@@ -39,12 +39,13 @@
         use-package-verbose t)
 
   ;; Emacs bug
-  (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+  (if (and (< emacs-major-version 27) (< emacs-minor-version 3))
+      (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
   ;;(setq debug-on-error t)
   (package-initialize t)
   ;; (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/") t)
   (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
-  (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/")) ;; Goes down often
+  (add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/")) ;; Goes down often
   ;; (add-to-list 'package-archives '("gnu" . "http://mirrors.163.com/elpa/gnu/"))
   (add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/") t)
   (package-refresh-contents)
@@ -65,7 +66,8 @@
 
   (tool-bar-mode -1)
   ;; (menu-bar-mode -1)
-  (scroll-bar-mode -1)
+  (unless (eq (window-system) nil)
+    (scroll-bar-mode -1))
 
   ;; Don't say yes or no, just y or n
   (fset 'yes-or-no-p 'y-or-n-p)
