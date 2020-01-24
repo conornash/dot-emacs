@@ -7,13 +7,17 @@
     (unless helm-source-buffers-list
       (setq helm-source-buffers-list
             (helm-make-source "Buffers" 'helm-source-buffers)))
-    (let ((helm-ff-transformer-show-only-basename nil))
+    (let ((helm-ff-transformer-show-only-basename nil)
+          (helm-search-all-files (case (window-system)
+                                   ('ns helm-source-mac-spotlight)
+                                   (nil helm-source-locate)
+                                   (t helm-source-locate))))
       (helm :sources '(helm-source-buffers-list
                        helm-source-recentf
                        helm-source-bookmarks
                        helm-source-files-in-current-dir
                        helm-source-buffer-not-found
-                       helm-source-mac-spotlight)
+                       helm-search-all-files)
             :buffer "*Where would you like to go?*")))
 
   (defun conor-helm-insert ()
