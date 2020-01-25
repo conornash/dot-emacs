@@ -36,15 +36,16 @@
         use-package-verbose t)
 
   (case (window-system)
-    ('ns (setq mac-command-modifier 'control
-               mac-control-modifier 'super
-               mac-option-modifier 'meta)
-         (menu-bar-mode -1)
-         (scroll-bar-mode -1)
-         (tool-bar-mode -1))
-    (nil (menu-bar-mode -1)
-         (tool-bar-mode -1)))
-
+    ('ns
+     (setq mac-command-modifier 'control
+           mac-control-modifier 'super
+           mac-option-modifier 'meta)
+     (menu-bar-mode -1)
+     (scroll-bar-mode -1)
+     (tool-bar-mode -1))
+    (t
+     (menu-bar-mode -1)
+     (tool-bar-mode -1)))
 
   ;; Emacs bug
   (if (and (< emacs-major-version 27) (< emacs-minor-version 3))
@@ -1365,14 +1366,14 @@ This is a system that makes `helm-apropos` more useful
 
 
 ** vterm
+Currently causes Emacs in terminal to segfault
 #+BEGIN_SRC  emacs-lisp :tangle yes
-  (use-package vterm
-    :commands (vterm)
-    :config
-    (add-hook 'vterm-mode-hook
-              '(lambda ()
-                 (define-key vterm-mode-map (kbd "C-y") 'vterm-yank))))
-
+  ;; (use-package vterm
+  ;;   :commands (vterm)
+  ;;   :config
+  ;;   (add-hook 'vterm-mode-hook
+  ;;             '(lambda ()
+  ;;                (define-key vterm-mode-map (kbd "C-y") 'vterm-yank))))
 #+END_SRC
 
 ** YAML
