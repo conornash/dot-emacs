@@ -25,9 +25,6 @@
         file-name-handler-alist nil
         inhibit-startup-screen t
         load-prefer-newer t
-        mac-command-modifier 'control
-        mac-control-modifier 'super
-        mac-option-modifier 'meta
         mac-pass-command-to-system nil
         max-lisp-eval-depth 60000
         max-specpdl-size 13000
@@ -37,6 +34,17 @@
         save-interprogram-paste-before-kill t
         use-package-always-ensure t
         use-package-verbose t)
+
+  (case (window-system)
+    ('ns (setq mac-command-modifier 'control
+               mac-control-modifier 'super
+               mac-option-modifier 'meta)
+         (menu-bar-mode -1)
+         (scroll-bar-mode -1)
+         (tool-bar-mode -1))
+    (nil (menu-bar-mode -1)
+         (tool-bar-mode -1)))
+
 
   ;; Emacs bug
   (if (and (< emacs-major-version 27) (< emacs-minor-version 3))
@@ -62,12 +70,6 @@
   (modify-frame-parameters nil '((wait-for-wm . nil)))
   (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
   (add-to-list 'default-frame-alist '(ns-appearance . dark))
-
-
-  (tool-bar-mode -1)
-  ;; (menu-bar-mode -1)
-  (unless (eq (window-system) nil)
-    (scroll-bar-mode -1))
 
   ;; Don't say yes or no, just y or n
   (fset 'yes-or-no-p 'y-or-n-p)
