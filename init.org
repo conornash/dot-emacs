@@ -35,15 +35,14 @@
         use-package-always-ensure t
         use-package-verbose t)
 
-  (case (window-system)
+  (pcase (window-system)
     ('ns
      (setq mac-command-modifier 'control
            mac-control-modifier 'super
            mac-option-modifier 'meta)
-     (menu-bar-mode -1)
      (scroll-bar-mode -1)
      (tool-bar-mode -1))
-    (t
+    (_
      (menu-bar-mode -1)
      (tool-bar-mode -1)))
 
