@@ -330,13 +330,6 @@
 #+END_SRC
 
 
-* Python
- #+BEGIN_SRC emacs-lisp :tangle yes
-
-   (org-babel-load-file (expand-file-name "emacs24.python.org" user-emacs-directory))
-#+END_SRC
-
-
 * Rainbow Delimiters
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package rainbow-delimiters
@@ -354,6 +347,98 @@
                    '((t :foreground "#efefff")) 'face-defface-spec))
 
 #+END_SRC
+
+
+* Languages
+
+** Elisp functions
+#+BEGIN_SRC emacs-lisp :tangle yes
+  ;; Emacs Lisp
+  (org-babel-load-if-exists (expand-file-name "emacs24.elisp.org" user-emacs-directory))
+
+  ;; Hacky functions
+  (org-babel-load-if-exists (expand-file-name "emacs24.hacky.org" user-emacs-directory))
+
+#+END_SRC
+
+** ESS / R
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (org-babel-load-if-exists (expand-file-name "emacs24.ess.org" user-emacs-directory))
+ #+END_SRC
+
+
+
+** js2 stuff
+#+BEGIN_SRC emacs-lisp :tangle yes
+;; (org-babel-load-if-exists (expand-file-name "emacs24.js2.org" user-emacs-directory))
+
+ #+END_SRC
+
+
+** Lua
+#+begin_src emacs-lisp :tangle yes
+  (defun lua-print-current-line ()
+    (interactive)
+    (save-excursion
+      (lua-send-string (buffer-substring (line-beginning-position) (line-end-position)))))
+
+  (use-package lua-mode
+    :mode "\\.p8\\'" "\\.lua\\'"
+    :config
+    (setq lua-documentation-function 'eww)
+    :hook
+    (lua-mode . (lambda ()
+                  (turn-on-smartparens-strict-mode)
+                  (define-key lua-mode-map (kbd "M-\\") 'lua-show-process-buffer)
+                  (define-key lua-mode-map (kbd "C-c C-r") 'lua-send-region)
+                  (define-key lua-mode-map (kbd "C-c C-d") 'lua-search-documentation)
+                  (define-key lua-mode-map (kbd "C-c C-b") 'lua-send-buffer)
+                  (define-key lua-mode-map (kbd "C-|") 'eval-at-cursor)
+                  (define-key lua-mode-map (kbd "C-\\") 'lua-print-current-line)
+                  (define-key lua-mode-map (kbd "C-M-x") 'lua-send-defun)
+
+                  (define-key lua-mode-map (kbd "C-M-f") 'lua-forward-sexp)
+                  (define-key lua-mode-map (kbd "C-M-b") 'lua-backwards-to-block-begin-or-end))))
+#+end_src
+
+** Python
+ #+BEGIN_SRC emacs-lisp :tangle yes
+
+   (org-babel-load-file (expand-file-name "emacs24.python.org" user-emacs-directory))
+#+END_SRC
+
+
+
+
+** Scheme
+#+BEGIN_SRC emacs-lisp :tangle yes
+(org-babel-load-if-exists (expand-file-name "emacs24.scheme.org" user-emacs-directory))
+
+#+END_SRC
+
+
+** Smalltalk
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package shampoo
+    :commands (shampoo-connect shampoo-reconnect shampoo-disconnect)
+    :mode ( "\\.st\\'" . shampoo-code-mode))
+
+  (add-hook 'shampoo-code-mode-hook
+              '(lambda ()
+                 (rainbow-mode 1)
+                 (turn-on-smartparens-strict-mode)))
+
+ #+END_SRC
+
+
+** SQL
+#+BEGIN_SRC emacs-lisp :tangle yes
+(org-babel-load-if-exists (expand-file-name "emacs24.sql.org" user-emacs-directory))
+
+ #+END_SRC
+
+
+
 
 
 * Other Packages
@@ -486,7 +571,7 @@
       (interactive)
       (let* ((file (dired-get-filename nil t)))
         (message "Opening %s..." file)
-        (async-shell-command (format "open \"%s\"" file))    
+        (async-shell-command (format "open \"%s\"" file))
         (message "Opening %s done" file)))
 
     (defun dired-back-to-top ()
@@ -605,12 +690,6 @@
  #+END_SRC
 
 
-** ESS / R
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (org-babel-load-if-exists (expand-file-name "emacs24.ess.org" user-emacs-directory))
- #+END_SRC
-
-
 ** Expand region
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package expand-region
@@ -629,7 +708,6 @@
 
 ** FontAwesome
 #+BEGIN_SRC emacs-lisp :tangle yes
- 
   ;; Requires font to be downloaded from http://fontawesome.io/
   (use-package fontawesome)
 
@@ -711,7 +789,6 @@ This is a system that makes `helm-apropos` more useful
             #'(lambda ()
                 (pyenv-mode 1)
                 (rainbow-mode 1)
-                (smartparens-mode 1)
                 (turn-on-smartparens-strict-mode)
                 (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
                 (setq tab-width 4
@@ -753,13 +830,6 @@ This is a system that makes `helm-apropos` more useful
 (define-key isearch-mode-map (kbd "M-o") 'helm-swoop-from-isearch)
 (define-key isearch-mode-map (kbd "s-o") 'helm-swoop-from-isearch)
 (define-key isearch-mode-map (kbd "C-<return>") 'isearch-exit-other-end)
-
- #+END_SRC
-
-
-** js2 stuff
-#+BEGIN_SRC emacs-lisp :tangle yes
-;; (org-babel-load-if-exists (expand-file-name "emacs24.js2.org" user-emacs-directory))
 
  #+END_SRC
 
@@ -1106,17 +1176,10 @@ This is a system that makes `helm-apropos` more useful
 
   (add-hook 'restclient-mode-hook
             '(lambda ()
-               (smartparens-mode 1)))
+               (turn-on-smartparens-strict-mode)))
 
 
  #+END_SRC
-
-
-** Scheme
-#+BEGIN_SRC emacs-lisp :tangle yes
-(org-babel-load-if-exists (expand-file-name "emacs24.scheme.org" user-emacs-directory))
-
-#+END_SRC
 
 
 ** Shell
@@ -1143,27 +1206,6 @@ This is a system that makes `helm-apropos` more useful
 #+BEGIN_SRC emacs-lisp :tangle yes
 (show-paren-mode 1)
 #+END_SRC
-
-
-** Smalltalk
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package shampoo
-    :commands (shampoo-connect shampoo-reconnect shampoo-disconnect)
-    :mode ( "\\.st\\'" . shampoo-code-mode))
-
-  (add-hook 'shampoo-code-mode-hook
-              '(lambda ()
-                 (rainbow-mode 1)
-                 (smartparens-mode 1)))
-
- #+END_SRC
-
-
-** SQL
-#+BEGIN_SRC emacs-lisp :tangle yes
-(org-babel-load-if-exists (expand-file-name "emacs24.sql.org" user-emacs-directory))
-
- #+END_SRC
 
 
 ** SSH mode
@@ -1296,7 +1338,7 @@ This is a system that makes `helm-apropos` more useful
   (add-hook 'web-mode-hook
             '(lambda ()
                (rainbow-mode 1)
-               (smartparens-mode 1)))
+               (turn-on-smartparens-strict-mode)))
  #+END_SRC
 
 
@@ -1430,17 +1472,6 @@ Currently causes Emacs in terminal to segfault
   (eval-after-load "enriched"
     '(defun enriched-decode-display-prop (start end &optional param)
        (list start end)))
-
-#+END_SRC
-
-
-* Elisp functions
-#+BEGIN_SRC emacs-lisp :tangle yes
-  ;; Emacs Lisp
-  (org-babel-load-if-exists (expand-file-name "emacs24.elisp.org" user-emacs-directory))
-
-  ;; Hacky functions
-  (org-babel-load-if-exists (expand-file-name "emacs24.hacky.org" user-emacs-directory))
 
 #+END_SRC
 

@@ -1,4 +1,3 @@
-
 * Helper functions
   #+BEGIN_SRC emacs-lisp :tangle yes
 
@@ -10,7 +9,7 @@
           (when (and (= (sp-get ok :end) (sp-get next-thing :beg))
                      (equal (sp-get ok :op) (sp-get next-thing :op)))
             (goto-char (sp-get ok :end))
-            (when (looking-back " ")
+            (when (looking-back " " nil)
               (delete-char -1))))))
 
   #+END_SRC
