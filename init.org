@@ -440,6 +440,15 @@
 
 
 
+** Visual Basic
+#+begin_src emacs-lisp :tangle yes
+  (org-babel-load-if-exists (expand-file-name "emacs24.vb.org" user-emacs-directory))
+  (use-package visual-basic-mode
+    :mode "\\.frm\\'" "\\.vb6\\'" "\\.vb\\'"
+    :ensure nil)
+#+end_src
+
+
 * Other Packages
 
 ** Auto-compile
