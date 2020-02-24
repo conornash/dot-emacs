@@ -202,68 +202,6 @@
 
 * Org Mode (full config)
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (package-install 'org-plus-contrib)
-  (use-package org
-    :mode ("\\.org$" . org-mode)
-    :ensure org-plus-contrib
-    :diminish
-    ((org-src-mode . " ℹ")
-     (org-indent-mode . " ⭾"))
-    :bind (("<s-tab>" . org-force-cycle-archived)
-           ("<s-down>" . org-forward-element)
-           ("<s-up>" . org-backward-element)
-           ("<s-left>" . org-up-element)
-           ("<s-right>" . org-down-element)
-           ("M-<down>" . org-metadown)
-           ("M-<up>" . org-metaup)
-           ("C-c l" . org-store-link)
-           ("C-c C-l" . org-insert-link)
-           ("C-c C-x C-j" . org-clock-goto)
-           ("s-!" . insert-current-timestamp-inactive)
-           ("s-o" . org-open-at-point)
-           ("s-O" . org-open-at-point-global))
-
-    :config
-    (setq comment-start-skip "^\\s-*#\\(?: \\|$\\)"
-          org-agenda-deadline-faces '((1.0 . '(:foreground "#cd4740"))
-                                      (0.9 . '(:foreground "goldenrod1"))
-                                      (0.0 . default))
-          org-agenda-dim-blocked-tasks nil
-          ;; Follow the point in the agenda buffer with the org file in the other buffer
-          org-agenda-start-with-follow-mode t
-          ;; don't show scheduled tasks in the TODO view of the agenda
-          org-agenda-todo-ignore-scheduled nil
-          org-clock-out-remove-zero-time-clocks t
-          org-clock-persist 'history
-          org-confirm-babel-evaluate nil
-          org-deadline-warning-days 28
-          ;; We don't want to see days in the clock report
-          org-duration-format '((special . h:mm))
-          org-enforce-todo-dependencies t
-          org-fontify-whole-heading-line t
-          org-goto-interface 'outline-path-completion
-          org-hide-emphasis-markers t
-          org-list-allow-alphabetical t
-          org-log-done t
-          ;; Timestamp of changes to deadline using C-c C-d/C-s
-          org-log-redeadline 'time
-          org-log-reschedule 'time
-          org-outline-path-complete-in-steps nil
-          org-refile-targets '((org-agenda-files . (:maxlevel . 2))
-                               (org-agenda-files . (:todo . "NEXTACTION"))
-                               (nil . (:maxlevel . 2)))
-          org-refile-use-outline-path 'file
-          ;; In Sparse Trees, show the details below the matching entries
-          org-src-window-setup 'current-window
-          org-src-fontify-natively t
-          org-show-entry-below t
-          org-speed-commands-user '(("S" . widen) ("d" . org-deadline))
-          org-table-last-column-widths '(95 7 5)
-          org-use-property-inheritance t
-          org-use-speed-commands t
-          ))
-
-
   (org-babel-load-file (expand-file-name "emacs24.orgmode.org" user-emacs-directory))
 #+END_SRC
 
@@ -936,6 +874,7 @@ This is a system that makes `helm-apropos` more useful
     (add-hook 'with-editor-mode-hook
               '(lambda ()
                  (orgalist-mode 1)))
+
     (setq magit-push-always-verify nil
           magit-diff-use-overlays nil
           magit-revision-headers-format "Author:     %aN <%aE>
@@ -959,10 +898,17 @@ This is a system that makes `helm-apropos` more useful
                                        magit-insert-unpulled-from-upstream
                                        magit-insert-unpulled-from-pushremote
                                        magit-insert-unpushed-to-upstream
-                                       magit-insert-unpushed-to-pushremote)))
+                                       magit-insert-unpushed-to-pushremote))
+    (magit-todos-mode 1))
 
   (use-package forge
     :after magit)
+  (use-package magit-todos
+    :after magit
+    :config
+    (-map (lambda (elem)
+            (add-to-list 'magit-todos-keywords-list elem))
+          '("NEXTACTION" "INREVIEW" "DONE" "TRANSFERRED" "CANCELLED" "DUPLICATE")))
  #+END_SRC
 
 
