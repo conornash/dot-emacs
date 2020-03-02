@@ -98,6 +98,7 @@
            ("C-c l" . org-store-link)
            ("C-c C-l" . org-insert-link)
            ("C-c C-x C-j" . org-clock-goto)
+           ("C-c C-x C-r" . org-clock-report)
            ("s-!" . insert-current-timestamp-inactive)
            ("s-o" . org-open-at-point)
            ("s-O" . org-open-at-point-global))
@@ -120,6 +121,7 @@
           org-fontify-whole-heading-line t
           org-goto-interface 'outline-path-completion
           org-hide-emphasis-markers t
+          org-image-actual-width 700
           org-list-allow-alphabetical t
           org-log-done t
           ;; Timestamp of changes to deadline using C-c C-d/C-s
@@ -137,12 +139,35 @@
           org-table-last-column-widths '(95 7 5)
           org-use-property-inheritance t        
           org-use-speed-commands t
+          org-startup-with-inline-images t
           org-speed-commands-user '(("S" . widen)
                                     ("d" . org-deadline))        
           ;; We don't want to see days in the clock report
           org-time-clocksum-format '(:hours "%d" :require-hours t :minutes ":%02d" :require-minutes t)
           ;; don't show scheduled tasks in the TODO view of the agenda
           org-agenda-todo-ignore-scheduled nil))
+
+  (require 'org-yt (expand-file-name "org-yt.el" "~/.emacs.d/"))
+
+  (defun org-image-link (protocol link _description)
+    "Interpret LINK as base64-encoded image data."
+    (cl-assert (string-match "\\`img" protocol) nil
+               "Expected protocol type starting with img")
+    (let ((buf (url-retrieve-synchronously (concat (substring protocol 3) ":" link))))
+      (cl-assert buf nil
+                 "Download of image \"%s\" failed." link)
+      (with-current-buffer buf
+        (goto-char (point-min))
+        (re-search-forward "\r?\n\r?\n")
+        (buffer-substring-no-properties (point) (point-max)))))
+
+  (org-link-set-parameters
+   "imghttp"
+   :image-data-fun #'org-image-link)
+
+  (org-link-set-parameters
+   "imghttps"
+   :image-data-fun #'org-image-link)
 
   (org-clock-persistence-insinuate)
 

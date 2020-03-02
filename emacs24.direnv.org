@@ -5,7 +5,7 @@
 ;; Depends on s.el
 
 (defun direnv-data (dir)
-  ;; TODO: use dir for folder or smart current-project-dir variable
+  ;; NEXTACTION: use dir for folder or smart current-project-dir variable
   (let ((cmd (concat "$SHELL -i -c '" "cd " dir " && direnv export bash'")))
     (shell-command-to-string cmd)))
 

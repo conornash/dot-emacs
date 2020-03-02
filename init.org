@@ -605,6 +605,8 @@
 ** emojify
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package emojify)
+  ;; NEXTACTION: Inhibit emojify mode for certain buffers
+  ;; https://github.com/iqbalansari/emacs-emojify#configuring-the-buffers-where-emojify-mode-is-enabled
   (global-emojify-mode -1)
 
  #+END_SRC

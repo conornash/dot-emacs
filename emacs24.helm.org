@@ -16,8 +16,8 @@
                        helm-source-recentf
                        helm-source-bookmarks
                        helm-source-files-in-current-dir
-                       helm-source-buffer-not-found
-                       helm-search-all-files)
+                       helm-search-all-files
+                       helm-source-buffer-not-found)
             :buffer "*Where would you like to go?*")))
 
   (defun conor-helm-insert ()

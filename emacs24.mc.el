@@ -5,6 +5,7 @@
       '(
         backward-sexp
         beginning-of-visual-line
+        conor-helm-kill-ring-regsters
         cua-copy-region
         cua-cut-region
         cua-exchange-point-and-mark
@@ -31,6 +32,7 @@
         move-text-down
         move-text-up
         my-python-eval-line
+        my/smarter-move-beginning-of-line
         org-beginning-of-line
         org-delete-char
         org-end-of-line
@@ -81,13 +83,9 @@
         ess-eval-region-or-function-or-paragraph-and-step
         helm-apropos
         my/vsplit-last-buffer
-        org-cycle
         rotate-frame-anticlockwise
         rotate-frame-clockwise
-        sp-down-sexp
-        sql-end-of-statement
         text-scale-decrease
         text-scale-increase
-        view-emacs-news
         wdired-finish-edit
         ))
