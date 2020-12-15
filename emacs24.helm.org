@@ -14,9 +14,9 @@
                                    (t helm-source-locate))))
       (helm :sources '(helm-source-buffers-list
                        helm-source-recentf
+                       helm-search-all-files
                        helm-source-bookmarks
                        helm-source-files-in-current-dir
-                       helm-search-all-files
                        helm-source-buffer-not-found)
             :buffer "*Where would you like to go?*")))
 
@@ -118,9 +118,6 @@
   (use-package helm-for-files :ensure nil)
   (use-package helm-x-files :ensure nil)
   (use-package helm-ring :ensure nil)
-  (use-package helm-pass :ensure nil)
-  (use-package password-generator :ensure nil)
-  (use-package helm-lsp :ensure nil)
 
   (use-package helm-swoop
     :bind
@@ -136,6 +133,7 @@
           helm-dash-docsets-path "~/dotfiles/.docsets"
           helm-dash-common-docsets '("Python 3" "PostgreSQL" "Emacs Lisp" "R"
                                      "SQLAlchemy" "boto3" "Jinja" "Common Lisp"
+                                     "SQLite" "Requests"
                                      "Airflow" "BigQuery_Standard_SQL" "Flask"))
     (use-package helm-pydoc))
 
@@ -143,7 +141,7 @@
     :bind
     (("<f10>" . conor-helm-ag-here))
     :config
-    (setq helm-ag-base-command "/usr/local/bin/ag -U -z --hidden --nocolor --nogroup --path-to-ignore=~/.agignore "))
+    (setq helm-ag-base-command "ag -U -z --hidden --nocolor --nogroup --path-to-ignore=~/.agignore "))
 
   (use-package helm-rg
     :bind

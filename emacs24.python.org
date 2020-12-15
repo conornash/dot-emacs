@@ -71,73 +71,38 @@
       (mapc (lambda (hook)
               (add-hook hook func))
             hooks))
+
+    ;; Allow shims to work
+    (add-to-list 'exec-path "/Users/conornash/.pyenv/shims/" t)
   #+END_SRC
 
 
 
 * Python Mode
   #+BEGIN_SRC emacs-lisp :tangle yes
-    (use-package pyenv-mode
-      :hook 
-      (python-mode . (lambda ()
-                       (pyenv-mode 1)
-                       (rainbow-delimiters-mode 1)
-                       (rainbow-mode 1)
-                       (smartscan-mode 1)
-                       (turn-on-smartparens-strict-mode)
-
-                       ;; (anaconda-mode 1)
-                       (lsp-mode 1)
-
-                       (flycheck-mode 1)
-                       (flymake-mode 0)
-                       ;; (flycheck-add-next-checker 'python-flake8 'python-pylint)
-                       ;; (flycheck-add-next-checker 'python-pylint 'python-pycompile)
-                       ;; (flycheck-add-next-checker 'python-pycompile 'python-mypy)
-                       (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
-
-                       (guide-key/add-local-guide-key-sequence "C-c")
-
-                       (define-key python-mode-map (kbd "<M-up>") 'move-text-up)
-                       (define-key python-mode-map (kbd "<M-down>") 'move-text-down)
-
-                       (define-key python-mode-map (kbd "M-\\") 'display-python-instance)
-                       (define-key python-mode-map (kbd "C-|") 'eval-at-cursor)
-                       (define-key python-mode-map (kbd "C-\\") 'my-python-eval-line)
-
-                       (define-key python-mode-map (kbd "C-S-a") 'python-nav-beginning-of-statement)
-                       (define-key python-mode-map (kbd "C-a") 'beginning-of-visual-line)
-                       (define-key python-mode-map (kbd "C-S-e") 'python-nav-end-of-statement)
-                       (define-key python-mode-map (kbd "C-e") 'end-of-visual-line)
-
-                       (local-unset-key (kbd "C-c C-d"))
-
-                       (define-key python-mode-map (kbd "C-c C-r") 'conor-python-shell-send-region)
-                       ))
-
-      :config
-      (use-package pyenv-mode-auto)
-      (use-package py-isort)
-      ;; (use-package anaconda-mode)
-      (define-key pyenv-mode-map (kbd "C-c C-s") nil)
-      (define-key pyenv-mode-map (kbd "C-c s") 'pyenv-mode-set)
-      (setq-default tab-width 4
-                    jit-lock-defer-time 0.25
-                    lsp-prefer-flymake nil
-                    python-indent-offset 4
-                    python-shell-interpreter "ipython"
-                    python-shell-interpreter-args "--simple-prompt -i --"
-                    python-shell-prompt-detect-failure-warning t
-                    python-shell-completion-native t
-                    python-shell-prompt-regexp "In \\[[0-9]+\\]: "
-                    python-shell-prompt-output-regexp "Out\\[[0-9]+\\]: "
-                    python-shell-completion-native-disabled-interpreters '("pypy" "ipython" "jupyter")
-                    ;; I don't know if this is kind of hacky since we can't control it on other systems.
-                    python-shell-process-environment
-                    '("PYTHONIOENCODING='utf-8'"
-                      "LANG=en_US.UTF-8"
-                      "LC_ALL=en_US.UTF-8"
-                      "LC_LANG=en_US.UTF-8")))
+    (use-package pyenv-mode)
+    (use-package pyenv-mode-auto)
+    (use-package py-isort)
+    ;; (use-package anaconda-mode)
+    (define-key pyenv-mode-map (kbd "C-c C-s") nil)
+    (define-key pyenv-mode-map (kbd "C-c s") 'pyenv-mode-set)
+    (setq-default tab-width 4
+                  jit-lock-defer-time 0.25
+                  lsp-prefer-flymake nil
+                  python-indent-offset 4
+                  python-shell-interpreter "ipython"
+                  python-shell-interpreter-args "--simple-prompt -i --"
+                  python-shell-prompt-detect-failure-warning t
+                  python-shell-completion-native t
+                  python-shell-prompt-regexp "In \\[[0-9]+\\]: "
+                  python-shell-prompt-output-regexp "Out\\[[0-9]+\\]: "
+                  python-shell-completion-native-disabled-interpreters '("pypy" "ipython" "jupyter")
+                  ;; I don't know if this is kind of hacky since we can't control it on other systems.
+                  python-shell-process-environment
+                  '("PYTHONIOENCODING='utf-8'"
+                    "LANG=en_US.UTF-8"
+                    "LC_ALL=en_US.UTF-8"
+                    "LC_LANG=en_US.UTF-8"))
 
 
     (use-package python-pytest
@@ -145,4 +110,42 @@
       (:map python-mode-map
             ("C-c t" . python-pytest-popup)))
 
+    (add-hook 'python-mode-hook
+              '(lambda ()
+                     (pyenv-mode 1)
+                     (rainbow-delimiters-mode 1)
+                     (rainbow-mode 1)
+                     (smartscan-mode 1)
+                     (turn-on-smartparens-strict-mode)
+
+                     ;; (anaconda-mode 1)
+                     (lsp-mode 1)
+
+                     (flycheck-mode 1)
+                     (flymake-mode 0)
+                     ;; (flycheck-add-next-checker 'python-flake8 'python-pylint)
+                     ;; (flycheck-add-next-checker 'python-pylint 'python-pycompile)
+                     ;; (flycheck-add-next-checker 'python-pycompile 'python-mypy)
+                     (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
+
+                     (guide-key/add-local-guide-key-sequence "C-c")
+
+                     (define-key python-mode-map (kbd "<M-up>") 'move-text-up)
+                     (define-key python-mode-map (kbd "<M-down>") 'move-text-down)
+
+                     (define-key python-mode-map (kbd "M-\\") 'display-python-instance)
+                     (define-key python-mode-map (kbd "C-|") 'eval-at-cursor)
+                     (define-key python-mode-map (kbd "C-\\") 'my-python-eval-line)
+
+                     (define-key python-mode-map (kbd "C-S-a") 'python-nav-beginning-of-statement)
+                     (define-key python-mode-map (kbd "C-a") 'beginning-of-visual-line)
+                     (define-key python-mode-map (kbd "C-S-e") 'python-nav-end-of-statement)
+                     (define-key python-mode-map (kbd "C-e") 'end-of-visual-line)
+
+                     (local-unset-key (kbd "C-c C-d"))
+
+                     (define-key python-mode-map (kbd "C-c C-r") 'conor-python-shell-send-region)
+
+                     (define-key python-mode-map (kbd "M-.") 'lsp-find-definition)
+                     ))
   #+END_SRC

@@ -9,8 +9,17 @@
 #+END_SRC
 
 
+* Stan
+#+begin_src emacs-lisp :tangle yes
+  (use-package stan-mode)
+
+#+end_src
+
 * Load ESS
 #+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package poly-markdown
+    :mode "\\.Rmd\\'")
+
   (use-package ess
     :mode (("\\.R$" . R-mode)
            ("\\.Rprofile$" . R-mode))

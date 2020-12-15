@@ -11,12 +11,12 @@
        ("\\.psql\\'" . sql-mode)
        ("\\.mysql\\'" . sql-mode)
        ("\\.mssql\\'" . sql-mode)
-       ("\\.sql\\'" . sql-mode))
+       ("\\.sql\\'" . sql-mode)
+       ("\\.sql32\\'" . sql-mode))
 
       :config
       (setq sql-pop-to-buffer-after-send-region t
             sql-send-terminator t
-            sql-postgres-program "/usr/local/bin/psql"
             sql-postgres-options '("-P" "pager=off"))
 
       (define-key sql-mode-map (kbd "C-\\") 'conor-sql-send-paragraph)

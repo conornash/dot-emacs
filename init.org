@@ -12,6 +12,7 @@
 #+SETUPFILE: theme-readtheorg.setup
 
 
+
 * Setup system
 ** Initial requirements
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -28,14 +29,17 @@
         mac-pass-command-to-system nil
         max-lisp-eval-depth 60000
         max-specpdl-size 13000
-        package--init-file-ensured t
-        package-enable-at-startup nil
         ring-bell-function 'ignore
-        save-interprogram-paste-before-kill t
-        use-package-always-ensure t
-        use-package-verbose t)
+        save-interprogram-paste-before-kill t)
 
   (pcase (window-system)
+    ('x
+     (setq x-meta-keysym 'ctrl
+           x-alt-keysym  'meta
+           x-ctrl-keysym 'super)
+     (menu-bar-mode -1)
+     (scroll-bar-mode -1)
+     (tool-bar-mode -1))
     ('ns
      (setq mac-command-modifier 'control
            mac-control-modifier 'super
@@ -50,26 +54,6 @@
   (if (and (< emacs-major-version 27) (< emacs-minor-version 3))
       (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
   ;;(setq debug-on-error t)
-  (package-initialize t)
-  ;; (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/") t)
-  (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
-  (add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/")) ;; Goes down often
-  ;; (add-to-list 'package-archives '("gnu" . "http://mirrors.163.com/elpa/gnu/"))
-  (add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/") t)
-  (package-refresh-contents)
-
-  (mapc (lambda (elem)
-            (unless (package-installed-p elem)
-             (package-install elem)))
-          '(diminish use-package bind-key))
-
-  (eval-when-compile
-    (require 'use-package))
-  (require 'files)
-
-  (modify-frame-parameters nil '((wait-for-wm . nil)))
-  (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
-  (add-to-list 'default-frame-alist '(ns-appearance . dark))
 
   ;; Don't say yes or no, just y or n
   (fset 'yes-or-no-p 'y-or-n-p)
@@ -98,34 +82,50 @@
   ;; Recursive....
 
   ;; For further use-package calls
+#+END_SRC
+
+
+** Package Management
+#+begin_src emacs-lisp :tangle yes
+(setq package--init-file-ensured t
+      package-enable-at-startup nil
+      use-package-always-ensure t
+      use-package-verbose t)
+
+  (package-initialize t)
+  ;; (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/") t)
+  (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
+  (add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/")) ;; Goes down often
+  ;; (add-to-list 'package-archives '("gnu" . "http://mirrors.163.com/elpa/gnu/"))
+  (add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/") t)
+  (package-refresh-contents)
+
+  (mapc (lambda (elem)
+            (unless (package-installed-p elem)
+             (package-install elem)))
+          '(diminish use-package bind-key))
+
+  (eval-when-compile
+    (require 'use-package))
+  (require 'files)
+
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 5))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+
   (use-package bind-key)
   (use-package diminish)
-#+END_SRC
 
-
-** Fonts
-#+BEGIN_SRC emacs-lisp :tangle yes
-  ;; Requires font to be downloaded from https://www.fontsquirrel.com/fonts/inconsolata
-  (set-face-attribute 'default nil
-                      :family "Inconsolata"
-                      :height 120
-                      :weight 'normal
-                      :width 'normal)
-
-  (when (functionp 'set-fontset-font)
-    (set-fontset-font "fontset-default"
-                      'unicode
-                      (font-spec :family "Inconsolata"
-                                 :height 120
-                                 :width 'normal
-                                 :weight 'normal)))
-
-  ;; unicode-fonts package
-  (use-package unicode-fonts)
-  (use-package persistent-soft)
-  (unicode-fonts-setup)
-
-#+END_SRC
+#+end_src
 
 
 ** Environment Variables
@@ -206,46 +206,6 @@
 #+END_SRC
 
 
-* Language Server Protocol (LSP) / Flycheck
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package lsp-mode
-    :hook (python-mode . lsp)
-    :commands lsp
-    :config
-    (setq
-     lsp-prefer-flymake nil
-     lsp-pyls-server-command '("pipenv" "run" "pyls")
-     lsp-restart 'ignore)
-    (lsp-register-client
-     (make-lsp-client :new-connection (lsp-tramp-connection '("pipenv" "run" "pyls"))
-                      :major-modes '(python-mode)
-                      :remote? t
-                      :server-id 'pyls-remote)))
-
-  (use-package lsp-ui
-    :commands lsp-ui-mode
-    :config
-    (add-hook 'lsp-ui-doc-frame-hook
-              '(lambda ()
-                 (setq-local window-number-skip t)))
-    )
-
-  (use-package company-lsp :commands company-lsp)
-  (use-package helm-lsp :commands helm-lsp-workspace-symbol)
-  (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
-  ;; optionally if you want to use debugger
-  (use-package dap-mode)
-  ;; (use-package dap-LANGUAGE) to load the dap adapter for your language
-
-  (use-package flycheck
-    :bind (("s-[" . flycheck-previous-error)
-           ("s-]" . flycheck-next-error))
-    :config
-    (add-to-list 'flycheck-checkers 'lsp-ui))
-
-#+END_SRC
-
-
 * Helm
 #+BEGIN_SRC emacs-lisp :tangle yes
   (org-babel-load-file (expand-file-name "emacs24.helm.org" user-emacs-directory))
@@ -285,106 +245,6 @@
 
 #+END_SRC
 
-
-* Languages
-
-** Elisp functions
-#+BEGIN_SRC emacs-lisp :tangle yes
-  ;; Emacs Lisp
-  (org-babel-load-if-exists (expand-file-name "emacs24.elisp.org" user-emacs-directory))
-
-  ;; Hacky functions
-  (org-babel-load-if-exists (expand-file-name "emacs24.hacky.org" user-emacs-directory))
-
-#+END_SRC
-
-** ESS / R
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (org-babel-load-if-exists (expand-file-name "emacs24.ess.org" user-emacs-directory))
- #+END_SRC
-
-
-
-** js2 stuff
-#+BEGIN_SRC emacs-lisp :tangle yes
-;; (org-babel-load-if-exists (expand-file-name "emacs24.js2.org" user-emacs-directory))
-
- #+END_SRC
-
-
-** Lua
-#+begin_src emacs-lisp :tangle yes
-  (defun lua-print-current-line ()
-    (interactive)
-    (save-excursion
-      (lua-send-string (buffer-substring (line-beginning-position) (line-end-position)))))
-
-  (use-package lua-mode
-    :mode "\\.p8\\'" "\\.lua\\'"
-    :config
-    (setq lua-documentation-function 'eww)
-    :hook
-    (lua-mode . (lambda ()
-                  (turn-on-smartparens-strict-mode)
-                  (define-key lua-mode-map (kbd "M-\\") 'lua-show-process-buffer)
-                  (define-key lua-mode-map (kbd "C-c C-r") 'lua-send-region)
-                  (define-key lua-mode-map (kbd "C-c C-d") 'lua-search-documentation)
-                  (define-key lua-mode-map (kbd "C-c C-b") 'lua-send-buffer)
-                  (define-key lua-mode-map (kbd "C-|") 'eval-at-cursor)
-                  (define-key lua-mode-map (kbd "C-\\") 'lua-print-current-line)
-                  (define-key lua-mode-map (kbd "C-M-x") 'lua-send-defun)
-
-                  (define-key lua-mode-map (kbd "C-M-f") 'lua-forward-sexp)
-                  (define-key lua-mode-map (kbd "C-M-b") 'lua-backwards-to-block-begin-or-end))))
-#+end_src
-
-** Python
- #+BEGIN_SRC emacs-lisp :tangle yes
-
-   (org-babel-load-file (expand-file-name "emacs24.python.org" user-emacs-directory))
-#+END_SRC
-
-
-
-
-** Scheme
-#+BEGIN_SRC emacs-lisp :tangle yes
-(org-babel-load-if-exists (expand-file-name "emacs24.scheme.org" user-emacs-directory))
-
-#+END_SRC
-
-
-** Smalltalk
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package shampoo
-    :commands (shampoo-connect shampoo-reconnect shampoo-disconnect)
-    :mode ( "\\.st\\'" . shampoo-code-mode))
-
-  (add-hook 'shampoo-code-mode-hook
-              '(lambda ()
-                 (rainbow-mode 1)
-                 (turn-on-smartparens-strict-mode)))
-
- #+END_SRC
-
-
-** SQL
-#+BEGIN_SRC emacs-lisp :tangle yes
-(org-babel-load-if-exists (expand-file-name "emacs24.sql.org" user-emacs-directory))
-
- #+END_SRC
-
-
-
-
-
-** Visual Basic
-#+begin_src emacs-lisp :tangle yes
-  (org-babel-load-if-exists (expand-file-name "emacs24.vb.org" user-emacs-directory))
-  (use-package visual-basic-mode
-    :mode "\\.frm\\'" "\\.vb6\\'" "\\.vb\\'"
-    :ensure nil)
-#+end_src
 
 
 * Other Packages
@@ -506,6 +366,7 @@
 
     :config
     (setq ls-lisp-use-insert-directory-program nil
+          dired-dwim-target t
           dired-listing-switches "-alh")
 
     (add-hook 'dired-mode-hook
@@ -654,14 +515,6 @@
  #+END_SRC
 
 
-** FontAwesome
-#+BEGIN_SRC emacs-lisp :tangle yes
-  ;; Requires font to be downloaded from http://fontawesome.io/
-  (use-package fontawesome)
-
-#+END_SRC
-
-
 ** Find file at point
 #+BEGIN_SRC emacs-lisp :tangle yes
   (setq abbrev-file-name "~/.emacs.d/abbrev_defs"
@@ -681,6 +534,23 @@
           yas-hippie-try-expand))
 
  #+END_SRC
+
+
+** Flycheck
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package flycheck
+  :bind (("s-[" . flycheck-previous-error)
+         ("s-]" . flycheck-next-error))
+  )
+#+END_SRC
+
+
+** FontAwesome
+#+BEGIN_SRC emacs-lisp :tangle yes
+  ;; Requires font to be downloaded from http://fontawesome.io/
+  (use-package fontawesome)
+
+#+END_SRC
 
 
 ** Guide-key
@@ -713,6 +583,17 @@ This is a system that makes `helm-apropos` more useful
   (use-package helpful
     :commands (helpful-function helpful-variable)
     :bind (("C-h k" . helpful-key)))
+
+#+END_SRC
+
+
+** hmac
+#+BEGIN_SRC emacs-lisp :tangle yes :eval never
+  (use-package hmac
+    :commands (hmac)
+    )
+
+
 
 #+END_SRC
 
@@ -782,6 +663,14 @@ This is a system that makes `helm-apropos` more useful
  #+END_SRC
 
 
+** jq-mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package jq-mode
+    :mode "\\.json\\'" "\\.jsonl\\'")
+
+ #+END_SRC
+
+
 ** JSON
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package json-navigator)
@@ -809,10 +698,10 @@ This is a system that makes `helm-apropos` more useful
 
 ** Key Chord
 #+BEGIN_SRC emacs-lisp :tangle yes
-
 (use-package key-chord
   :config
   (key-chord-mode 1)
+  (key-chord-define-global "qq" 'org-capture)
   (key-chord-define-global "HH" 'helm-apropos)
   (key-chord-define-global "hh" 'helm-M-x)
   (key-chord-define-global "JJ" 'org-agenda)
@@ -867,6 +756,79 @@ This is a system that makes `helm-apropos` more useful
 #+END_SRC
 
 
+** LSP (Language Server Protocol)
+#+BEGIN_SRC emacs-lisp :tangle yes
+  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+  (setq lsp-keymap-prefix "s-l")
+
+  (use-package lsp-mode
+    :hook ((python-mode . lsp-deferred)
+           (lsp-mode . lsp-enable-which-key-integration))
+    :commands (lsp lsp-deferred) 
+    :config
+    (setq
+     lsp-diagnostics-provider :flycheck
+     lsp-pyls-plugins-pycodestyle-enabled t
+     lsp-pyls-plugins-pylint-args '("--disable=W0301,W0312,C0103,W191,E127,E1102,E203,C0326,W1201")
+     )
+
+    )
+
+  ;; optionally
+  (use-package lsp-ui
+    :commands lsp-ui-mode
+    :config
+    (setq lsp-ui-sideline-ignore-duplicate t)
+    (add-hook 'lsp-mode-hook 'lsp-ui-mode)
+    (add-hook 'lsp-ui-doc-frame-mode-hook
+              '(lambda ()
+                 (setq-local window-number-skip t))))
+
+  (use-package company-lsp :commands company-lsp)
+
+  (use-package helm-lsp
+    :commands helm-lsp-workspace-symbol
+    :config
+    (define-key lsp-mode-map [remap xref-find-apropos] #'helm-lsp-workspace-symbol))
+
+  (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
+  ;; optionally if you want to use debugger
+  ;; (use-package dap-mode)
+  ;; (use-package dap-LANGUAGE) to load the dap adapter for your language
+
+
+  ;; optional if you want which-key integration
+  (use-package which-key
+    :config
+    (which-key-mode))
+
+
+
+  (defvar lsp-docker-client-configs
+    (list
+     (list :server-id 'bash-ls :docker-server-id 'bashls-docker :server-command "bash-language-server start")
+     ;; (list :server-id 'clangd :docker-server-id 'clangd-docker :server-command "ccls")
+     (list :server-id 'css-ls :docker-server-id 'cssls-docker :server-command "css-languageserver --stdio")
+     ;; (list :server-id 'dockerfile-ls :docker-server-id 'dockerfilels-docker :server-command "docker-langserver --stdio")
+     (list :server-id 'gopls :docker-server-id 'gopls-docker :server-command "gopls")
+     (list :server-id 'html-ls :docker-server-id 'htmls-docker :server-command "html-languageserver --stdio")
+     (list :server-id 'pyls :docker-server-id 'pyls-docker :server-command "pyls")
+     ;; (list :server-id 'ts-ls :docker-server-id 'tsls-docker :server-command "typescript-language-server --stdio")
+     ))
+
+  (defvar lsp-docker-client-packages
+    '(lsp-css lsp-clients lsp-bash lsp-go lsp-pyls lsp-html lsp-typescript
+              lsp-terraform lsp-cpp))
+
+  (use-package lsp-docker)
+  (lsp-docker-init-clients
+   :path-mappings '(("/Users/conornash/Dropbox/Documents" . "/projects"))
+   :client-packages lsp-docker-client-packages
+   :client-configs lsp-docker-client-configs)
+#+END_SRC
+
+
+
 ** Magit
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package magit
@@ -878,6 +840,7 @@ This is a system that makes `helm-apropos` more useful
                  (orgalist-mode 1)))
 
     (setq magit-push-always-verify nil
+          magit-diff-refine-hunk t
           magit-diff-use-overlays nil
           magit-revision-headers-format "Author:     %aN <%aE>
   AuthorDate: %ad
@@ -933,74 +896,7 @@ This is a system that makes `helm-apropos` more useful
 
     :config
     (setq mc/list-file (expand-file-name "emacs24.mc.el" user-emacs-directory)
-          mc/cmds-to-run-for-all
-          '(
-            backward-sexp
-            beginning-of-visual-line
-            cua-copy-region
-            cua-cut-region
-            cua-exchange-point-and-mark
-            cua-paste
-            djcb-duplicate-line
-            downcase-region
-            electric-newline-and-maybe-indent
-            end-of-buffer
-            end-of-visual-line
-            ess-smart-S-assign
-            ess-smart-comma
-            ess-yank
-            forward-sexp
-            hungry-delete-backward
-            hungry-delete-forward
-            iregister-copy-to-register-kill
-            iregister-point-or-text-to-register-kill-ring-save
-            jedi:dot-complete
-            kill-region
-            kill-sexp
-            kill-visual-line
-            move-text-down
-            move-text-up
-            my-python-eval-line
-            org-beginning-of-line
-            org-delete-char
-            org-end-of-line
-            org-force-self-insert
-            org-self-insert-command
-            paredit-backward
-            paredit-backward-kill-word
-            paredit-close-round
-            paredit-doublequote
-            paredit-forward
-            paredit-forward-delete
-            paredit-forward-kill-word
-            paredit-forward-slurp-sexp
-            paredit-join-sexps
-            paredit-kill
-            paredit-newline
-            paredit-open-round
-            paredit-open-square
-            paredit-semicolon
-            paredit-splice-sexp
-            paredit-wrap-round
-            python-indent-dedent-line-backspace
-            python-indent-electric-colon
-            sp--self-insert-command
-            sp-backward-delete-char
-            sp-backward-kill-word
-            sp-backward-sexp
-            sp-delete-char
-            sp-down-sexp
-            sp-forward-sexp
-            sp-forward-slurp-sexp
-            sp-kill-hybrid-sexp
-            sp-kill-sexp
-            sp-kill-word
-            sp-remove-active-pair-overlay
-            sp-splice-sexp
-            sp-up-sexp
-            transpose-words
-            yas-expand
-            )))
+          mc/insert-numbers-default 1))
 
  #+END_SRC
 
@@ -1029,6 +925,13 @@ This is a system that makes `helm-apropos` more useful
           paradox-column-width-package 25
           ;; Auth token in private.org
           paradox-execute-asynchronously t))
+
+ #+END_SRC
+
+
+** Powershell
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package powershell)
 
  #+END_SRC
 
@@ -1128,7 +1031,9 @@ This is a system that makes `helm-apropos` more useful
   (use-package restclient
     :mode ("\\.http\\'" . restclient-mode)
     :config
-    (use-package restclient-helm))
+    (use-package restclient-helm)
+    ;; (use-package restclient-jq :ensure nil)
+    (use-package ob-restclient))
 
   (add-hook 'restclient-mode-hook
             '(lambda ()
@@ -1216,6 +1121,12 @@ This is a system that makes `helm-apropos` more useful
           remote-file-name-inhibit-cache nil
           tramp-completion-reread-directory-timeout nil)
     (defalias 'tcac 'tramp-cleanup-all-connections))
+ #+END_SRC
+
+
+** Terraform
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package terraform-mode)
  #+END_SRC
 
 
@@ -1413,6 +1324,106 @@ Currently causes Emacs in terminal to segfault
  #+END_SRC
 
 
+* Languages
+** Elisp functions
+#+BEGIN_SRC emacs-lisp :tangle yes
+  ;; Emacs Lisp
+  (org-babel-load-if-exists (expand-file-name "emacs24.elisp.org" user-emacs-directory))
+
+  ;; Hacky functions
+  (org-babel-load-if-exists (expand-file-name "emacs24.hacky.org" user-emacs-directory))
+
+#+END_SRC
+
+** ESS / R
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (org-babel-load-if-exists (expand-file-name "emacs24.ess.org" user-emacs-directory))
+ #+END_SRC
+
+
+
+** js2 stuff
+#+BEGIN_SRC emacs-lisp :tangle yes
+;; (org-babel-load-if-exists (expand-file-name "emacs24.js2.org" user-emacs-directory))
+
+ #+END_SRC
+
+
+** Lua
+#+begin_src emacs-lisp :tangle yes
+  (defun lua-print-current-line ()
+    (interactive)
+    (save-excursion
+      (lua-send-string (buffer-substring (line-beginning-position) (line-end-position)))))
+
+  (use-package lua-mode
+    :mode "\\.p8\\'" "\\.lua\\'"
+    :config
+    (setq lua-documentation-function 'eww)
+    :hook
+    (lua-mode . (lambda ()
+                  (turn-on-smartparens-strict-mode)
+                  (define-key lua-mode-map (kbd "M-\\") 'lua-show-process-buffer)
+                  (define-key lua-mode-map (kbd "C-c C-r") 'lua-send-region)
+                  (define-key lua-mode-map (kbd "C-c C-d") 'lua-search-documentation)
+                  (define-key lua-mode-map (kbd "C-c C-b") 'lua-send-buffer)
+                  (define-key lua-mode-map (kbd "C-|") 'eval-at-cursor)
+                  (define-key lua-mode-map (kbd "C-\\") 'lua-print-current-line)
+                  (define-key lua-mode-map (kbd "C-M-x") 'lua-send-defun)
+
+                  (define-key lua-mode-map (kbd "C-M-f") 'lua-forward-sexp)
+                  (define-key lua-mode-map (kbd "C-M-b") 'lua-backwards-to-block-begin-or-end))))
+#+end_src
+
+** Python
+ #+BEGIN_SRC emacs-lisp :tangle yes
+
+   (org-babel-load-file (expand-file-name "emacs24.python.org" user-emacs-directory))
+#+END_SRC
+
+
+
+
+** Scheme
+#+BEGIN_SRC emacs-lisp :tangle yes
+(org-babel-load-if-exists (expand-file-name "emacs24.scheme.org" user-emacs-directory))
+
+#+END_SRC
+
+
+** Smalltalk
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package shampoo
+    :commands (shampoo-connect shampoo-reconnect shampoo-disconnect)
+    :mode ( "\\.st\\'" . shampoo-code-mode))
+
+  (add-hook 'shampoo-code-mode-hook
+              '(lambda ()
+                 (rainbow-mode 1)
+                 (turn-on-smartparens-strict-mode)))
+
+ #+END_SRC
+
+
+** SQL
+#+BEGIN_SRC emacs-lisp :tangle yes
+(org-babel-load-if-exists (expand-file-name "emacs24.sql.org" user-emacs-directory))
+
+ #+END_SRC
+
+
+
+
+
+** Visual Basic
+#+begin_src emacs-lisp :tangle yes
+  (org-babel-load-if-exists (expand-file-name "emacs24.vb.org" user-emacs-directory))
+  (use-package visual-basic-mode
+    :mode "\\.frm\\'" "\\.vb6\\'" "\\.vb\\'"
+    :ensure nil)
+#+end_src
+
+
 * Gnus
 #+BEGIN_SRC emacs-lisp :tangle yes
   (setq gnus-directory (expand-file-name "gnus" user-emacs-directory)
@@ -1523,9 +1534,48 @@ Doesn't seem to work correctly yet
 #+END_SRC
 
 
+** Fonts
+#+BEGIN_SRC emacs-lisp :tangle yes
+  ;; unicode-fonts package
+  (use-package unicode-fonts)
+  (use-package persistent-soft)
+  (unicode-fonts-setup)
+
+  ;; Requires font to be downloaded from https://www.fontsquirrel.com/fonts/inconsolata
+  (set-face-attribute 'default nil
+                      :family "Inconsolata")
+
+  ;; (when (functionp 'set-fontset-font)
+  ;;   (set-fontset-font "fontset-default"
+  ;;                     'unicode
+  ;;                     (font-spec :family "Inconsolata"
+  ;;                                :weight 'normal)))
+
+
+  (setq face-font-family-alternatives '(("Monospace" "Inconsolata")
+                                       ("Monospace Serif" "Courier 10 Pitch" "Consolas" "Courier Std" "FreeMono" "Nimbus Mono L")
+                                       ("Sans Serif" "Johnston ITC Std" "Effra")
+                                       ))
+#+END_SRC
+
+** Themes
+#+BEGIN_SRC emacs-lisp :tangle yes
+  ;; (use-package atom-dark-theme)
+  ;; (load-theme 'atom-dark t)
+
+
+  (setq zenburn-use-variable-pitch nil
+        zenburn-scale-org-headlines t
+        zenburn-scale-outline-headlines t)
+
+  (use-package zenburn-theme)
+  (load-theme 'zenburn t)
+
+  (modify-frame-parameters nil '((wait-for-wm . nil)))
+  (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
+  (add-to-list 'default-frame-alist '(ns-appearance . dark))
+#+END_SRC
 ** Activate global modes that aren't required during startup
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package atom-dark-theme)
-  (load-theme 'atom-dark t)
   (helm-mode 1)
 #+END_SRC

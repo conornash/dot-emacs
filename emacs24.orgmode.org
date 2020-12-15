@@ -273,6 +273,9 @@
     :config
     (setq org-reveal-root "http://cdn.jsdelivr.net/reveal.js/3.0.0/"))
 
+  (use-package org-protocol
+    :ensure nil)
+
   (use-package ox-taskjuggler
     :ensure nil)
 
@@ -320,12 +323,15 @@
 #+END_SRC
 
 
+
 * Org Babel
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package ob-async)
-  (use-package ob-restclient)
   (use-package ob-sql-mode)
   (use-package ein)
+  (use-package restclient)
+  (use-package ob-restclient
+    :after restclient)
 
   (org-babel-do-load-languages
    'org-babel-load-languages
