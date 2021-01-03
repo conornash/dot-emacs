@@ -102,7 +102,9 @@
            ("s-!" . insert-current-timestamp-inactive)
            ("s-o" . org-open-at-point)
            ("s-O" . org-open-at-point-global))
-
+    :chords
+    (("qq" . org-capture)
+     ("JJ" . org-agenda))
     :config
     (setq comment-start-skip "^\\s-*#\\(?: \\|$\\)"
           ;; org-agenda-deadline-faces '((1.0 . '(:foreground "#cd4740"))
@@ -127,6 +129,7 @@
           ;; Timestamp of changes to deadline using C-c C-d/C-s
           org-log-redeadline 'time
           org-log-reschedule 'time
+          org-modules '()
           org-outline-path-complete-in-steps nil
           org-refile-targets '((org-agenda-files . (:maxlevel . 2))
                                (org-agenda-files . (:todo . "NEXTACTION"))
@@ -327,7 +330,7 @@
 * Org Babel
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package ob-async)
-  (use-package ob-sql-mode)
+  ;; (use-package ob-sql-mode)
   (use-package ein)
   (use-package restclient)
   (use-package ob-restclient
@@ -344,8 +347,9 @@
      (org        . t)
      (python     . t)
      (shell      . t)
-     (sql        . t)
-     (sql-mode   . t)))
+     ;; (sql        . t)
+     ;; (sql-mode   . t)
+     ))
 
   ;; (org-babel-lob-ingest "~/Dropbox/emacs/emacs24/elisp/emacs24.Babel.org")
 

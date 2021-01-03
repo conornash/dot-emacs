@@ -5,7 +5,6 @@
       '(
         backward-sexp
         beginning-of-visual-line
-        conor-helm-kill-ring-regsters
         cua-copy-region
         cua-cut-region
         cua-exchange-point-and-mark
@@ -40,6 +39,7 @@
         org-self-insert-command
         org-shiftleft
         org-shiftright
+        org-self-insert-command
         paredit-backward
         paredit-backward-kill-word
         paredit-close-round
@@ -88,4 +88,5 @@
         text-scale-decrease
         text-scale-increase
         wdired-finish-edit
+        helm-M-x
         ))

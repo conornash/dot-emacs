@@ -12,12 +12,19 @@
 #+SETUPFILE: theme-readtheorg.setup
 
 
-
 * Setup system
 ** Initial requirements
 #+BEGIN_SRC emacs-lisp :tangle yes
+  (if (and (fboundp 'native-comp-available-p)
+       (native-comp-available-p))
+      (setq comp-speed 2
+            package-native-compile t))
+
+  (if (functionp 'json-serialize)
+      (setq comp-deferred-compilation t))
+
   (setq gc-cons-percentage 0.8
-        gc-cons-threshold (* 500 (* 1024 1024)))
+        gc-cons-threshold (* 1000 (* 1024 1024)))
 
   (defvar doom--file-name-handler-alist file-name-handler-alist)
   (setq apropos-do-all t
@@ -32,6 +39,7 @@
         ring-bell-function 'ignore
         save-interprogram-paste-before-kill t)
 
+
   (pcase (window-system)
     ('x
      (setq x-meta-keysym 'ctrl
@@ -41,6 +49,11 @@
      (scroll-bar-mode -1)
      (tool-bar-mode -1))
     ('ns
+     (eval-when-compile
+       (defvar x-alt-keysym)
+       (defvar x-ctrl-keysym)
+       (defvar x-meta-keysym)
+       )
      (setq mac-command-modifier 'control
            mac-control-modifier 'super
            mac-option-modifier 'meta)
@@ -79,18 +92,16 @@
   ;; (setq-default header-line-format mode-line-format)
   ;; (setq-default mode-line-format nil)
 
-  ;; Recursive....
 
-  ;; For further use-package calls
 #+END_SRC
 
 
 ** Package Management
 #+begin_src emacs-lisp :tangle yes
-(setq package--init-file-ensured t
-      package-enable-at-startup nil
-      use-package-always-ensure t
-      use-package-verbose t)
+  (setq package--init-file-ensured t
+        package-enable-at-startup nil
+        use-package-always-ensure t
+        use-package-verbose t)
 
   (package-initialize t)
   ;; (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/") t)
@@ -101,30 +112,35 @@
   (package-refresh-contents)
 
   (mapc (lambda (elem)
-            (unless (package-installed-p elem)
-             (package-install elem)))
-          '(diminish use-package bind-key))
+          (unless (package-installed-p elem)
+            (package-install elem)))
+        '(diminish use-package bind-key))
 
   (eval-when-compile
     (require 'use-package))
   (require 'files)
 
-(defvar bootstrap-version)
-(let ((bootstrap-file
-       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-      (bootstrap-version 5))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
+  (defvar bootstrap-version)
+  (let ((bootstrap-file
+         (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+        (bootstrap-version 5))
+    (unless (file-exists-p bootstrap-file)
+      (with-current-buffer
+          (url-retrieve-synchronously
+           "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+           'silent 'inhibit-cookies)
+        (goto-char (point-max))
+        (eval-print-last-sexp)))
+    (load bootstrap-file nil 'nomessage))
 
   (use-package bind-key)
   (use-package diminish)
 
+  (use-package use-package-ensure-system-package
+    :ensure t)
+  (use-package use-package-chords
+    :ensure t
+    :config (key-chord-mode 1))
 #+end_src
 
 
@@ -235,7 +251,7 @@
                                        rainbow-delimiters-mode-disable)
     :config
     (face-spec-set 'rainbow-delimiters-depth-1-face
-                   '((t :foreground "Gray79")) 'face-defface-spec)
+                   '((t :foreground "#e2e2e2")) 'face-defface-spec)
     (face-spec-set 'rainbow-delimiters-depth-2-face
                    '((t :foreground "#e1ffe1")) 'face-defface-spec)
     (face-spec-set 'rainbow-delimiters-depth-3-face
@@ -347,9 +363,9 @@
 ** cua-mode
 #+BEGIN_SRC emacs-lisp :tangle yes
   (cua-mode t)
-  (setq cua-enable-cua-keys nil)
-  (setq cua-delete-selection nil)
-  (setq delete-active-region nil)
+  (setq cua-enable-cua-keys nil
+        cua-delete-selection nil
+        delete-active-region nil)
   (delete-selection-mode -1)
 
  #+END_SRC
@@ -465,10 +481,10 @@
 
 ** emojify
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package emojify)
-  ;; NEXTACTION: Inhibit emojify mode for certain buffers
-  ;; https://github.com/iqbalansari/emacs-emojify#configuring-the-buffers-where-emojify-mode-is-enabled
-  (global-emojify-mode -1)
+  ;; (use-package emojify)
+  ;; ;; NEXTACTION: Inhibit emojify mode for certain buffers
+  ;; ;; https://github.com/iqbalansari/emacs-emojify#configuring-the-buffers-where-emojify-mode-is-enabled
+  ;; (global-emojify-mode -1)
 
  #+END_SRC
 
@@ -666,6 +682,7 @@ This is a system that makes `helm-apropos` more useful
 ** jq-mode
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package jq-mode
+    :ensure-system-package jq
     :mode "\\.json\\'" "\\.jsonl\\'")
 
  #+END_SRC
@@ -673,7 +690,6 @@ This is a system that makes `helm-apropos` more useful
 
 ** JSON
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package json-navigator)
   (use-package origami)
   (use-package json-mode
     :after origami
@@ -694,21 +710,6 @@ This is a system that makes `helm-apropos` more useful
                 (define-key json-mode-map (kbd "C-M-f") 'origami-forward-fold-same-level)
                 ))
  #+END_SRC
-
-
-** Key Chord
-#+BEGIN_SRC emacs-lisp :tangle yes
-(use-package key-chord
-  :config
-  (key-chord-mode 1)
-  (key-chord-define-global "qq" 'org-capture)
-  (key-chord-define-global "HH" 'helm-apropos)
-  (key-chord-define-global "hh" 'helm-M-x)
-  (key-chord-define-global "JJ" 'org-agenda)
-  (key-chord-define-global "jj" 'conor-helm-files))
-
-
-#+END_SRC
 
 
 ** Keyfreq
@@ -765,12 +766,6 @@ This is a system that makes `helm-apropos` more useful
     :hook ((python-mode . lsp-deferred)
            (lsp-mode . lsp-enable-which-key-integration))
     :commands (lsp lsp-deferred) 
-    :config
-    (setq
-     lsp-diagnostics-provider :flycheck
-     lsp-pyls-plugins-pycodestyle-enabled t
-     lsp-pyls-plugins-pylint-args '("--disable=W0301,W0312,C0103,W191,E127,E1102,E203,C0326,W1201")
-     )
 
     )
 
@@ -792,39 +787,17 @@ This is a system that makes `helm-apropos` more useful
     (define-key lsp-mode-map [remap xref-find-apropos] #'helm-lsp-workspace-symbol))
 
   (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
-  ;; optionally if you want to use debugger
-  ;; (use-package dap-mode)
-  ;; (use-package dap-LANGUAGE) to load the dap adapter for your language
-
 
   ;; optional if you want which-key integration
   (use-package which-key
     :config
     (which-key-mode))
 
-
-
-  (defvar lsp-docker-client-configs
-    (list
-     (list :server-id 'bash-ls :docker-server-id 'bashls-docker :server-command "bash-language-server start")
-     ;; (list :server-id 'clangd :docker-server-id 'clangd-docker :server-command "ccls")
-     (list :server-id 'css-ls :docker-server-id 'cssls-docker :server-command "css-languageserver --stdio")
-     ;; (list :server-id 'dockerfile-ls :docker-server-id 'dockerfilels-docker :server-command "docker-langserver --stdio")
-     (list :server-id 'gopls :docker-server-id 'gopls-docker :server-command "gopls")
-     (list :server-id 'html-ls :docker-server-id 'htmls-docker :server-command "html-languageserver --stdio")
-     (list :server-id 'pyls :docker-server-id 'pyls-docker :server-command "pyls")
-     ;; (list :server-id 'ts-ls :docker-server-id 'tsls-docker :server-command "typescript-language-server --stdio")
-     ))
-
   (defvar lsp-docker-client-packages
     '(lsp-css lsp-clients lsp-bash lsp-go lsp-pyls lsp-html lsp-typescript
               lsp-terraform lsp-cpp))
 
   (use-package lsp-docker)
-  (lsp-docker-init-clients
-   :path-mappings '(("/Users/conornash/Dropbox/Documents" . "/projects"))
-   :client-packages lsp-docker-client-packages
-   :client-configs lsp-docker-client-configs)
 #+END_SRC
 
 
@@ -864,7 +837,7 @@ This is a system that makes `helm-apropos` more useful
                                        magit-insert-unpulled-from-pushremote
                                        magit-insert-unpushed-to-upstream
                                        magit-insert-unpushed-to-pushremote))
-    (magit-todos-mode 1))
+    )
 
   (use-package forge
     :after magit)
@@ -916,6 +889,8 @@ This is a system that makes `helm-apropos` more useful
                 (define-key nov-mode-map (kbd "u") 'nov-goto-toc)
                 (set-window-margins (current-buffer) 1 1)))
 #+end_src
+
+
 ** Paradox Package Manager
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package paradox
@@ -1335,6 +1310,8 @@ Currently causes Emacs in terminal to segfault
 
 #+END_SRC
 
+
+
 ** ESS / R
 #+BEGIN_SRC emacs-lisp :tangle yes
   (org-babel-load-if-exists (expand-file-name "emacs24.ess.org" user-emacs-directory))
@@ -1374,6 +1351,8 @@ Currently causes Emacs in terminal to segfault
                   (define-key lua-mode-map (kbd "C-M-f") 'lua-forward-sexp)
                   (define-key lua-mode-map (kbd "C-M-b") 'lua-backwards-to-block-begin-or-end))))
 #+end_src
+
+
 
 ** Python
  #+BEGIN_SRC emacs-lisp :tangle yes
@@ -1452,9 +1431,44 @@ Currently causes Emacs in terminal to segfault
 
 * Keybindings
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (org-babel-load-if-exists (expand-file-name "emacs24.keybindings.org" user-emacs-directory))
-
- #+END_SRC
+  (define-key comint-mode-map "\C-a" 'comint-bol-or-process-mark)
+  (define-key query-replace-map (kbd "C-j") 'newline)
+  (global-set-key "\C-c\M-d" 'zero-pad)
+  (global-set-key "\C-cg" 'goto-line)
+  (global-set-key "\M-/" 'hippie-expand)
+  (global-set-key (kbd "<M-f9>") 'ffap-next)
+  (global-set-key (kbd "<f5>") 'compile)
+  (global-set-key (kbd "C-'") 'add-single-quoted-argument)
+  (global-set-key (kbd "C--") 'text-scale-decrease)
+  (global-set-key (kbd "C-=") 'text-scale-increase)
+  (global-set-key (kbd "C-M-!") 'conornash/shell-command-do-it)
+  (global-set-key (kbd "C-M-%") 'query-replace-regexp)
+  (global-set-key (kbd "C-M-,") 'previous-buffer)
+  (global-set-key (kbd "C-M-.") 'next-buffer)
+  (global-set-key (kbd "C-M-\\") 'indent-region)
+  (global-set-key (kbd "C-\"") 'add-quoted-argument)
+  (global-set-key (kbd "C-c !") 'org-time-stamp-inactive)
+  (global-set-key (kbd "C-c C-f") 'ffap-next)
+  (global-set-key (kbd "C-c M-g") 'linum-relative-mode)
+  (global-set-key (kbd "C-s-SPC") 'insert-char)
+  (global-set-key (kbd "C-s-\\") 'uncomment-region)
+  (global-set-key (kbd "C-x $") (lambda()(interactive)(insert "€")))
+  (global-set-key (kbd "C-x 2") 'my/vsplit-last-buffer)
+  (global-set-key (kbd "C-x 3") 'my/hsplit-last-buffer)
+  (global-set-key (kbd "M-(") 'nest-outer-round-parens)
+  (global-set-key (kbd "M-<down>") 'move-text-down)
+  (global-set-key (kbd "M-<up>") 'move-text-up)
+  (global-set-key (kbd "M-\\") 'comment-dwim)
+  (global-set-key (kbd "M-n") 'iregister-jump-to-next-marker)
+  (global-set-key (kbd "M-p") 'iregister-jump-to-previous-marker)
+  (global-set-key (kbd "s-!") 'insert-current-timestamp-inactive)
+  (global-set-key (kbd "s-SPC") 'set-rectangular-region-anchor)
+  (global-set-key (kbd "s-k") 'djcb-duplicate-line)
+  (global-set-key (kbd "s-q") nil)
+  (global-set-key [remap beginning-of-visual-line] 'my/smarter-move-beginning-of-line)
+  (global-set-key [remap goto-line] 'goto-line-with-feedback)
+  (global-unset-key (kbd "s-p"))
+#+END_SRC
 
 
 * Scratch buffer
@@ -1490,27 +1504,35 @@ Currently causes Emacs in terminal to segfault
 
 
 ** Declare functions for the byte-compiler
-Doesn't seem to work correctly yet
 #+BEGIN_SRC emacs-lisp :tangle yes
+
   (eval-when-compile
     (mapc
      (lambda (elem) (declare-function elem (find-lisp-object-file-name elem 'defun)))
      '(auto-compile-on-load-mode
        auto-compile-on-save-mode
+       ediff-copy-diff
+       ediff-get-region-contents
        exec-path-from-shell-initialize
        global-emojify-mode
        global-hungry-delete-mode
        global-undo-tree-mode
+       global-undo-tree-mode,
        guide-key-mode
        key-chord-define-global
        key-chord-mode
        keyfreq-autosave-mode
        keyfreq-mode
+       lua-send-string
        org-babel-load-file
+       term-char-mode
+       term-in-line-mode,
+       term-line-mode
        unicode-fonts-setup
        window-number-meta-mode
        yas-global-mode
-       )))
+       ))
+    )
 #+END_SRC
 
 

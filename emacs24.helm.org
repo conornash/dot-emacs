@@ -75,6 +75,10 @@
      ("<M-f1>" . helm-apropos)
      ("<C-f8>" . helm-global-mark-ring)
      ("C-M-y" . conor-helm-kill-ring-regsters))
+    :chords
+    (("HH" . helm-apropos)
+     ("hh" . helm-M-x)
+     ("jj" . conor-helm-files))
     :diminish (helm-mode . " ⎈")
     :config
     (setq
@@ -104,6 +108,8 @@
      helm-org-show-filename t
      helm-quick-update t
      helm-scroll-amount 8)
+
+    (helm-autoresize-mode 0)
 
     (add-hook 'helm-cleanup-hook
               #'(lambda ()
@@ -138,12 +144,14 @@
     (use-package helm-pydoc))
 
   (use-package helm-ag
+    :ensure-system-package (ag . the_silver_searcher)
     :bind
     (("<f10>" . conor-helm-ag-here))
     :config
     (setq helm-ag-base-command "ag -U -z --hidden --nocolor --nogroup --path-to-ignore=~/.agignore "))
 
   (use-package helm-rg
+    :ensure-system-package rg
     :bind
     (("<C-f10>" . helm-rg))
     :config
