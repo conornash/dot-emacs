@@ -21,11 +21,14 @@
     :mode "\\.Rmd\\'")
 
   (use-package ess
+    :ensure t
+    :init (require 'ess-site)
     :mode (("\\.R$" . R-mode)
            ("\\.Rprofile$" . R-mode))
 
     :hook ((ess-mode . (lambda ()
                          (smartparens-mode 1)
+                         (helm-mode 1)
                          (turn-on-smartparens-strict-mode)
                          (flycheck-mode 1)
                          (company-mode 1)
@@ -53,6 +56,7 @@
 
            (inferior-ess-mode . (lambda ()
                                   (smartparens-mode 1)
+                                  (helm-mode 1)
                                   (turn-on-smartparens-strict-mode)
                                   ;; (auto-complete-mode t)
                                   (company-mode 1)

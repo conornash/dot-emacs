@@ -211,6 +211,7 @@
 
   (add-hook 'org-src-mode-hook
             #'(lambda ()
+                (helm-mode 1)
                 (hack-dir-local-variables-non-file-buffer)))
 
   ;;
@@ -329,27 +330,25 @@
 
 * Org Babel
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package ob-async)
+  ;; (use-package ob-async)
   ;; (use-package ob-sql-mode)
-  (use-package ein)
   (use-package restclient)
   (use-package ob-restclient
     :after restclient)
 
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((R          . t)
-     (ein        . t)
-     (emacs-lisp . t)   
-     (js         . t)
-     (restclient . t)
-     (lisp       . t)
-     (org        . t)
-     (python     . t)
-     (shell      . t)
-     ;; (sql        . t)
-     ;; (sql-mode   . t)
-     ))
+  ;; (org-babel-do-load-languages
+  ;;  'org-babel-load-languages
+  ;;  '((R          . t)   
+  ;;    (emacs-lisp . t)   
+  ;;    (js         . t)
+  ;;    (restclient . t)
+  ;;    (lisp       . t)
+  ;;    (org        . t)
+  ;;    (python     . t)
+  ;;    (shell      . t)
+  ;;    ;; (sql        . t)
+  ;;    ;; (sql-mode   . t)
+  ;;    ))
 
   ;; (org-babel-lob-ingest "~/Dropbox/emacs/emacs24/elisp/emacs24.Babel.org")
 

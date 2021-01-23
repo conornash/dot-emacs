@@ -767,6 +767,12 @@ This is a system that makes `helm-apropos` more useful
            (lsp-mode . lsp-enable-which-key-integration))
     :commands (lsp lsp-deferred) 
 
+    :config
+    (setq
+     lsp-diagnostics-provider :flycheck
+     lsp-pyls-plugins-pycodestyle-enabled t
+     lsp-pyls-plugins-pylint-args '("--disable=W0301,W0312,C0103,W191,E127,E1102,E203,C0326,W1201")
+     )
     )
 
   ;; optionally
@@ -793,11 +799,27 @@ This is a system that makes `helm-apropos` more useful
     :config
     (which-key-mode))
 
+  (defvar lsp-docker-client-configs
+    (list
+     (list :server-id 'bash-ls :docker-server-id 'bashls-docker :server-command "bash-language-server start")
+     ;; (list :server-id 'clangd :docker-server-id 'clangd-docker :server-command "ccls")
+     (list :server-id 'css-ls :docker-server-id 'cssls-docker :server-command "css-languageserver --stdio")
+     ;; (list :server-id 'dockerfile-ls :docker-server-id 'dockerfilels-docker :server-command "docker-langserver --stdio")
+     (list :server-id 'gopls :docker-server-id 'gopls-docker :server-command "gopls")
+     (list :server-id 'html-ls :docker-server-id 'htmls-docker :server-command "html-languageserver --stdio")
+     (list :server-id 'pyls :docker-server-id 'pyls-docker :server-command "pyls")
+     ;; (list :server-id 'ts-ls :docker-server-id 'tsls-docker :server-command "typescript-language-server --stdio")
+     ))
+
   (defvar lsp-docker-client-packages
     '(lsp-css lsp-clients lsp-bash lsp-go lsp-pyls lsp-html lsp-typescript
               lsp-terraform lsp-cpp))
 
   (use-package lsp-docker)
+  (lsp-docker-init-clients
+   :path-mappings '(("/Users/conornash/Dropbox/Documents" . "/projects"))
+   :client-packages lsp-docker-client-packages
+   :client-configs lsp-docker-client-configs)
 #+END_SRC
 
 
@@ -1105,18 +1127,13 @@ This is a system that makes `helm-apropos` more useful
  #+END_SRC
 
 
-** Undo Tree
+** Undo Fu
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package undo-tree
-    :bind (("C-/" . undo-tree-undo)
-           ("C-?" . undo-tree-redo))
-    :diminish
-    (undo-tree-mode . " ")
-    :config
-    (global-undo-tree-mode 1))
+  (use-package undo-fu
+    :bind (("C-/" . undo-fu-only-undo)
+           ("C-?" . undo-fu-only-redo)))
 
  #+END_SRC
-
 
 ** Uniquify
 #+BEGIN_SRC emacs-lisp :tangle yes
