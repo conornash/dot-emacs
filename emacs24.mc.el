@@ -9,6 +9,8 @@
         cua-cut-region
         cua-exchange-point-and-mark
         cua-paste
+        cua-paste-pop
+        cycle-spacing
         djcb-duplicate-line
         downcase-region
         electric-newline-and-maybe-indent
@@ -37,9 +39,9 @@
         org-end-of-line
         org-force-self-insert
         org-self-insert-command
+        org-self-insert-command
         org-shiftleft
         org-shiftright
-        org-self-insert-command
         paredit-backward
         paredit-backward-kill-word
         paredit-close-round
@@ -67,12 +69,15 @@
         sp-forward-sexp
         sp-forward-slurp-sexp
         sp-kill-hybrid-sexp
+        sp-kill-region
         sp-kill-sexp
         sp-kill-word
         sp-remove-active-pair-overlay
         sp-splice-sexp
+        sp-split-sexp
         sp-up-sexp
         transpose-words
+        undo-fu-only-undo
         yas-expand
         ))
 
@@ -81,6 +86,7 @@
         buf-move-left
         conor-helm-files
         ess-eval-region-or-function-or-paragraph-and-step
+        helm-M-x
         helm-apropos
         my/vsplit-last-buffer
         rotate-frame-anticlockwise
@@ -88,5 +94,4 @@
         text-scale-decrease
         text-scale-increase
         wdired-finish-edit
-        helm-M-x
         ))

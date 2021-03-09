@@ -9,6 +9,7 @@
       (("\\.hql\\'" . sql-mode)
        ("\\.bqql\\'" . sql-mode)
        ("\\.psql\\'" . sql-mode)
+       ("\\.ssql\\'" . sql-mode)
        ("\\.mysql\\'" . sql-mode)
        ("\\.mssql\\'" . sql-mode)
        ("\\.sql\\'" . sql-mode)

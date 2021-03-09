@@ -137,10 +137,10 @@
     :config
     (setq helm-dash-browser-func 'eww
           helm-dash-docsets-path "~/dotfiles/.docsets"
-          helm-dash-common-docsets '("Python 3" "PostgreSQL" "Emacs Lisp" "R"
-                                     "SQLAlchemy" "boto3" "Jinja" "Common Lisp"
-                                     "SQLite" "Requests"
-                                     "Airflow" "BigQuery_Standard_SQL" "Flask"))
+          helm-dash-common-docsets '( "AWS_Redshift_SQL_Reference" "Airflow" "BigQuery_Standard_SQL" 
+                                     "Flask" "Jinja" "MySQL" "Org_Mode" "Pandas"
+                                     "PostgreSQL" "Python 3" "R" "Requests" "SQLAlchemy"
+                                     "SQLite" "boto3" "ggplot2" "ms-sql" "postgis"))
     (use-package helm-pydoc))
 
   (use-package helm-ag

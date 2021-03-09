@@ -147,5 +147,6 @@
                      (define-key python-mode-map (kbd "C-c C-r") 'conor-python-shell-send-region)
 
                      (define-key python-mode-map (kbd "M-.") 'lsp-find-definition)
+                     (define-key python-mode-map (kbd "s-.") 'lsp-find-references)
                      ))
   #+END_SRC
