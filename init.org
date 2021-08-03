@@ -23,14 +23,13 @@
   (if (functionp 'json-serialize)
       (setq comp-deferred-compilation t))
 
-  (setq gc-cons-percentage 0.8
-        gc-cons-threshold (* 1000 (* 1024 1024)))
+  ;; (setq gc-cons-percentage (expt 10 -4)
+  ;;       gc-cons-threshold (expt 2 30))
 
   (defvar doom--file-name-handler-alist file-name-handler-alist)
   (setq apropos-do-all t
         delete-active-region 'kill
         enable-recursive-minibuffers t
-        file-name-handler-alist nil
         inhibit-startup-screen t
         load-prefer-newer t
         mac-pass-command-to-system nil
@@ -65,7 +64,7 @@
 
   ;; Emacs bug
   (if (and (< emacs-major-version 27) (< emacs-minor-version 3))
-      (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
+     (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
   ;;(setq debug-on-error t)
 
   ;; Don't say yes or no, just y or n
@@ -120,18 +119,18 @@
     (require 'use-package))
   (require 'files)
 
-  (defvar bootstrap-version)
-  (let ((bootstrap-file
-         (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-        (bootstrap-version 5))
-    (unless (file-exists-p bootstrap-file)
-      (with-current-buffer
-          (url-retrieve-synchronously
-           "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-           'silent 'inhibit-cookies)
-        (goto-char (point-max))
-        (eval-print-last-sexp)))
-    (load bootstrap-file nil 'nomessage))
+  ;; (defvar bootstrap-version)
+  ;; (let ((bootstrap-file
+  ;;        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+  ;;       (bootstrap-version 5))
+  ;;   (unless (file-exists-p bootstrap-file)
+  ;;     (with-current-buffer
+  ;;         (url-retrieve-synchronously
+  ;;          "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+  ;;          'silent 'inhibit-cookies)
+  ;;       (goto-char (point-max))
+  ;;       (eval-print-last-sexp)))
+  ;;   (load bootstrap-file nil 'nomessage))
 
   (use-package bind-key)
   (use-package diminish)
@@ -346,6 +345,22 @@
  #+END_SRC
 
 
+** compile
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (setq clean-compile-command "say \"No clean compile command set\"")
+  (defun conornash/compile-clean-func ()
+    "This function does a clean compile."
+    (interactive)
+    (setq-local original-compile-command compile-command)
+    (compile clean-compile-command)
+    (setq-local compile-command original-compile-command))
+
+  (global-set-key (kbd "<f5>") 'compile)
+  (global-set-key (kbd "<C-f5>") 'compile)
+  (global-set-key (kbd "<M-f5>") 'conornash/compile-clean-func)
+ #+END_SRC
+
+
 ** CSV Mode
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package csv-mode
@@ -371,9 +386,35 @@
  #+END_SRC
 
 
+** Dash
+#+BEGIN_SRC emacs-lisp :tangle yes
+  ;; (use-package dash-at-point
+  ;;   :bind (("C-c C-d" . dash-at-point)))
+ #+END_SRC
+
+
+** dbt
+#+begin_src emacs-lisp :tangle yes
+
+  (setq dbt-log-highlights
+        '(("^[0-9]+-[0-9]+-[0-9]+ [.0-:]+" . font-lock-function-name-face)
+          ("[0-9]+-[0-9]+-[0-9]+ [.0-:]+ \\([^:]+\\)" . (1 font-lock-constant-face))
+  ))
+
+
+  (define-derived-mode dbt-log-mode fundamental-mode "dbt log"
+    "major mode for editing dbt-log language code."
+    (setq font-lock-defaults '(dbt-log-highlights)))
+
+  ;; (use-package dbt-log-mode
+  ;;   :ensure nil
+  ;;   :mode "\\.dbt.log'"
+  ;;   )
+#+end_src
+
 ** Dired
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package ls-lisp :ensure nil)
+  ;; (use-package ls-lisp :ensure nil)
 
   (use-package dired
     :ensure nil
@@ -469,6 +510,7 @@
     :ensure nil
     :bind (("<C-f11>" . ediff)
            ("<M-f11>" . ediff-buffers)
+           ("<C-M-f11>" . ediff-regions-wordwise)
            ("<f11>" . ediff-show-registry))
 
     :config
@@ -758,30 +800,65 @@ This is a system that makes `helm-apropos` more useful
 
 ** Line numbers
 #+BEGIN_SRC emacs-lisp :tangle yes
+  ;; This should be set regardless of using the nlinum package
+  ;; `goto-line-with-feedback' depends on it
+  (setq line-number-display-limit-width 9000000)
 
   (use-package nlinum
-    :commands (global-nlinum-mode nlinum-mode)
-    :config
-    (setq line-number-display-limit-width 9000000))
+    :commands (global-nlinum-mode nlinum-mode))
+
+  (defun goto-line-with-feedback ()
+    "Show line numbers temporarily, while prompting for the line number input"
+    (interactive)
+    (unwind-protect
+        (progn
+          (nlinum-mode 1)
+          (goto-line (read-number "Goto line: ")))
+      (nlinum-mode -1)))
+
 #+END_SRC
 
 
 ** LSP (Language Server Protocol)
 #+BEGIN_SRC emacs-lisp :tangle yes
-  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
-  (setq lsp-keymap-prefix "s-l")
+
+  ;; (setq default-docker-container-name "lsp-container")
 
   (use-package lsp-mode
     :hook ((python-mode . lsp-deferred)
            (lsp-mode . lsp-enable-which-key-integration))
-    :commands (lsp lsp-deferred) 
+    :commands (lsp lsp-deferred)
 
     :config
     (setq
      lsp-diagnostics-provider :flycheck
-     lsp-pyls-plugins-pycodestyle-enabled t
-     lsp-pyls-plugins-pylint-args '("--disable=W0301,W0312,C0103,W191,E127,E1102,E203,C0326,W1201")
+     ;; lsp-pyls-plugins-pycodestyle-enabled t
+     ;; lsp-pyls-plugins-pylint-args '("--disable=W0301,W0312,C0103,W191,E127,E1102,E203,C0326,W1201")
      )
+    )
+
+  (use-package lsp-docker
+    ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+    :init
+    (defvar lsp-docker-client-packages
+      '(lsp-css lsp-clients lsp-bash lsp-go lsp-pyls lsp-html lsp-typescript
+                lsp-terraform lsp-clangd))
+    (setq lsp-docker-client-configs
+          '((:server-id bash-ls :docker-server-id bashls-docker :server-command "bash-language-server start")
+            (:server-id clangd :docker-server-id clangd-docker :server-command "clangd")
+            (:server-id css-ls :docker-server-id cssls-docker :server-command "css-languageserver --stdio")
+            ;; (:server-id dockerfile-ls :docker-server-id dockerfilels-docker :server-command "docker-langserver --stdio")
+            (:server-id gopls :docker-server-id gopls-docker :server-command "gopls")
+            (:server-id html-ls :docker-server-id htmls-docker :server-command "html-languageserver --stdio")
+            (:server-id pyls :docker-server-id pyls-docker :server-command "pyls")
+            (:server-id ts-ls :docker-server-id tsls-docker :server-command "typescript-language-server --stdio")))
+
+    :config
+    (setq lsp-keymap-prefix "s-l")
+    (lsp-docker-init-clients
+     :path-mappings '(("path-to-projects-you-want-to-use" . "/projects"))
+     :client-packages lsp-docker-client-packages
+     :client-configs lsp-docker-client-configs)
     )
 
   ;; optionally
@@ -794,8 +871,6 @@ This is a system that makes `helm-apropos` more useful
               '(lambda ()
                  (setq-local window-number-skip t))))
 
-  (use-package company-lsp :commands company-lsp)
-
   (use-package helm-lsp
     :commands helm-lsp-workspace-symbol
     :config
@@ -807,28 +882,6 @@ This is a system that makes `helm-apropos` more useful
   (use-package which-key
     :config
     (which-key-mode))
-
-  (defvar lsp-docker-client-configs
-    (list
-     (list :server-id 'bash-ls :docker-server-id 'bashls-docker :server-command "bash-language-server start")
-     ;; (list :server-id 'clangd :docker-server-id 'clangd-docker :server-command "ccls")
-     (list :server-id 'css-ls :docker-server-id 'cssls-docker :server-command "css-languageserver --stdio")
-     ;; (list :server-id 'dockerfile-ls :docker-server-id 'dockerfilels-docker :server-command "docker-langserver --stdio")
-     (list :server-id 'gopls :docker-server-id 'gopls-docker :server-command "gopls")
-     (list :server-id 'html-ls :docker-server-id 'htmls-docker :server-command "html-languageserver --stdio")
-     (list :server-id 'pyls :docker-server-id 'pyls-docker :server-command "pyls")
-     ;; (list :server-id 'ts-ls :docker-server-id 'tsls-docker :server-command "typescript-language-server --stdio")
-     ))
-
-  (defvar lsp-docker-client-packages
-    '(lsp-css lsp-clients lsp-bash lsp-go lsp-pyls lsp-html lsp-typescript
-              lsp-terraform lsp-cpp))
-
-  (use-package lsp-docker)
-  (lsp-docker-init-clients
-   :path-mappings '(("/Users/conornash/Dropbox/Documents" . "/projects"))
-   :client-packages lsp-docker-client-packages
-   :client-configs lsp-docker-client-configs)
 #+END_SRC
 
 
@@ -872,12 +925,12 @@ This is a system that makes `helm-apropos` more useful
 
   (use-package forge
     :after magit)
-  (use-package magit-todos
-    :after magit
-    :config
-    (-map (lambda (elem)
-            (add-to-list 'magit-todos-keywords-list elem))
-          '("NEXTACTION" "INREVIEW" "DONE" "TRANSFERRED" "CANCELLED" "DUPLICATE")))
+  ;; (use-package magit-todos
+  ;;   :after magit
+  ;;   :config
+  ;;   (-map (lambda (elem)
+  ;;           (add-to-list 'magit-todos-keywords-list elem))
+  ;;         '("NEXTACTION" "INREVIEW" "DONE" "TRANSFERRED" "CANCELLED" "DUPLICATE")))
  #+END_SRC
 
 
@@ -1043,6 +1096,7 @@ This is a system that makes `helm-apropos` more useful
 
   (add-hook 'restclient-mode-hook
             '(lambda ()
+               (json-pretty-print-buffer-ordered)
                (turn-on-smartparens-strict-mode)))
 
 
@@ -1210,6 +1264,41 @@ This is a system that makes `helm-apropos` more useful
  #+END_SRC
 
 
+** pulse
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  (defun conor-pulse-hook (&rest arg)
+    (pulse-line-hook-function))
+
+  (use-package pulse
+    :ensure nil
+    :config
+    (setq
+     pulse-command-advice-flag  	t
+     pulse-iterations           	25
+     pulse-delay                	0.05)
+    (face-spec-set 'pulse-highlight-start-face	'((((class color) (background dark))
+                                                     (:background "#AAAAAA"))
+                                                    (((class color) (background light))
+                                                     (:background "#FFFFFF"))))
+    (face-spec-set 'pulse-highlight-face '((((class color) (background dark))
+                                            (:background "#AAAAAA"))
+                                           (((class color) (background light))
+                                            (:background "#FFFFFF"))))
+    (dolist (command '(scroll-up
+                       scroll-down
+                       recenter-top-bottom
+                       other-window))
+      (advice-add command :filter-return #'conor-pulse-hook)))
+
+
+
+
+
+ #+END_SRC
+
+
+
 ** Buffer/Window/Frame navigation
 #+BEGIN_SRC emacs-lisp :tangle yes
   (setq split-height-threshold 140
@@ -1253,15 +1342,27 @@ This is a system that makes `helm-apropos` more useful
     :bind (("C-<" . rotate-frame-anticlockwise)
            ("C->" . rotate-frame-clockwise)))
 
+  (defun conornash/scroll-up (prefix)
+    (interactive "p")
+    (previous-line prefix)
+    (scroll-lock-previous-line prefix))
+
+  (defun conornash/scroll-down (prefix)
+    (interactive "p")
+    (next-line prefix)
+    (scroll-lock-next-line prefix))
+
+  (global-set-key (kbd "s-<down>") 'conornash/scroll-down)
+  (global-set-key (kbd "s-<up>") 'conornash/scroll-up)
+
   (global-set-key (kbd "<M-f8>") 'kill-buffer-and-window)
   (global-set-key (kbd "C-`") 'other-frame)
   (global-set-key (kbd "C-s-]") 'other-frame)
   (global-set-key (kbd "s-0") 'delete-window)
   (global-set-key (kbd "s-1") 'delete-other-windows)
   (global-set-key (kbd "s-\\") 'other-frame)
-
-
 #+END_SRC
+
 
 
 ** Man pages
@@ -1290,6 +1391,12 @@ Currently causes Emacs in terminal to segfault
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package yaml-mode
     :mode "\\.lookml\\'" "\\.yaml.template\\'" "\\.yaml\\'" "\\.yml\\'")
+
+  (add-hook 'yaml-mode-hook
+            #'(lambda ()
+                (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
+                ))
+
 
  #+END_SRC
 
@@ -1325,6 +1432,14 @@ Currently causes Emacs in terminal to segfault
  #+END_SRC
 
 
+** indent-guide
+#+begin_src emacs-lisp :tangle yes
+
+  (use-package indent-guide)
+  (use-package highlight-indentation)
+
+#+end_src
+
 * Languages
 ** Elisp functions
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -1359,12 +1474,40 @@ Currently causes Emacs in terminal to segfault
     (save-excursion
       (lua-send-string (buffer-substring (line-beginning-position) (line-end-position)))))
 
+  (use-package company-lua)
+
+  (defun set-company-backends-for-lua()
+    "Set lua company backend."
+    (setq-local company-backends '(
+                                   (
+                                    company-lua
+                                    company-keywords
+                                    company-gtags
+                                    company-yasnippet
+                                    )
+                                   company-capf
+                                   company-dabbrev-code
+                                   company-files
+                                   )))
+
+  (use-package lsp-lua-emmy
+    :demand
+    :ensure nil
+    :load-path "~/Dropbox/Documents/lsp-lua-emmy"
+    :hook (lua-mode . lsp)
+    :config
+    (setq lsp-lua-emmy-jar-path (expand-file-name "EmmyLua-LS-all.jar" user-emacs-directory))
+    )
+
   (use-package lua-mode
-    :mode "\\.p8\\'" "\\.lua\\'"
+    :interpreter "lua"
+    :mode "\\.lua\\'"
     :config
     (setq lua-documentation-function 'eww)
     :hook
     (lua-mode . (lambda ()
+                  (set-company-backends-for-lua)
+                  (lsp-mode)
                   (turn-on-smartparens-strict-mode)
                   (define-key lua-mode-map (kbd "M-\\") 'lua-show-process-buffer)
                   (define-key lua-mode-map (kbd "C-c C-r") 'lua-send-region)
@@ -1375,7 +1518,13 @@ Currently causes Emacs in terminal to segfault
                   (define-key lua-mode-map (kbd "C-M-x") 'lua-send-defun)
 
                   (define-key lua-mode-map (kbd "C-M-f") 'lua-forward-sexp)
-                  (define-key lua-mode-map (kbd "C-M-b") 'lua-backwards-to-block-begin-or-end))))
+                  (define-key lua-mode-map (kbd "C-M-b") 'lua-backwards-to-block-begin-or-end)))
+
+    :config
+    (setq lua-indent-level 4)
+    (setq lua-indent-string-contents t)
+    (setq lua-prefix-key nil))
+
 #+end_src
 
 
@@ -1389,12 +1538,30 @@ Currently causes Emacs in terminal to segfault
 
 
 
+** PICO-8
+#+begin_src emacs-lisp :tangle yes
+  (use-package pico8-mode
+    :mode "\\.p8\\'"
+    :demand
+    :ensure nil
+    :load-path "~/Dropbox/Documents/pico8-mode"
+    :config
+    (setq pico8-documentation-file "/Users/conornash/Library/Application Support/pico-8/pico-8.txt")
+    )
+
+#+end_src
+
 ** Scheme
 #+BEGIN_SRC emacs-lisp :tangle yes
 (org-babel-load-if-exists (expand-file-name "emacs24.scheme.org" user-emacs-directory))
 
 #+END_SRC
 
+
+** Racket
+#+BEGIN_SRC emacs-lisp :tangle yes
+(org-babel-load-if-exists (expand-file-name "emacs24.racket.org" user-emacs-directory))
+#+end_src
 
 ** Smalltalk
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -1463,7 +1630,6 @@ Currently causes Emacs in terminal to segfault
   (global-set-key "\C-cg" 'goto-line)
   (global-set-key "\M-/" 'hippie-expand)
   (global-set-key (kbd "<M-f9>") 'ffap-next)
-  (global-set-key (kbd "<f5>") 'compile)
   (global-set-key (kbd "C-'") 'add-single-quoted-argument)
   (global-set-key (kbd "C--") 'text-scale-decrease)
   (global-set-key (kbd "C-=") 'text-scale-increase)
@@ -1488,12 +1654,14 @@ Currently causes Emacs in terminal to segfault
   (global-set-key (kbd "M-n") 'iregister-jump-to-next-marker)
   (global-set-key (kbd "M-p") 'iregister-jump-to-previous-marker)
   (global-set-key (kbd "s-!") 'insert-current-timestamp-inactive)
+  (global-set-key (kbd "M-SPC") 'cycle-spacing)
   (global-set-key (kbd "s-SPC") 'set-rectangular-region-anchor)
   (global-set-key (kbd "s-k") 'djcb-duplicate-line)
   (global-set-key (kbd "s-q") nil)
   (global-set-key [remap beginning-of-visual-line] 'my/smarter-move-beginning-of-line)
   (global-set-key [remap goto-line] 'goto-line-with-feedback)
   (global-unset-key (kbd "s-p"))
+  (global-set-key (kbd "<f14>") 'scroll-lock-mode)
 #+END_SRC
 
 
@@ -1585,13 +1753,25 @@ Currently causes Emacs in terminal to segfault
 ** Fonts
 #+BEGIN_SRC emacs-lisp :tangle yes
   ;; unicode-fonts package
-  (use-package unicode-fonts)
-  (use-package persistent-soft)
-  (unicode-fonts-setup)
+  (use-package unicode-fonts
+    :config
+    (unicode-fonts-setup))
+
+  (set-face-attribute 'font-lock-comment-face nil
+                      :weight 'medium
+                      :slant 'italic)
+
+  (set-face-attribute 'font-lock-variable-name-face nil
+                      :weight 'medium
+                      ;; :foreground "#FFB380"
+                      :foreground "#FFBF94")
 
   ;; Requires font to be downloaded from https://www.fontsquirrel.com/fonts/inconsolata
+  ;; (set-face-attribute 'default nil
+  ;;                     :family "IBM Plex Mono")
   (set-face-attribute 'default nil
-                      :family "Inconsolata")
+                      :height 135
+                      :family "Cascadia Code PL")
 
   ;; (when (functionp 'set-fontset-font)
   ;;   (set-fontset-font "fontset-default"
@@ -1600,7 +1780,7 @@ Currently causes Emacs in terminal to segfault
   ;;                                :weight 'normal)))
 
 
-  (setq face-font-family-alternatives '(("Monospace" "Inconsolata")
+  (setq face-font-family-alternatives '(("Cascadia Code PL" "Inconsolata")
                                        ("Monospace Serif" "Courier 10 Pitch" "Consolas" "Courier Std" "FreeMono" "Nimbus Mono L")
                                        ("Sans Serif" "Johnston ITC Std" "Effra")
                                        ))
@@ -1611,17 +1791,17 @@ Currently causes Emacs in terminal to segfault
   ;; (use-package atom-dark-theme)
   ;; (load-theme 'atom-dark t)
 
-
-  (setq zenburn-use-variable-pitch nil
-        zenburn-scale-org-headlines t
-        zenburn-scale-outline-headlines t)
+  ;; (setq zenburn-use-variable-pitch nil
+  ;;       zenburn-scale-org-headlines t
+  ;;       zenburn-scale-outline-headlines t)
 
   (use-package zenburn-theme)
   (load-theme 'zenburn t)
 
-  (modify-frame-parameters nil '((wait-for-wm . nil)))
+
+  ;; (modify-frame-parameters nil '((wait-for-wm . nil)))
   (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
-  (add-to-list 'default-frame-alist '(ns-appearance . dark))
+  ;; (add-to-list 'default-frame-alist '(ns-appearance . dark))
 #+END_SRC
 ** Activate global modes that aren't required during startup
 #+BEGIN_SRC emacs-lisp :tangle yes

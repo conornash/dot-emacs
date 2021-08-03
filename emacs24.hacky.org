@@ -40,31 +40,6 @@
         [?\C-s ?h ?e ?a ?d ?l ?i ?n ?e ?\C-a ?\C-  ?\C-n ?\C-n ?\C-w])
 
 
-  ;; I know that string is in my Emacs somewhere!
-  (use-package cl
-    :ensure nil)
-  (defcustom search-all-buffers-ignored-files (list (rx-to-string '(and bos (or ".bash_history" "TAGS") eos)))
-    "Files to ignore when searching buffers via \\[search-all-buffers]."
-    :type 'editable-list)
-
-  ;; Superseded by helm-multi-swoop-all
-  (use-package grep)
-  (defun search-all-buffers (regexp prefix)
-    "Searches file-visiting buffers for occurence of REGEXP.  With
-  prefix > 1 (i.e., if you type C-u \\[search-all-buffers]),
-  searches all buffers."
-    (interactive (list (grep-read-regexp)
-                       current-prefix-arg))
-    (message "Regexp is %s; prefix is %s" regexp prefix)
-    (multi-occur
-     (if (member prefix '(4 (4)))
-         (buffer-list)
-       (remove-if
-        (lambda (b) (some (lambda (rx) (string-match rx  (file-name-nondirectory (buffer-file-name b)))) search-all-buffers-ignored-files))
-        (remove-if-not 'buffer-file-name (buffer-list))))
-     regexp))
-
-
   (fset 'ce 'calc-eval)
 
   ;; Eval the region at the cursor point (i.e. just the variable)
@@ -187,35 +162,6 @@
     (newline)                             ; insert a newline
     (switch-to-buffer nil))               ; return to the initial buffer
 
-
-
-  ;; (defun count-words-region (beginning end)
-  ;;   "Print number of words in the region."
-  ;;   (interactive "r")
-  ;;   (message "Counting words in region ... ")
-
-
-  ;; ;;; 1. Set up appropriate conditions.
-  ;;   (save-excursion
-  ;;     (let ((count 0))
-  ;;       (goto-char beginning)
-
-  ;; ;;; 2. Run the while loop.
-  ;;       (while (and (< (point) end)
-  ;;                 (re-search-forward "\\w+\\W*" end t))
-  ;;         (setq count (1+ count)))
-
-  ;; ;;; 3. Send a message to the user.
-  ;;       (cond ((zerop count)
-  ;;              (message
-  ;;               "The region does NOT have any words."))
-  ;;             ((= 1 count)
-  ;;              (message
-  ;;               "The region has 1 word."))
-  ;;             (t
-  ;;              (message
-  ;;               "The region has %d words." count))))))
-
   ;; Count the words in the entire document
   (defun count-words-buffer ()
     "Count all the words in the buffer"
@@ -286,25 +232,6 @@
            (insert (expand-file-name filename)))
           (t
            (insert filename))))
-
-  ;; I don't like how the python-shell-send-string in python.el
-  ;; makes you send the whole file (unsaved, at that) when you want to
-  ;; just pass a region. This is my version with just an if form removed.
-
-
-  (defun goto-line-with-feedback ()
-    "Show line numbers temporarily, while prompting for the line number input"
-    (interactive)
-    (unwind-protect
-        (progn
-          (linum-mode 1)
-          (goto-line (read-number "Goto line: ")))
-      (linum-mode -1)))
-
-  ;; Elisp go-to-definition with M-. and back again with M-,
-  ;; (autoload 'elisp-slime-nav-mode "elisp-slime-nav")
-  ;; (add-hook 'emacs-lisp-mode-hook (lambda () (elisp-slime-nav-mode t)))
-
 
   ;; code borrowed from http://emacs-fu.blogspot.com/2010/01/duplicating-lines-and-commenting-them.html
   (defun djcb-duplicate-line (&optional commentfirst)
@@ -390,12 +317,12 @@
 
   ;; This is to allow highlighting in compiliation buffers
   ;; stolen from http://stackoverflow.com/a/3072831/77298
-  (use-package ansi-color)
-  (defun colorize-compilation-buffer ()
-    (toggle-read-only)
-    (ansi-color-apply-on-region (point-min) (point-max))
-    (toggle-read-only))
-  (add-hook 'compilation-filter-hook 'colorize-compilation-buffer)
+  ;; (use-package ansi-color)
+  ;; (defun colorize-compilation-buffer ()
+  ;;   (toggle-read-only)
+  ;;   (ansi-color-apply-on-region (point-min) (point-max))
+  ;;   (toggle-read-only))
+  ;; (add-hook 'compilation-filter-hook 'colorize-compilation-buffer)
 
 
   (defun my/vsplit-last-buffer (prefix)

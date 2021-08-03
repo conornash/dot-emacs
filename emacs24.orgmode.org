@@ -89,105 +89,105 @@
     ((org-src-mode . " ℹ")
      (org-indent-mode . " ⭾"))
     :bind (("<s-tab>" . org-force-cycle-archived)
-           ("<s-down>" . org-forward-element)
-           ("<s-up>" . org-backward-element)
-           ("<s-left>" . org-up-element)
-           ("<s-right>" . org-down-element)
-           ("M-<down>" . org-metadown)
-           ("M-<up>" . org-metaup)
-           ("C-c l" . org-store-link)
-           ("C-c C-l" . org-insert-link)
-           ("C-c C-x C-j" . org-clock-goto)
-           ("C-c C-x C-r" . org-clock-report)
-           ("s-!" . insert-current-timestamp-inactive)
-           ("s-o" . org-open-at-point)
-           ("s-O" . org-open-at-point-global))
+	   ("<s-down>" . org-forward-element)
+	   ("<s-up>" . org-backward-element)
+	   ("<s-left>" . org-up-element)
+	   ("<s-right>" . org-down-element)
+	   ("M-<down>" . org-metadown)
+	   ("M-<up>" . org-metaup)
+	   ("C-c l" . org-store-link)
+	   ("C-c C-l" . org-insert-link)
+	   ("C-c C-x C-j" . org-clock-goto)
+	   ("C-c C-x C-r" . org-clock-report)
+	   ("s-!" . insert-current-timestamp-inactive)
+	   ("s-o" . org-open-at-point)
+	   ("s-O" . org-open-at-point-global))
     :chords
     (("qq" . org-capture)
      ("JJ" . org-agenda))
     :config
     (setq comment-start-skip "^\\s-*#\\(?: \\|$\\)"
-          ;; org-agenda-deadline-faces '((1.0 . '(:foreground "#cd4740"))
-          ;;                             (0.9 . '(:foreground "goldenrod1"))
-          ;;                             (0.0 . default))
-          org-agenda-dim-blocked-tasks t
-          org-agenda-start-with-follow-mode t
-          org-agenda-todo-ignore-scheduled nil
-          org-clock-out-remove-zero-time-clocks t
-          org-clock-persist 'history
-          org-confirm-babel-evaluate nil
-          org-deadline-warning-days 28
-          ;; We don't want to see days in the clock report
-          org-duration-format '((special . h:mm))
-          org-enforce-todo-dependencies t
-          org-fontify-whole-heading-line t
-          org-goto-interface 'outline-path-completion
-          org-hide-emphasis-markers t
-          org-image-actual-width 700
-          org-list-allow-alphabetical t
-          org-log-done t
-          ;; Timestamp of changes to deadline using C-c C-d/C-s
-          org-log-redeadline 'time
-          org-log-reschedule 'time
-          org-modules '()
-          org-outline-path-complete-in-steps nil
-          org-refile-targets '((org-agenda-files . (:maxlevel . 2))
-                               (org-agenda-files . (:todo . "NEXTACTION"))
-                               (nil . (:maxlevel . 2)))
-          org-refile-use-outline-path 'file
-          ;; In Sparse Trees, show the details below the matching entries
-          org-src-window-setup 'current-window
-          org-src-fontify-natively t
-          org-show-entry-below t        
-          org-table-last-column-widths '(95 7 5)
-          org-use-property-inheritance t        
-          org-use-speed-commands t
-          org-startup-with-inline-images t
-          org-speed-commands-user '(("S" . widen)
-                                    ("d" . org-deadline))        
-          ;; We don't want to see days in the clock report
-          org-time-clocksum-format '(:hours "%d" :require-hours t :minutes ":%02d" :require-minutes t)
-          ;; don't show scheduled tasks in the TODO view of the agenda
-          org-agenda-todo-ignore-scheduled nil))
-
+	  ;; org-agenda-deadline-faces '((1.0 . '(:foreground "#cd4740"))
+	  ;;                             (0.9 . '(:foreground "goldenrod1"))
+	  ;;                             (0.0 . default))
+	  org-agenda-dim-blocked-tasks t
+	  org-agenda-start-with-follow-mode t
+	  org-agenda-todo-ignore-scheduled nil
+	  org-clock-out-remove-zero-time-clocks t
+	  org-clock-persist 'history
+	  org-confirm-babel-evaluate nil
+	  org-deadline-warning-days 28
+	  ;; We don't want to see days in the clock report
+	  org-duration-format '((special . h:mm))
+	  org-enforce-todo-dependencies t
+	  org-fontify-whole-heading-line t
+	  org-goto-interface 'outline-path-completion
+	  org-hide-emphasis-markers t
+	  org-image-actual-width 700
+	  org-list-allow-alphabetical t
+	  org-log-done t
+	  ;; Timestamp of changes to deadline using C-c C-d/C-s
+	  org-log-redeadline 'time
+	  org-log-reschedule 'time
+	  org-modules '()
+	  org-outline-path-complete-in-steps nil
+	  org-refile-targets '((org-agenda-files . (:maxlevel . 2))
+			       (org-agenda-files . (:todo . "NEXTACTION"))
+			       (nil . (:maxlevel . 2)))
+	  org-refile-use-outline-path 'file
+	  ;; In Sparse Trees, show the details below the matching entries
+	  org-src-window-setup 'current-window
+	  org-src-fontify-natively t
+	  org-show-entry-below t        
+	  org-table-last-column-widths '(95 7 5)
+	  org-use-property-inheritance t        
+	  org-use-speed-commands t
+	  org-startup-with-inline-images t
+	  org-speed-commands-user '(("S" . widen)
+				    ("d" . org-deadline))        
+	  ;; We don't want to see days in the clock report
+	  org-time-clocksum-format '(:hours "%d" :require-hours t :minutes ":%02d" :require-minutes t)
+	  ;; don't show scheduled tasks in the TODO view of the agenda
+	  org-agenda-todo-ignore-scheduled nil))
+  
   (require 'org-yt (expand-file-name "org-yt.el" "~/.emacs.d/"))
-
+  
   (defun org-image-link (protocol link _description)
     "Interpret LINK as base64-encoded image data."
     (cl-assert (string-match "\\`img" protocol) nil
-               "Expected protocol type starting with img")
+	       "Expected protocol type starting with img")
     (let ((buf (url-retrieve-synchronously (concat (substring protocol 3) ":" link))))
       (cl-assert buf nil
-                 "Download of image \"%s\" failed." link)
+		 "Download of image \"%s\" failed." link)
       (with-current-buffer buf
-        (goto-char (point-min))
-        (re-search-forward "\r?\n\r?\n")
-        (buffer-substring-no-properties (point) (point-max)))))
-
+	(goto-char (point-min))
+	(re-search-forward "\r?\n\r?\n")
+	(buffer-substring-no-properties (point) (point-max)))))
+  
   (org-link-set-parameters
    "imghttp"
    :image-data-fun #'org-image-link)
-
+  
   (org-link-set-parameters
    "imghttps"
    :image-data-fun #'org-image-link)
-
+  
   (org-clock-persistence-insinuate)
-
+  
   (add-hook 'org-mode-hook
-            #'(lambda ()
-                (setq-local isearch-lazy-highlight nil)
-                (org-defkey org-mode-map [remap forward-paragraph] 'forward-paragraph)
-                (org-defkey org-mode-map [remap backward-paragraph] 'backward-paragraph)
-                (define-key org-mode-map (kbd "C-z") 'yas/expand)
-                (define-key org-mode-map (kbd "M-#") 'er/expand-region)
-                (visual-line-mode 1)
-                (delete '("\\.pdf\\'" . default) org-file-apps)
-                ;; PDF viewer
-                (add-to-list 'org-file-apps '("\\.pdf\\'" . "open %s"))
-                (add-to-list 'org-export-filter-timestamp-functions
-                             #'endless/filter-timestamp)))
-
+	    #'(lambda ()
+		(setq-local isearch-lazy-highlight nil)
+		(org-defkey org-mode-map [remap forward-paragraph] 'forward-paragraph)
+		(org-defkey org-mode-map [remap backward-paragraph] 'backward-paragraph)
+		(define-key org-mode-map (kbd "C-z") 'yas/expand)
+		(define-key org-mode-map (kbd "M-#") 'er/expand-region)
+		(visual-line-mode 1)
+		(delete '("\\.pdf\\'" . default) org-file-apps)
+		;; PDF viewer
+		(add-to-list 'org-file-apps '("\\.pdf\\'" . "open %s"))
+		(add-to-list 'org-export-filter-timestamp-functions
+			     #'endless/filter-timestamp)))
+  
   (use-package orgalist)
   ;; (add-hook 'orgalist-mode-map
   ;;           #'(lambda ()
@@ -208,12 +208,12 @@
   ;;               ;; PDF viewer
   ;;               ;; (add-to-list 'org-file-apps '("\\.pdf\\'" . "open %s"))
   ;;               ))
-
+  
   (add-hook 'org-src-mode-hook
-            #'(lambda ()
-                (helm-mode 1)
-                (hack-dir-local-variables-non-file-buffer)))
-
+	    #'(lambda ()
+		(helm-mode 1)
+		(hack-dir-local-variables-non-file-buffer)))
+  
   ;;
   ;; fix yasnippet conflict
   ;;(add-hook 'org-mode-hook
@@ -221,20 +221,20 @@
   ;;	    (org-set-local 'yas/trigger-key [tab])
   ;;	    (define-key yas/keymap [tab] 'yas/next-field-or-maybe-expand)
   ;;	    (define-key org-mode-map "\M-A" 'org-archive-to-archive-sibling)))
-
+  
   ;; org export docbook
   (setq org-export-docbook-xslt-proc-command "xsltproc --output %o %s %i")
   (setq org-export-docbook-xslt-proc-command "")
-
+  
   (eval-when-compile
     (defvar org-agenda-mode-map))
-
+  
   (add-hook 'org-agenda-mode-hook
-            #'(lambda ()
-                (define-key org-agenda-mode-map (kbd ">") 'org-agenda-remove-restriction-lock)
-                (define-key org-agenda-mode-map (kbd "M") 'org-google-calendar-sync)))
-
-
+	    #'(lambda ()
+		(define-key org-agenda-mode-map (kbd ">") 'org-agenda-remove-restriction-lock)
+		(define-key org-agenda-mode-map (kbd "M") 'org-google-calendar-sync)))
+  
+  
   ;;  ;; Sacha Chua's clock-in-and-mark-task-started-at-the-same-time code
   ;;  (eval-after-load 'org
   ;;    '(progn
@@ -259,40 +259,34 @@
   ;;        (org-clock-out)))
   ;;       (add-hook 'org-after-todo-state-change-hook
   ;;              'wicked/org-clock-out-if-waiting)))
-
+  
   ;; Import Org-Mobile changes
   ;;(org-mobile-pull)
-
+  
   ;; Recalculate the agenda every 5 seconds when idle
   ;; (run-with-idle-timer 5 nil (lambda () (org-agenda-list) (delete-window)))
-
+  
   ;; org-mode HTML export
   ;; (setq org-export-html-style "<link rel=\"stylesheet\" type=\"text/css\" href=\"css/msnyder.css\">")
-
+  
   (use-package htmlize)
-  (use-package ox-publish
-    :ensure nil)
-
+  (use-package org-protocol :ensure nil)
+  (use-package ox-md :ensure nil)
+  (use-package ox-publish :ensure nil)
+  (use-package ox-taskjuggler :ensure nil)
+  (use-package ox-freemind :ensure nil)
+  (use-package ox-icalendar :ensure nil)
+  
   (use-package ox-reveal
     :config
     (setq org-reveal-root "http://cdn.jsdelivr.net/reveal.js/3.0.0/"))
-
-  (use-package org-protocol
-    :ensure nil)
-
-  (use-package ox-taskjuggler
-    :ensure nil)
-
-  (setq org-export-backends '('ascii 'html 'icalendar 'latex 'odt 'taskjuggler)
-        org-agenda-exporter-settings
-        '((ps-number-of-columns 2)
-          (ps-landscape-mode t)
-          (org-agenda-add-entry-text-maxlines 5)
-          (htmlize-output-type 'css)))
-
-  ;; (require 'org-bullets)
-  ;; (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
-
+  
+  (setq
+   org-agenda-exporter-settings '((ps-number-of-columns 2)
+				  (ps-landscape-mode t)
+				  (org-agenda-add-entry-text-maxlines 5)
+				  (htmlize-output-type 'css)))
+  
   ;; Properties drawers are now required to be located right after a headline and its planning line, when applicable.
   ;; It will break some documents as TODO states changes were sometimes logged before the property drawer.
   ;; The following function will repair them:
@@ -303,27 +297,27 @@
       (org-with-wide-buffer
        (goto-char (point-min))
        (let ((case-fold-search t)
-             (inline-re (and (featurep 'org-inlinetask)
-                             (concat (org-inlinetask-outline-regexp)
-                                     "END[ \t]*$"))))
-         (org-map-entries
-          (lambda ()
-            (unless (and inline-re (org-looking-at-p inline-re))
-              (save-excursion
-                (let ((end (save-excursion (outline-next-heading) (point))))
-                  (forward-line)
-                  (when (org-looking-at-p org-planning-line-re) (forward-line))
-                  (when (and (< (point) end)
-                             (not (org-looking-at-p org-property-drawer-re))
-                             (save-excursion
-                               (and (re-search-forward org-property-drawer-re end t)
-                                    (eq (org-element-type
-                                         (save-match-data (org-element-at-point)))
-                                        'drawer))))
-                    (insert (delete-and-extract-region
-                             (match-beginning 0)
-                             (min (1+ (match-end 0)) end)))
-                    (unless (bolp) (insert "\n"))))))))))))
+	     (inline-re (and (featurep 'org-inlinetask)
+			     (concat (org-inlinetask-outline-regexp)
+				     "END[ \t]*$"))))
+	 (org-map-entries
+	  (lambda ()
+	    (unless (and inline-re (org-looking-at-p inline-re))
+	      (save-excursion
+		(let ((end (save-excursion (outline-next-heading) (point))))
+		  (forward-line)
+		  (when (org-looking-at-p org-planning-line-re) (forward-line))
+		  (when (and (< (point) end)
+			     (not (org-looking-at-p org-property-drawer-re))
+			     (save-excursion
+			       (and (re-search-forward org-property-drawer-re end t)
+				    (eq (org-element-type
+					 (save-match-data (org-element-at-point)))
+					'drawer))))
+		    (insert (delete-and-extract-region
+			     (match-beginning 0)
+			     (min (1+ (match-end 0)) end)))
+		    (unless (bolp) (insert "\n"))))))))))))
 #+END_SRC
 
 
@@ -331,53 +325,52 @@
 * Org Babel
 #+BEGIN_SRC emacs-lisp :tangle yes
   ;; (use-package ob-async)
-  ;; (use-package ob-sql-mode)
+  (use-package ob-sql-mode)
   (use-package restclient)
   (use-package ob-restclient
     :after restclient)
 
-  ;; (org-babel-do-load-languages
-  ;;  'org-babel-load-languages
-  ;;  '((R          . t)   
-  ;;    (emacs-lisp . t)   
-  ;;    (js         . t)
-  ;;    (restclient . t)
-  ;;    (lisp       . t)
-  ;;    (org        . t)
-  ;;    (python     . t)
-  ;;    (shell      . t)
-  ;;    ;; (sql        . t)
-  ;;    ;; (sql-mode   . t)
-  ;;    ))
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((R          . t)   
+     (emacs-lisp . t)   
+     (js         . t)
+     (restclient . t)
+     (lisp       . t)
+     (plantuml   . t)
+     (python     . t)
+     (shell      . t)
+     (sql        . t)
+     (sql-mode   . t)))
 
   ;; (org-babel-lob-ingest "~/Dropbox/emacs/emacs24/elisp/emacs24.Babel.org")
 
   (setq org-structure-template-alist '(("a" . "export ascii")
-                                       ("c" . "center")
-                                       ("C" . "comment")
-                                       ("e" . "example")
-                                       ("E" . "export")
-                                       ("h" . "export html")
-                                       ("l" . "export latex")
-                                       ("q" . "quote")
-                                       ("s" . "src")
-                                       ("v" . "verse")))
+		       ("c" . "center")
+		       ("C" . "comment")
+		       ("e" . "example")
+		       ("E" . "export")
+		       ("h" . "export html")
+		       ("l" . "export latex")
+		       ("q" . "quote")
+		       ("s" . "src")
+		       ("v" . "verse")))
   ;; (add-to-list 'org-structure-template-alist '("el" . "#+BEGIN_SRC emacs-lisp :tangle yes :eval never\n ?\n#+END_SRC"))
   ;; (add-to-list 'org-structure-template-alist '("py" . "#+BEGIN_SRC python :results output :exports both :prologue (progn (setenv \"PYENV_VERSION\" \"scheduler-as-a-service-3.6.1\") \"\") :eval never\n ?\n#+END_SRC"))
   ;; (add-to-list 'org-structure-template-alist '("rana" . "#+BEGIN_SRC R :results output :exports both :cache yes :eval never\n  library(nbs.analysis)\n  ?\n#+END_SRC"))
 
   (setq org-babel-R-command "/usr/local/bin/R --slave --no-save"
-        org-html-keep-old-src t
-        org-babel-default-inline-header-args '((:session . "none")
-                                               (:cache . "yes")
-                                               (:eval . "never")
-                                               (:exports . "both")
-                                               (:tangle . "yes"))
-        org-babel-default-header-args '((:session . "none")
-                                        (:cache . "yes")
-                                        (:eval . "never")
-                                        (:exports . "both")
-                                        (:tangle . "yes")))
+    org-html-keep-old-src t
+    org-babel-default-inline-header-args '((:session . "none")
+			   (:cache . "yes")
+			   (:eval . "never")
+			   (:exports . "both")
+			   (:tangle . "yes"))
+    org-babel-default-header-args '((:session . "none")
+		    (:cache . "yes")
+		    (:eval . "never")
+		    (:exports . "both")
+		    (:tangle . "yes")))
 
-  (use-package org-jira)
+
 #+END_SRC

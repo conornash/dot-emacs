@@ -5,93 +5,75 @@
       '(
         backward-sexp
         beginning-of-visual-line
+        copy-to-register
         cua-copy-region
         cua-cut-region
         cua-exchange-point-and-mark
         cua-paste
         cua-paste-pop
         cycle-spacing
-        djcb-duplicate-line
         downcase-region
         electric-newline-and-maybe-indent
-        electric-pair-delete-pair
-        end-of-buffer
         end-of-visual-line
-        ess-smart-S-assign
+        ess-roxy-move-beginning-of-line
         ess-smart-comma
-        ess-yank
         forward-sexp
         hungry-delete-backward
         hungry-delete-forward
         indent-for-tab-command
-        iregister-copy-to-register-kill
-        iregister-point-or-text-to-register-kill-ring-save
-        jedi:dot-complete
-        kill-region
+        insert-register
         kill-sexp
         kill-visual-line
         move-text-down
         move-text-up
-        my-python-eval-line
         my/smarter-move-beginning-of-line
-        org-beginning-of-line
-        org-delete-char
-        org-end-of-line
         org-force-self-insert
+        org-metaright
         org-self-insert-command
-        org-self-insert-command
-        org-shiftleft
-        org-shiftright
-        paredit-backward
-        paredit-backward-kill-word
-        paredit-close-round
-        paredit-doublequote
-        paredit-forward
-        paredit-forward-delete
-        paredit-forward-kill-word
-        paredit-forward-slurp-sexp
-        paredit-join-sexps
-        paredit-kill
-        paredit-newline
-        paredit-open-round
-        paredit-open-square
-        paredit-semicolon
-        paredit-splice-sexp
-        paredit-wrap-round
-        python-indent-dedent-line-backspace
-        python-indent-electric-colon
-        sp--self-insert-command
+        org-transpose-words
+        python-indent-dedent-line
+        restclient-toggle-body-visibility-or-indent
         sp-backward-delete-char
         sp-backward-kill-word
         sp-backward-sexp
+        sp-backward-up-sexp
         sp-delete-char
         sp-down-sexp
+        sp-forward-barf-sexp
         sp-forward-sexp
         sp-forward-slurp-sexp
+        sp-join-sexp
         sp-kill-hybrid-sexp
         sp-kill-region
-        sp-kill-sexp
         sp-kill-word
-        sp-remove-active-pair-overlay
         sp-splice-sexp
         sp-split-sexp
         sp-up-sexp
+        tab-to-tab-stop
+        transpose-sexps
         transpose-words
         undo-fu-only-undo
+        upcase-region
+        vr/replace
+        wdired-finish-edit
+        yaml-electric-backspace
+        yaml-electric-dash-and-dot
         yas-expand
         ))
 
 (setq mc/cmds-to-run-once
       '(
-        buf-move-left
         conor-helm-files
-        ess-eval-region-or-function-or-paragraph-and-step
+        cua-scroll-up
+        ess-goto-end-of-function-or-para
+        fill-paragraph
+        handle-switch-frame
         helm-M-x
-        helm-apropos
-        my/vsplit-last-buffer
-        rotate-frame-anticlockwise
-        rotate-frame-clockwise
+        lsp-ui-doc--handle-mouse-movement
+        make-frame-command
+        org-cycle
+        other-frame
         text-scale-decrease
         text-scale-increase
-        wdired-finish-edit
+        view-emacs-FAQ
         ))
