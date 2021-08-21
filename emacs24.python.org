@@ -111,7 +111,7 @@
             ("C-c t" . python-pytest-popup)))
 
     (add-hook 'python-mode-hook
-              '(lambda ()
+              #'(lambda ()
                      (pyenv-mode 1)
                      (rainbow-delimiters-mode 1)
                      (rainbow-mode 1)

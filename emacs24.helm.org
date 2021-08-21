@@ -6,19 +6,19 @@
     (interactive)
     (unless helm-source-buffers-list
       (setq helm-source-buffers-list
-	    (helm-make-source "Buffers" 'helm-source-buffers)))
+        (helm-make-source "Buffers" 'helm-source-buffers)))
     (let ((helm-ff-transformer-show-only-basename nil)
-	  (helm-search-all-files (case (window-system)
-				   ('ns helm-source-mac-spotlight)
-				   (nil helm-source-locate)
-				   (t helm-source-locate))))
+      (helm-search-all-files (cl-case (window-system)
+                   ('ns helm-source-mac-spotlight)
+                   (nil helm-source-locate)
+                   (t helm-source-locate))))
       (helm :sources '(helm-source-buffers-list
-		       helm-source-recentf
-		       helm-search-all-files
-		       helm-source-bookmarks
-		       helm-source-files-in-current-dir
-		       helm-source-buffer-not-found)
-	    :buffer "*Where would you like to go?*")))
+               helm-source-recentf
+               helm-search-all-files
+               helm-source-bookmarks
+               helm-source-files-in-current-dir
+               helm-source-buffer-not-found)
+        :buffer "*Where would you like to go?*")))
 
   (defun conor-helm-insert ()
     "Helm function to insert text in a buffer"
@@ -26,45 +26,35 @@
     (helm-register-candidates)
     (helm-kill-ring-candidates)
     (helm :sources '(helm-source-register
-		     helm-source-kill-ring)
-	  :buffer "*helm insert*"))
+             helm-source-kill-ring)
+      :buffer "*helm insert*"))
 
   (defun conor-helm-project ()
     "Helm function to work with projects"
     (interactive)
     (helm :sources '(helm-source-projectile-buffers-list
-		     helm-source-projectile-files-list
-		     helm-source-projectile-projects)
-	  :buffer "*helm project*"))
+             helm-source-projectile-files-list
+             helm-source-projectile-projects)
+      :buffer "*helm project*"))
 
   (defun conor-helm-kill-ring-regsters ()
     (interactive)
     (helm :sources '(helm-source-kill-ring
-		     helm-source-register)
-	  :buffer "*helm kill ring & registers"))
+             helm-source-register)
+      :buffer "*helm kill ring & registers"))
 
   (defun conor-helm-ag-here ()
     (interactive)
     (helm-do-ag default-directory))
 
-  (defun helm-describe-variable (var)
-    "VAR is symbol or string."
-    (cl-letf (((symbol-function 'message) #'ignore))
-      (helpful-variable (helm-symbolify var))))
-
-
-  (defun helm-describe-function (func)
-    "FUNC is symbol or string."
-    (cl-letf (((symbol-function 'message) #'ignore))
-      (helpful-function (helm-symbolify func))))
 #+END_SRC
 
 
 
 * Helm
 #+BEGIN_SRC emacs-lisp :tangle yes
-
   (use-package helm
+    :straight t
     :commands (helm-mode helm-apropos conor-helm-files conor-helm-ag-here)
     :bind
     (("<f1>" . helm-M-x)
@@ -92,12 +82,6 @@
      helm-move-to-line-cycle-in-source nil
      ;; search for library in `require' and `declare-function' sexp.
      helm-ff-search-library-in-sexp t
-     helm-for-files-preferred-list '(helm-source-buffers-list
-				     helm-source-recentf
-				     helm-source-bookmarks
-				     helm-source-file-cache
-				     helm-source-files-in-current-dir
-				     helm-source-mac-spotlight)
      ;; scroll 8 lines other window using M-<next>/M-<prior>
      helm-echo-input-in-header-line t
      helm-ff-file-name-history-use-recentf t
@@ -119,46 +103,57 @@
     ;;               (setq gc-cons-percentage 0.8)))
     )
 
-    (global-set-key [remap apropos-command] 'helm-apropos)
+  (use-package helm-ring :straight nil)
+  (use-package helm-x-files :straight nil)
+  (use-package helm-for-files
+    :straight nil
+    :defines helm-source-mac-spotlight
+    :init
+    (unless helm-source-buffers-list
+      (setq helm-source-buffers-list (helm-make-source "Buffers" 'helm-source-buffers)
+            helm-for-files-preferred-list
+            '(helm-source-buffers-list
+              helm-source-recentf
+              helm-source-bookmarks
+              helm-source-file-cache
+              helm-source-files-in-current-dir
+              helm-source-mac-spotlight))))
 
-    (use-package helm-config :ensure nil)
-    (use-package helm-for-files :ensure nil)
-    (use-package helm-x-files :ensure nil)
-    (use-package helm-ring :ensure nil)
+  (global-set-key [remap apropos-command] 'helm-apropos)
 
-    (use-package helm-swoop
-      :bind
-      (("M-o" . helm-swoop)
-       ("<C-M-f12>" . helm-multi-swoop-org)
-       ("<C-M-f10>" . helm-multi-swoop)
-       ("<M-f10>" . helm-multi-swoop-all)))
+  (use-package helm-swoop
+    :bind
+    (("M-o" . helm-swoop)
+     ("<C-M-f12>" . helm-multi-swoop-org)
+     ("<C-M-f10>" . helm-multi-swoop)
+     ("<M-f10>" . helm-multi-swoop-all)))
 
-    (use-package helm-dash
-      :bind (("C-c C-d" . helm-dash-at-point))
-      :config
-      (setq helm-dash-browser-func 'eww
-	    helm-dash-docsets-path "~/dotfiles/.docsets"
-	    helm-dash-common-docsets '( "AWS_Redshift_SQL_Reference" "Airflow" "BigQuery_Standard_SQL" 
-					"Flask" "Jinja" "MySQL" "Org_Mode" "Pandas"
-					"PostgreSQL" "Python 3" "R" "Requests" "SQLAlchemy"
-					"SQLite" "boto3" "ggplot2" "ms-sql" "postgis"))
-      (use-package helm-pydoc))
+  (use-package helm-dash
+    :bind (("C-c C-d" . helm-dash-at-point))
+    :config
+    (setq helm-dash-browser-func 'eww
+      helm-dash-docsets-path "~/dotfiles/.docsets"
+      helm-dash-common-docsets '( "AWS_Redshift_SQL_Reference" "Airflow" "BigQuery_Standard_SQL"
+                      "Flask" "Jinja" "MySQL" "Org_Mode" "Pandas"
+                      "PostgreSQL" "Python 3" "R" "Requests" "SQLAlchemy"
+                      "SQLite" "boto3" "ggplot2" "ms-sql" "postgis"))
+    (use-package helm-pydoc))
 
-    (use-package helm-ag
-      :ensure-system-package (ag . the_silver_searcher)
-      :bind
-      (("<f10>" . conor-helm-ag-here))
-      :config
-      (setq helm-ag-base-command "ag -U -z --hidden --nocolor --nogroup --path-to-ignore=~/.agignore "))
+  (use-package helm-ag
+    :ensure-system-package (ag . the_silver_searcher)
+    :bind
+    (("<f10>" . conor-helm-ag-here))
+    :config
+    (setq helm-ag-base-command "ag -U -z --hidden --nocolor --nogroup --path-to-ignore=~/.agignore "))
 
-    (use-package helm-rg
-      :ensure-system-package rg
-      :bind
-      (("<C-f10>" . helm-rg))
-      :config
-      (setq helm-rg-default-extra-args "-z"))
+  (use-package helm-rg
+    :ensure-system-package rg
+    :bind
+    (("<C-f10>" . helm-rg))
+    :config
+    (setq helm-rg-default-extra-args "-z"))
 
-    (use-package helm-unicode
-      :bind (("C-x 8 RET" . helm-unicode)))
+  (use-package helm-unicode
+    :bind (("C-x 8 RET" . helm-unicode)))
 
 #+END_SRC

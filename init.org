@@ -17,14 +17,18 @@
 #+BEGIN_SRC emacs-lisp :tangle yes
   (if (and (fboundp 'native-comp-available-p)
        (native-comp-available-p))
-      (setq comp-speed 2
+      (setq native-comp-speed 2
             package-native-compile t))
 
-  (if (functionp 'json-serialize)
-      (setq comp-deferred-compilation t))
+  (if (and (functionp 'json-serialize)
+           (json-serialize nil))
+      (progn
+        (message "Native JSON is available")
+        (setq native-comp-deferred-compilation t))
+    (message "Native JSON is *not* available"))
 
-  ;; (setq gc-cons-percentage (expt 10 -4)
-  ;;       gc-cons-threshold (expt 2 30))
+  (setq gc-cons-percentage (expt 10 -4)
+        gc-cons-threshold (expt 2 22))
 
   (defvar doom--file-name-handler-alist file-name-handler-alist)
   (setq apropos-do-all t
@@ -97,40 +101,43 @@
 
 ** Package Management
 #+begin_src emacs-lisp :tangle yes
-  (setq package--init-file-ensured t
-        package-enable-at-startup nil
-        use-package-always-ensure t
-        use-package-verbose t)
 
-  (package-initialize t)
+  (defvar bootstrap-version)
+  (let ((bootstrap-file
+         (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+        (bootstrap-version 5))
+    (unless (file-exists-p bootstrap-file)
+      (with-current-buffer
+          (url-retrieve-synchronously
+           "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+           'silent 'inhibit-cookies)
+        (goto-char (point-max))
+        (eval-print-last-sexp)))
+    (load bootstrap-file nil 'nomessage))
+
+  (straight-use-package 'use-package)
+  (setq straight-use-package-by-default t)
+  ;; (setq package--init-file-ensured t
+  ;;       package-enable-at-startup nil
+  ;;       use-package-always-ensure t
+  ;;       use-package-verbose t)
+
+  ;; (package-initialize)
   ;; (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/") t)
-  (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
-  (add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/")) ;; Goes down often
-  ;; (add-to-list 'package-archives '("gnu" . "http://mirrors.163.com/elpa/gnu/"))
-  (add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/") t)
-  (package-refresh-contents)
+  ;; (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
+  ;; (add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/")) ;; Goes down often
+  ;; ;; (add-to-list 'package-archives '("gnu" . "http://mirrors.163.com/elpa/gnu/"))
+  ;; (add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/") t)
+  ;; (package-refresh-contents)
 
-  (mapc (lambda (elem)
-          (unless (package-installed-p elem)
-            (package-install elem)))
-        '(diminish use-package bind-key))
+  ;; (mapc (lambda (elem)
+  ;;         (unless (package-installed-p elem)
+  ;;           (package-install elem)))
+  ;;       '(diminish use-package bind-key))
 
   (eval-when-compile
     (require 'use-package))
   (require 'files)
-
-  ;; (defvar bootstrap-version)
-  ;; (let ((bootstrap-file
-  ;;        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-  ;;       (bootstrap-version 5))
-  ;;   (unless (file-exists-p bootstrap-file)
-  ;;     (with-current-buffer
-  ;;         (url-retrieve-synchronously
-  ;;          "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-  ;;          'silent 'inhibit-cookies)
-  ;;       (goto-char (point-max))
-  ;;       (eval-print-last-sexp)))
-  ;;   (load bootstrap-file nil 'nomessage))
 
   (use-package bind-key)
   (use-package diminish)
@@ -174,25 +181,6 @@
 #+END_SRC
 
 
-** Byte Compile
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (defun tangle-init ()
-    "If the current buffer is an org file in the user directory the code-blocks are
-  tangled, and the tangled file is compiled."
-    (when (and
-           (equal (file-name-directory (buffer-file-name)) (expand-file-name user-emacs-directory))
-           (file-exists-p (buffer-file-name))
-           (string= "org" (file-name-extension (buffer-file-name))))
-      ;; Avoid running hooks when tangling.
-      (let ((prog-mode-hook nil)
-            (org-file-to-compile (expand-file-name (buffer-file-name))))
-        (org-babel-tangle)
-        (byte-compile-file (expand-file-name (concat (file-name-sans-extension org-file-to-compile) ".el"))))))
-
-  (add-hook 'after-save-hook #'tangle-init)
-#+END_SRC
-
-
 ** Automatically refresh open files if changed on disk
 #+BEGIN_SRC emacs-lisp :tangle yes
 
@@ -215,9 +203,358 @@
  #+END_SRC
 
 
-* Org Mode (full config)
+* Org Mode
+** Get Org version
+  For straight.el
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (org-babel-load-file (expand-file-name "emacs24.orgmode.org" user-emacs-directory))
+  (require 'subr-x)
+  (straight-use-package 'git)
+
+  (defun org-git-version ()
+    "The Git version of org-mode.
+  Inserted by installing org-mode or when a release is made."
+    (require 'git)
+    (let ((git-repo (expand-file-name
+                     "straight/repos/org/" user-emacs-directory)))
+      (string-trim
+       (git-run "describe"
+                "--match=release\*"
+                "--abbrev=6"
+                "HEAD"))))
+
+  (defun org-release ()
+    "The release version of org-mode.
+  Inserted by installing org-mode or when a release is made."
+    (require 'git)
+    (let ((git-repo (expand-file-name
+                     "straight/repos/org/" user-emacs-directory)))
+      (string-trim
+       (string-remove-prefix
+        "release_"
+        (git-run "describe"
+                 "--match=release\*"
+                 "--abbrev=0"
+                 "HEAD")))))
+
+  (provide 'org-version)
+#+END_SRC
+
+
+
+
+** Load Org-mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (setq org-contrib-includes-list
+        '(ob-arduino ob-clojure-literate ob-csharp ob-eukleides ob-fomus ob-julia ob-mathematica
+                     ob-mathomatic ob-oz ob-php ob-redis ob-sclang ob-smiles ob-spice
+                     ob-stata ob-tcl ob-vbnet ol-bookmark ol-elisp-symbol ol-git-link ol-man
+                     ol-mew ol-notmuch ol-vm ol-wl org-annotate-file org-attach-embedded-images org-bibtex-extras
+                     org-checklist org-choose org-collector org-contacts org-contribdir org-depend org-effectiveness
+                     org-eldoc org-eval org-eval-light org-expiry org-interactive-query org-invoice org-learn
+                     org-license org-mac-iCal org-mac-link org-mairix org-notify org-panel org-passwords
+                     org-registry org-screen org-screenshot org-secretary org-static-mathjax org-sudoku orgtbl-sqlinsert
+                     org-toc org-track org-velocity org-wikinodes ox-bibtex ox-confluence ox-deck
+                     ox-extra ox-freemind ox-groff ox-koma-letter ox-rss ox-s5 ox-taskjuggler))
+  (use-package org-contrib
+    :straight
+    (org-contrib :type git
+                 :includes org-contrib-includes-list
+                 :repo "https://git.sr.ht/~bzg/org-contrib"
+                 :files (:defaults "lisp/*.el")))
+
+  (use-package org
+    :mode ("\\.org$" . org-mode)
+    :diminish
+    ((org-src-mode . " ℹ")
+     (org-indent-mode . " ⭾"))
+    :bind (("<s-tab>" . org-force-cycle-archived)
+       ("<s-down>" . org-forward-element)
+       ("<s-up>" . org-backward-element)
+       ("<s-left>" . org-up-element)
+       ("<s-right>" . org-down-element)
+       ("M-<down>" . org-metadown)
+       ("M-<up>" . org-metaup)
+       ("C-c l" . org-store-link)
+       ("C-c C-l" . org-insert-link)
+       ("C-c C-x C-j" . org-clock-goto)
+       ("C-c C-x C-r" . org-clock-report)
+       ("s-!" . insert-current-timestamp-inactive)
+       ("s-o" . org-open-at-point)
+       ("s-O" . org-open-at-point-global))
+    :chords
+    (("qq" . org-capture)
+     ("JJ" . org-agenda))
+    :config
+    (setq comment-start-skip "^\\s-*#\\(?: \\|$\\)"
+      ;; org-agenda-deadline-faces '((1.0 . '(:foreground "#cd4740"))
+      ;;                             (0.9 . '(:foreground "goldenrod1"))
+      ;;                             (0.0 . default))
+      org-agenda-dim-blocked-tasks t
+      org-agenda-start-with-follow-mode t
+      org-agenda-todo-ignore-scheduled nil
+      org-clock-out-remove-zero-time-clocks t
+      org-clock-persist 'history
+      org-confirm-babel-evaluate nil
+      org-deadline-warning-days 28
+      ;; We don't want to see days in the clock report
+      org-duration-format '((special . h:mm))
+      org-enforce-todo-dependencies t
+      org-fontify-whole-heading-line t
+      org-goto-interface 'outline-path-completion
+      org-hide-emphasis-markers t
+      org-image-actual-width 700
+      org-list-allow-alphabetical t
+      org-log-done t
+      ;; Timestamp of changes to deadline using C-c C-d/C-s
+      org-log-redeadline 'time
+      org-log-reschedule 'time
+      org-modules '()
+      org-outline-path-complete-in-steps nil
+      org-refile-targets '((org-agenda-files . (:maxlevel . 2))
+           (org-agenda-files . (:todo . "NEXTACTION"))
+           (nil . (:maxlevel . 2)))
+      org-refile-use-outline-path 'file
+      ;; In Sparse Trees, show the details below the matching entries
+      org-src-window-setup 'current-window
+      org-src-fontify-natively t
+      org-show-entry-below t
+      org-table-last-column-widths '(95 7 5)
+      org-use-property-inheritance t
+      org-use-speed-commands t
+      org-startup-with-inline-images t
+      org-speed-commands-user '(("S" . widen)
+            ("d" . org-deadline))
+      ;; We don't want to see days in the clock report
+      org-time-clocksum-format '(:hours "%d" :require-hours t :minutes ":%02d" :require-minutes t)
+      ;; don't show scheduled tasks in the TODO view of the agenda
+      org-agenda-todo-ignore-scheduled nil))
+
+  (require 'org-yt (expand-file-name "org-yt.el" "~/.emacs.d/"))
+
+  (defun org-image-link (protocol link _description)
+    "Interpret LINK as base64-encoded image data."
+    (cl-assert (string-match "\\`img" protocol) nil
+       "Expected protocol type starting with img")
+    (let ((buf (url-retrieve-synchronously (concat (substring protocol 3) ":" link))))
+      (cl-assert buf nil
+     "Download of image \"%s\" failed." link)
+      (with-current-buffer buf
+    (goto-char (point-min))
+    (re-search-forward "\r?\n\r?\n")
+    (buffer-substring-no-properties (point) (point-max)))))
+
+  (org-link-set-parameters
+   "imghttp"
+   :image-data-fun #'org-image-link)
+
+  (org-link-set-parameters
+   "imghttps"
+   :image-data-fun #'org-image-link)
+
+  (org-clock-persistence-insinuate)
+
+  (use-package orgalist)
+
+  (add-hook 'org-src-mode-hook
+    #'(lambda ()
+    (helm-mode 1)
+    (hack-dir-local-variables-non-file-buffer)))
+
+  (setq org-export-docbook-xslt-proc-command "xsltproc --output %o %s %i")
+  (setq org-export-docbook-xslt-proc-command "")
+
+  (eval-when-compile
+    (defvar org-agenda-mode-map))
+
+  (add-hook 'org-agenda-mode-hook
+    #'(lambda ()
+    (define-key org-agenda-mode-map (kbd ">") 'org-agenda-remove-restriction-lock)
+    (define-key org-agenda-mode-map (kbd "M") 'org-google-calendar-sync)))
+
+  (use-package htmlize)
+
+
+  (use-package org-protocol :straight nil)
+  (use-package ox-md :straight nil)
+  (use-package ox-publish :straight nil)
+  (use-package ox-taskjuggler :straight nil)
+  (use-package ox-freemind :straight nil)
+  (use-package ox-icalendar :straight nil)
+
+  (use-package ox-reveal
+    :config
+    (setq org-reveal-root "http://cdn.jsdelivr.net/reveal.js/3.0.0/"))
+
+  (setq
+   org-agenda-exporter-settings '((ps-number-of-columns 2)
+          (ps-landscape-mode t)
+          (org-agenda-add-entry-text-maxlines 5)
+          (htmlize-output-type 'css)))
+
+  (defun org-repair-property-drawers ()
+    "Fix properties drawers in current buffer.
+   Ignore non Org buffers."
+    (when (eq major-mode 'org-mode)
+      (org-with-wide-buffer
+       (goto-char (point-min))
+       (let ((case-fold-search t)
+     (inline-re (and (featurep 'org-inlinetask)
+         (concat (org-inlinetask-outline-regexp)
+             "END[ \t]*$"))))
+     (org-map-entries
+      (lambda ()
+    (unless (and inline-re (org-looking-at-p inline-re))
+      (save-excursion
+    (let ((end (save-excursion (outline-next-heading) (point))))
+      (forward-line)
+      (when (org-looking-at-p org-planning-line-re) (forward-line))
+      (when (and (< (point) end)
+         (not (org-looking-at-p org-property-drawer-re))
+         (save-excursion
+           (and (re-search-forward org-property-drawer-re end t)
+            (eq (org-element-type
+             (save-match-data (org-element-at-point)))
+            'drawer))))
+        (insert (delete-and-extract-region
+         (match-beginning 0)
+         (min (1+ (match-end 0)) end)))
+        (unless (bolp) (insert "\n"))))))))))))
+#+END_SRC
+
+
+
+** Helper Functions
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (defun org-babel-load-if-exists (org-file)
+    (when (file-exists-p org-file)
+      (org-babel-load-file org-file)))
+
+  (defun insert-current-timestamp-inactive ()
+    (interactive)
+    (let ((current-prefix-arg '(16)))
+      (org-time-stamp-inactive current-prefix-arg)))
+
+  (defun caolan/repeated-string (n str)
+    (string-join (make-list (+ n 1) "") str))
+
+  (defun path-to-breadcrumbs (file basedir)
+    (let ((dir (expand-file-name (file-name-directory file))))
+      (if (and (string-equal dir (expand-file-name basedir))
+               (string-equal (file-name-base file) "index"))
+          ;; empty breadcrumbs to show we're at root index page
+          nil
+        (let* ((crumb-path (directory-file-name
+                            (file-relative-name dir basedir)))
+               (crumb-parts (remove-if
+                             (lambda (x) (string-equal x "."))
+                             (reverse (split-string crumb-path "/"))))
+               (crumbs (and crumb-parts
+                            (list (cons (car crumb-parts) "index.html")))))
+          ;; parent directories
+          (dotimes (i (length (cdr crumb-parts)))
+            (setq crumbs
+                  (cons (cons (nth i (cdr crumb-parts))
+                              (concat (caolan/repeated-string (+ i 1) "../")
+                                      "index.html"))
+                        crumbs)))
+          (setq crumbs
+                (cons `("NBS" . ,(if (> (length crumb-parts) 0)
+                                     (concat (caolan/repeated-string
+                                              (length crumb-parts)
+                                              "../")
+                                             "index.html")
+                                   "index.html"))
+                      crumbs))
+          (if (string-equal (file-name-base file) "index")
+              (butlast crumbs)
+            crumbs)))))
+
+  (defun my-website-preamble (plist project-name)
+    (let* ((file (expand-file-name (plist-get plist :input-file)))
+           (basedir (file-name-as-directory (plist-get plist :base-directory)))
+           (crumbs (path-to-breadcrumbs file basedir))
+           (date (org-publish-find-date file project-name)))
+      (concat
+       "<ol class=\"breadcrumbs\">"
+       (if crumbs
+           (mapconcat (lambda (crumb)
+                        (concat "<li>"
+                                "<a href=\"" (cdr crumb) "\">"
+                                (car crumb)
+                                "</a>"
+                                "</li>"))
+                      crumbs
+                      "")
+         "<li class=\"current\"><a href=\"index.html\">NBS</a></li>")
+       "</ol>"
+       (if date
+           (concat "<div class=\"date\">"
+                   (format-time-string "%d %b %Y" date)
+                   "</div>")
+         ""))))
+
+  (defun endless/filter-timestamp (trans back _comm)
+    "Remove <> around time-stamps."
+    (pcase back
+      ((or `jekyll `html)
+       (progn
+         (replace-regexp-in-string "&[lg]t;" "" trans)))
+      (`latex
+       (replace-regexp-in-string "[<>]" "" trans))))
+#+END_SRC
+
+
+** Org Babel
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package ob-async)
+  (use-package ob-sql-mode)
+  (use-package restclient)
+  (use-package ob-restclient
+    :after restclient)
+
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((R          . t)
+     (emacs-lisp . t)
+     (js         . t)
+     (restclient . t)
+     (lisp       . t)
+     (plantuml   . t)
+     (python     . t)
+     (shell      . t)
+     (sql        . t)
+     (sql-mode   . t)))
+
+  ;; (org-babel-lob-ingest "~/Dropbox/emacs/emacs24/elisp/emacs24.Babel.org")
+
+  (setq org-structure-template-alist '(("a" . "export ascii")
+               ("c" . "center")
+               ("C" . "comment")
+               ("e" . "example")
+               ("E" . "export")
+               ("h" . "export html")
+               ("l" . "export latex")
+               ("q" . "quote")
+               ("s" . "src")
+               ("v" . "verse")))
+  ;; (add-to-list 'org-structure-template-alist '("el" . "#+BEGIN_SRC emacs-lisp :tangle yes :eval never\n ?\n#+END_SRC"))
+  ;; (add-to-list 'org-structure-template-alist '("py" . "#+BEGIN_SRC python :results output :exports both :prologue (progn (setenv \"PYENV_VERSION\" \"scheduler-as-a-service-3.6.1\") \"\") :eval never\n ?\n#+END_SRC"))
+  ;; (add-to-list 'org-structure-template-alist '("rana" . "#+BEGIN_SRC R :results output :exports both :cache yes :eval never\n  library(nbs.analysis)\n  ?\n#+END_SRC"))
+
+  (setq org-babel-R-command "/usr/local/bin/R --slave --no-save"
+    org-html-keep-old-src t
+    org-babel-default-inline-header-args '((:session . "none")
+               (:cache . "yes")
+               (:eval . "never")
+               (:exports . "both")
+               (:tangle . "yes"))
+    org-babel-default-header-args '((:session . "none")
+            (:cache . "yes")
+            (:eval . "never")
+            (:exports . "both")
+            (:tangle . "yes")))
+
+
 #+END_SRC
 
 
@@ -329,7 +666,7 @@
 
 ** Comint
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package comint :ensure nil)
+  ;; (use-package comint :ensure nil)
 
  #+END_SRC
 
@@ -369,7 +706,7 @@
     (setq csv-separators '("," "\t" "|")))
 
   (add-hook 'csv-mode-hook
-            '(lambda ()
+            #'(lambda ()
                (setq-local isearch-lazy-highlight nil)
                (hl-line-mode 1)))
 #+END_SRC
@@ -410,14 +747,18 @@
   ;;   :ensure nil
   ;;   :mode "\\.dbt.log'"
   ;;   )
+
 #+end_src
 
 ** Dired
 #+BEGIN_SRC emacs-lisp :tangle yes
-  ;; (use-package ls-lisp :ensure nil)
+  (use-package ls-lisp
+    :straight nil
+    :ensure nil)
 
   (use-package dired
     :ensure nil
+    :straight nil
     :bind (("C-x C-j" . dired-jump)
            ("C-x M-f" . find-name-dired))
 
@@ -456,11 +797,12 @@
 
   (setq diredp-hide-details-initially-flag nil
         diredp-bind-problematic-terminal-keys nil)
-  (add-to-list 'load-path (expand-file-name "emacswiki/dired+" user-emacs-directory))
-  (use-package dired+
-    :ensure nil
-    :config
-    (setq diredp-hide-details-toggled nil))
+
+  ;; (add-to-list 'load-path (expand-file-name "emacswiki/dired+" user-emacs-directory))
+  ;; (use-package dired+
+  ;;   :ensure nil
+  ;;   :config
+  ;;   (setq diredp-hide-details-toggled nil))
 
  #+END_SRC
 
@@ -479,14 +821,15 @@
   (use-package docker
     :bind (("<f7>" . docker-containers)
            ("<C-f7>" . docker-images)))
-  (use-package docker-tramp)
-  (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
+  ;; (use-package docker-tramp)
+  ;; (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
 #+END_SRC
 
 
 ** Dockerfile
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package dockerfile-mode)
+  (use-package dockerfile-mode
+    :mode "Dockerfile\\'")
 
   (add-hook 'dockerfile-mode-hook
             #'(lambda ()
@@ -560,7 +903,9 @@
 ** Encryption
 #+BEGIN_SRC emacs-lisp :tangle yes
   ;; EasyPG
-  (use-package epa-file :ensure nil)
+  (use-package epa-file
+    :ensure nil
+    :straight nil)
   (epa-file-enable)
 
  #+END_SRC
@@ -741,7 +1086,35 @@ This is a system that makes `helm-apropos` more useful
 
 ** JSON
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package origami)
+  (use-package origami
+    :config
+    (define-key origami-mode-map (kbd "C-M-n") 'origami-next-fold)
+    (define-key origami-mode-map (kbd "C-M-p") 'origami-previous-fold)
+    (define-key origami-mode-map (kbd "C-M-b") 'origami-backward-fold-same-level)
+    (define-key origami-mode-map (kbd "C-M-f") 'origami-forward-fold-same-level)
+
+    (defun origami-yaml-parser (create)
+      (lambda (content)
+        (with-temp-buffer
+          (insert content)
+          (yaml-mode)
+          (defun yaml-subparser (beg end)
+            "find all fold block between beg and end."
+            (goto-char beg)
+            (let (acc)
+              ;; iterate all same level children.
+              (while (and (beginning-of-defun -1) (<= (point) end)) ;; have children between beg and end?
+                (let* ((new-beg (point))
+                       (new-offset (progn (search-forward-regexp ":" nil t) (- (point) new-beg)))
+                       (new-end (progn (end-of-defun) (point))))
+                  (setq acc (cons (funcall create new-beg new-end new-offset
+                                           (yaml-subparser new-beg new-end))
+                                  acc))
+                  (goto-char new-end)))
+              acc))
+          (yaml-subparser (point-min) (point-max)))))
+
+    )
   (use-package json-mode
     :after origami
     :mode "\\.json\\'" "\\.jsonl\\'"
@@ -753,13 +1126,11 @@ This is a system that makes `helm-apropos` more useful
                 (origami-mode 1)
                 (smartparens-strict-mode 1)
                 (define-key json-mode-map (kbd "C-M-\\") 'json-pretty-print)
-                (define-key json-mode-map (kbd "<M-tab>") 'origami-recursively-toggle-node)
-                (define-key json-mode-map (kbd "<S-tab>") 'origami-toggle-all-nodes)
-                (define-key json-mode-map (kbd "C-M-n") 'origami-next-fold)
-                (define-key json-mode-map (kbd "C-M-p") 'origami-previous-fold)
-                (define-key json-mode-map (kbd "C-M-b") 'origami-backward-fold-same-level)
-                (define-key json-mode-map (kbd "C-M-f") 'origami-forward-fold-same-level)
+                (define-key origami-mode-map (kbd "<M-tab>") 'origami-recursively-toggle-node)
+                (define-key origami-mode-map (kbd "<S-tab>") 'origami-toggle-all-nodes)
                 ))
+
+
  #+END_SRC
 
 
@@ -813,8 +1184,9 @@ This is a system that makes `helm-apropos` more useful
     (unwind-protect
         (progn
           (nlinum-mode 1)
-          (goto-line (read-number "Goto line: ")))
-      (nlinum-mode -1)))
+          (goto-char (point-min))
+          (forward-line (1- (read-number "Goto line: ")))
+          (nlinum-mode -1))))
 
 #+END_SRC
 
@@ -851,7 +1223,8 @@ This is a system that makes `helm-apropos` more useful
             (:server-id gopls :docker-server-id gopls-docker :server-command "gopls")
             (:server-id html-ls :docker-server-id htmls-docker :server-command "html-languageserver --stdio")
             (:server-id pyls :docker-server-id pyls-docker :server-command "pyls")
-            (:server-id ts-ls :docker-server-id tsls-docker :server-command "typescript-language-server --stdio")))
+            ;; (:server-id ts-ls :docker-server-id tsls-docker :server-command "typescript-language-server --stdio")
+            ))
 
     :config
     (setq lsp-keymap-prefix "s-l")
@@ -868,8 +1241,8 @@ This is a system that makes `helm-apropos` more useful
     (setq lsp-ui-sideline-ignore-duplicate t)
     (add-hook 'lsp-mode-hook 'lsp-ui-mode)
     (add-hook 'lsp-ui-doc-frame-mode-hook
-              '(lambda ()
-                 (setq-local window-number-skip t))))
+              #'(lambda ()
+                  (setq-local window-number-skip t))))
 
   (use-package helm-lsp
     :commands helm-lsp-workspace-symbol
@@ -893,8 +1266,8 @@ This is a system that makes `helm-apropos` more useful
     :bind (("<f6>" . magit-status))
     :config
     (add-hook 'with-editor-mode-hook
-              '(lambda ()
-                 (orgalist-mode 1)))
+              #'(lambda ()
+                  (orgalist-mode 1)))
 
     (setq magit-push-always-verify nil
           magit-diff-refine-hunk t
@@ -1095,9 +1468,9 @@ This is a system that makes `helm-apropos` more useful
     (use-package ob-restclient))
 
   (add-hook 'restclient-mode-hook
-            '(lambda ()
-               (json-pretty-print-buffer-ordered)
-               (turn-on-smartparens-strict-mode)))
+            #'(lambda ()
+                (json-pretty-print-buffer-ordered)
+                (turn-on-smartparens-strict-mode)))
 
 
  #+END_SRC
@@ -1171,16 +1544,15 @@ This is a system that makes `helm-apropos` more useful
 
 ** Tramp
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package tramp
-    :init
-    (setq tramp-use-ssh-controlmaster-options t)
-    :config
-    (setq tramp-default-method "ssh"
-          tramp-connection-timeout 5
-          tramp-use-ssh-controlmaster-options t
-          remote-file-name-inhibit-cache nil
-          tramp-completion-reread-directory-timeout nil)
-    (defalias 'tcac 'tramp-cleanup-all-connections))
+  ;; (use-package tramp
+  ;;   :init
+  ;;   (setq tramp-use-ssh-controlmaster-options t)
+  ;;   :config
+  ;;   (setq tramp-default-method "ssh"
+  ;;         tramp-connection-timeout 5
+  ;;         tramp-use-ssh-controlmaster-options t
+  ;;         remote-file-name-inhibit-cache nil)
+  ;;   (defalias 'tcac 'tramp-cleanup-all-connections))
  #+END_SRC
 
 
@@ -1202,6 +1574,7 @@ This is a system that makes `helm-apropos` more useful
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package uniquify
     :ensure nil
+    :straight nil
     :config
     (setq uniquify-buffer-name-style 'post-forward-angle-brackets))
 
@@ -1220,6 +1593,7 @@ This is a system that makes `helm-apropos` more useful
 ** Visual line mode
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package simple
+    :straight nil
     :ensure nil
     :diminish
     (visual-line-mode . " "))
@@ -1258,7 +1632,7 @@ This is a system that makes `helm-apropos` more useful
           web-mode-block-padding 0))
 
   (add-hook 'web-mode-hook
-            '(lambda ()
+            #'(lambda ()
                (rainbow-mode 1)
                (turn-on-smartparens-strict-mode)))
  #+END_SRC
@@ -1342,18 +1716,18 @@ This is a system that makes `helm-apropos` more useful
     :bind (("C-<" . rotate-frame-anticlockwise)
            ("C->" . rotate-frame-clockwise)))
 
-  (defun conornash/scroll-up (prefix)
-    (interactive "p")
-    (previous-line prefix)
-    (scroll-lock-previous-line prefix))
+  ;; (defun conornash/scroll-up (prefix)
+  ;;   (interactive "p")
+  ;;   (previous-line prefix)
+  ;;   (scroll-lock-previous-line prefix))
 
-  (defun conornash/scroll-down (prefix)
-    (interactive "p")
-    (next-line prefix)
-    (scroll-lock-next-line prefix))
+  ;; (defun conornash/scroll-down (prefix)
+  ;;   (interactive "p")
+  ;;   (next-line prefix)
+  ;;   (scroll-lock-next-line prefix))
 
-  (global-set-key (kbd "s-<down>") 'conornash/scroll-down)
-  (global-set-key (kbd "s-<up>") 'conornash/scroll-up)
+  ;; (global-set-key (kbd "s-<down>") 'conornash/scroll-down)
+  ;; (global-set-key (kbd "s-<up>") 'conornash/scroll-up)
 
   (global-set-key (kbd "<M-f8>") 'kill-buffer-and-window)
   (global-set-key (kbd "C-`") 'other-frame)
@@ -1371,7 +1745,7 @@ This is a system that makes `helm-apropos` more useful
     :commands (helm-man-woman))
 
   (add-hook 'woman-mode-hook
-            '(lambda ()
+            #'(lambda ()
                (subword-mode -1)))
 #+END_SRC
 
@@ -1383,18 +1757,25 @@ Currently causes Emacs in terminal to segfault
   ;;   :commands (vterm)
   ;;   :config
   ;;   (add-hook 'vterm-mode-hook
-  ;;             '(lambda ()
+  ;;             #'(lambda ()
   ;;                (define-key vterm-mode-map (kbd "C-y") 'vterm-yank))))
 #+END_SRC
 
 ** YAML
 #+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package yafolding
+    :config
+    (define-key yafolding-mode-map (kbd "<M-tab>") 'yafolding-toggle-element)
+    (define-key yafolding-mode-map (kbd "<S-tab>") 'origami-toggle-all-nodes)
+    )
   (use-package yaml-mode
     :mode "\\.lookml\\'" "\\.yaml.template\\'" "\\.yaml\\'" "\\.yml\\'")
 
   (add-hook 'yaml-mode-hook
             #'(lambda ()
                 (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
+                (origami-mode 1)
+                (yafolding-mode 1)
                 ))
 
 
@@ -1469,36 +1850,6 @@ Currently causes Emacs in terminal to segfault
 
 ** Lua
 #+begin_src emacs-lisp :tangle yes
-  (defun lua-print-current-line ()
-    (interactive)
-    (save-excursion
-      (lua-send-string (buffer-substring (line-beginning-position) (line-end-position)))))
-
-  (use-package company-lua)
-
-  (defun set-company-backends-for-lua()
-    "Set lua company backend."
-    (setq-local company-backends '(
-                                   (
-                                    company-lua
-                                    company-keywords
-                                    company-gtags
-                                    company-yasnippet
-                                    )
-                                   company-capf
-                                   company-dabbrev-code
-                                   company-files
-                                   )))
-
-  (use-package lsp-lua-emmy
-    :demand
-    :ensure nil
-    :load-path "~/Dropbox/Documents/lsp-lua-emmy"
-    :hook (lua-mode . lsp)
-    :config
-    (setq lsp-lua-emmy-jar-path (expand-file-name "EmmyLua-LS-all.jar" user-emacs-directory))
-    )
-
   (use-package lua-mode
     :interpreter "lua"
     :mode "\\.lua\\'"
@@ -1525,6 +1876,37 @@ Currently causes Emacs in terminal to segfault
     (setq lua-indent-string-contents t)
     (setq lua-prefix-key nil))
 
+  (defun lua-print-current-line ()
+    (interactive)
+    (save-excursion
+      (lua-send-string (buffer-substring (line-beginning-position) (line-end-position)))))
+
+  (use-package company-lua)
+
+  (defun set-company-backends-for-lua()
+    "Set lua company backend."
+    (setq-local company-backends '(
+                                   (
+                                    company-lua
+                                    company-keywords
+                                    company-gtags
+                                    company-yasnippet
+                                    )
+                                   company-capf
+                                   company-dabbrev-code
+                                   company-files
+                                   )))
+
+  ;; (use-package lsp-lua-emmy
+  ;;   :demand
+  ;;   :straight nil
+  ;;   :ensure nil
+  ;;   :load-path "~/Dropbox/Documents/lsp-lua-emmy"
+  ;;   :hook (lua-mode . lsp)
+  ;;   :config
+  ;;   (setq lsp-lua-emmy-jar-path (expand-file-name "EmmyLua-LS-all.jar" user-emacs-directory))
+  ;;   )
+
 #+end_src
 
 
@@ -1542,6 +1924,7 @@ Currently causes Emacs in terminal to segfault
 #+begin_src emacs-lisp :tangle yes
   (use-package pico8-mode
     :mode "\\.p8\\'"
+    :straight nil
     :demand
     :ensure nil
     :load-path "~/Dropbox/Documents/pico8-mode"
@@ -1570,7 +1953,7 @@ Currently causes Emacs in terminal to segfault
     :mode ( "\\.st\\'" . shampoo-code-mode))
 
   (add-hook 'shampoo-code-mode-hook
-              '(lambda ()
+              #'(lambda ()
                  (rainbow-mode 1)
                  (turn-on-smartparens-strict-mode)))
 
@@ -1688,12 +2071,8 @@ Currently causes Emacs in terminal to segfault
 
 ** Back to usual parameters
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (setq gc-cons-percentage 0.2
-        gc-cons-threshold 800000)
-
-  (setq file-name-handler-alist doom--file-name-handler-alist
-        ;; In case another package turns this on
-        auto-window-vscroll nil)
+  ;; In case another package turns this on
+  ;; (setq auto-window-vscroll nil)
 #+END_SRC
 
 
@@ -1786,6 +2165,30 @@ Currently causes Emacs in terminal to segfault
                                        ))
 #+END_SRC
 
+** Byte Compile
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (defun tangle-init ()
+    "If the current buffer is an org file in the user directory the code-blocks are
+  tangled, and the tangled file is compiled."
+    (when (and
+           (or
+            (equal (file-name-directory (buffer-file-name))
+                   (expand-file-name user-emacs-directory))
+            (and
+             (boundp 'user-private-directory)
+             (equal (file-name-directory (buffer-file-name))
+                    (expand-file-name user-private-directory))))
+           (file-exists-p (buffer-file-name))
+           (string= "org" (file-name-extension (buffer-file-name))))
+      ;; Avoid running hooks when tangling.
+      (let ((prog-mode-hook nil)
+            (org-file-to-compile (expand-file-name (buffer-file-name))))
+        (org-babel-tangle)
+        (byte-compile-file (expand-file-name (concat (file-name-sans-extension org-file-to-compile) ".el"))))))
+
+  (add-hook 'after-save-hook #'tangle-init)
+#+END_SRC
+
 ** Themes
 #+BEGIN_SRC emacs-lisp :tangle yes
   ;; (use-package atom-dark-theme)
@@ -1802,8 +2205,4 @@ Currently causes Emacs in terminal to segfault
   ;; (modify-frame-parameters nil '((wait-for-wm . nil)))
   (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
   ;; (add-to-list 'default-frame-alist '(ns-appearance . dark))
-#+END_SRC
-** Activate global modes that aren't required during startup
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (helm-mode 1)
 #+END_SRC

@@ -6,15 +6,14 @@
 
     (use-package sql
       :mode
-      (("\\.hql\\'" . sql-mode)
-       ("\\.bqql\\'" . sql-mode)
-       ("\\.psql\\'" . sql-mode)
-       ("\\.ssql\\'" . sql-mode)
-       ("\\.mysql\\'" . sql-mode)
-       ("\\.mssql\\'" . sql-mode)
-       ("\\.sql\\'" . sql-mode)
-       ("\\.sql32\\'" . sql-mode))
-
+      (("\\.bqql\\'"   . sql-mode)
+       ("\\.hql\\'"    . sql-mode)
+       ("\\.mssql\\'"  . sql-mode)
+       ("\\.mysql\\'"  . sql-mode)
+       ("\\.psql\\'"   . sql-mode)
+       ("\\.sql32\\'"  . sql-mode)
+       ("\\.sql\\'"    . sql-mode)
+       ("\\.ssql\\'"   . sql-mode))
       :config
       (setq sql-pop-to-buffer-after-send-region t
             sql-send-terminator t

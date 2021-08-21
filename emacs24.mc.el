@@ -71,6 +71,7 @@
         helm-M-x
         lsp-ui-doc--handle-mouse-movement
         make-frame-command
+        my/hsplit-last-buffer
         org-cycle
         other-frame
         text-scale-decrease

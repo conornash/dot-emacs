@@ -57,7 +57,7 @@
   "Display the currently running Skewer instance in another window"
   (interactive)
   (display-buffer
-   (first (-filter '(lambda (x) (s-contains? "*Skewer" x))
+   (first (-filter #'(lambda (x) (s-contains? "*Skewer" x))
                    (-map 'buffer-name (buffer-list)))) t))
 
 #+END_SRC

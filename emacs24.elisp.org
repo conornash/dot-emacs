@@ -30,6 +30,7 @@
 * Elisp
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package redshank
+    :commands (redshank-mode)
     :diminish (redshank-mode . " 🗡"))
 
   (use-package elisp-slime-nav

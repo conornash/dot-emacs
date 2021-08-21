@@ -237,17 +237,15 @@
   (defun djcb-duplicate-line (&optional commentfirst)
     "comment line at point; if COMMENTFIRST is non-nil, comment the
   original" (interactive)
-  (beginning-of-line)
-  (push-mark)
-  (end-of-line)
-  (let ((str (buffer-substring (region-beginning) (region-end))))
-    (when commentfirst
-      (comment-region (region-beginning) (region-end)))
-    (insert
-     (concat (if (= 0 (forward-line 1)) "" "\n") str "\n"))
-    (forward-line -1)))
-
-
+    (beginning-of-line)
+    (push-mark)
+    (end-of-line)
+    (let ((str (buffer-substring (region-beginning) (region-end))))
+      (when commentfirst
+        (comment-region (region-beginning) (region-end)))
+      (insert
+       (concat (if (= 0 (forward-line 1)) "" "\n") str "\n"))
+      (forward-line -1)))
   (defun my-skewer-eval-line (vis)
     "Send the current line to the inferior ESS process.
   Arg has same meaning as for `ess-eval-region'."
@@ -374,6 +372,11 @@
 
 
 
+  (defun camel-to-snake ()
+    (interactive)
+    (progn
+      (replace-regexp " " "_" nil (region-beginning) (region-end))
+      (downcase-region (region-beginning) (region-end))))
   (defvar conornash/say-what-im-doing-common-commands
     '(
       backward-char
