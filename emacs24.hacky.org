@@ -548,5 +548,22 @@
     (interactive "r")
     (shell-command (buffer-substring pointed marked)))
 
+  (defun dired-grep-marked-files ()
+    "`i` case insensitive; `n` print line number;
+  `I` ignore binary files; `E` extended regular expressions."
+    (interactive)
+    (let* ((files (dired-get-marked-files))
+           (search-term (read-string "regex:  "))
+           (grep-command
+            (concat
+             grep-program
+             " "
+             "-inIE --color=always -C2"
+             " "
+             search-term
+             " "
+             (mapconcat 'shell-quote-argument files " "))))
+      (when (and files search-term grep-command)
+        (compilation-start grep-command 'grep-mode (lambda (mode) "*grep*") nil))))
 
 #+END_SRC

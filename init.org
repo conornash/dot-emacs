@@ -30,18 +30,16 @@
   (setq gc-cons-percentage (expt 10 -4)
         gc-cons-threshold (expt 2 22))
 
-  (defvar doom--file-name-handler-alist file-name-handler-alist)
   (setq apropos-do-all t
         delete-active-region 'kill
         enable-recursive-minibuffers t
         inhibit-startup-screen t
         load-prefer-newer t
         mac-pass-command-to-system nil
-        max-lisp-eval-depth 60000
-        max-specpdl-size 13000
+        max-lisp-eval-depth 30000
+        max-specpdl-size 15000
         ring-bell-function 'ignore
         save-interprogram-paste-before-kill t)
-
 
   (pcase (window-system)
     ('x
@@ -69,7 +67,6 @@
   ;; Emacs bug
   (if (and (< emacs-major-version 27) (< emacs-minor-version 3))
      (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
-  ;;(setq debug-on-error t)
 
   ;; Don't say yes or no, just y or n
   (fset 'yes-or-no-p 'y-or-n-p)
@@ -81,19 +78,6 @@
   (set-keyboard-coding-system 'utf-8)
   ;; Unicode coding
   (set-language-environment "UTF-8")
-
-  ;; backwards compatibility as default-buffer-file-coding-system
-  ;; is deprecated in 23.2.
-  (eval-when-compile
-    (defvar default-buffer-file-coding-system))
-  (if (boundp 'buffer-file-coding-system)
-      (setq-default buffer-file-coding-system 'utf-8)
-    (setq default-buffer-file-coding-system 'utf-8))
-  (setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING))
-
-  ;; Header line
-  ;; (setq-default header-line-format mode-line-format)
-  ;; (setq-default mode-line-format nil)
 
 
 #+END_SRC
@@ -111,16 +95,15 @@
           (url-retrieve-synchronously
            "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
            'silent 'inhibit-cookies)
-        (goto-char (point-max))
-        (eval-print-last-sexp)))
+        (goto-char (point-max))))
     (load bootstrap-file nil 'nomessage))
 
   (straight-use-package 'use-package)
-  (setq straight-use-package-by-default t)
-  ;; (setq package--init-file-ensured t
-  ;;       package-enable-at-startup nil
-  ;;       use-package-always-ensure t
-  ;;       use-package-verbose t)
+  (setq straight-use-package-by-default t
+        package--init-file-ensured t
+        package-enable-at-startup nil
+        use-package-always-ensure t
+        use-package-verbose t)
 
   ;; (package-initialize)
   ;; (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/") t)
@@ -136,16 +119,15 @@
   ;;       '(diminish use-package bind-key))
 
   (eval-when-compile
-    (require 'use-package))
+    (require 'use-package)
+    (require 'straight))
   (require 'files)
 
   (use-package bind-key)
   (use-package diminish)
 
-  (use-package use-package-ensure-system-package
-    :ensure t)
+  (use-package use-package-ensure-system-package)
   (use-package use-package-chords
-    :ensure t
     :config (key-chord-mode 1))
 #+end_src
 
@@ -153,6 +135,7 @@
 ** Environment Variables
 #+BEGIN_SRC emacs-lisp :tangle yes
   ;; Pull in environment variables
+  (defvar exec-path-from-shell-warn-duration-millis)
   (use-package exec-path-from-shell)
 
   (when (memq window-system '(mac ns))
@@ -236,189 +219,6 @@
                  "--abbrev=0"
                  "HEAD")))))
 
-  (provide 'org-version)
-#+END_SRC
-
-
-
-
-** Load Org-mode
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (setq org-contrib-includes-list
-        '(ob-arduino ob-clojure-literate ob-csharp ob-eukleides ob-fomus ob-julia ob-mathematica
-                     ob-mathomatic ob-oz ob-php ob-redis ob-sclang ob-smiles ob-spice
-                     ob-stata ob-tcl ob-vbnet ol-bookmark ol-elisp-symbol ol-git-link ol-man
-                     ol-mew ol-notmuch ol-vm ol-wl org-annotate-file org-attach-embedded-images org-bibtex-extras
-                     org-checklist org-choose org-collector org-contacts org-contribdir org-depend org-effectiveness
-                     org-eldoc org-eval org-eval-light org-expiry org-interactive-query org-invoice org-learn
-                     org-license org-mac-iCal org-mac-link org-mairix org-notify org-panel org-passwords
-                     org-registry org-screen org-screenshot org-secretary org-static-mathjax org-sudoku orgtbl-sqlinsert
-                     org-toc org-track org-velocity org-wikinodes ox-bibtex ox-confluence ox-deck
-                     ox-extra ox-freemind ox-groff ox-koma-letter ox-rss ox-s5 ox-taskjuggler))
-  (use-package org-contrib
-    :straight
-    (org-contrib :type git
-                 :includes org-contrib-includes-list
-                 :repo "https://git.sr.ht/~bzg/org-contrib"
-                 :files (:defaults "lisp/*.el")))
-
-  (use-package org
-    :mode ("\\.org$" . org-mode)
-    :diminish
-    ((org-src-mode . " ℹ")
-     (org-indent-mode . " ⭾"))
-    :bind (("<s-tab>" . org-force-cycle-archived)
-       ("<s-down>" . org-forward-element)
-       ("<s-up>" . org-backward-element)
-       ("<s-left>" . org-up-element)
-       ("<s-right>" . org-down-element)
-       ("M-<down>" . org-metadown)
-       ("M-<up>" . org-metaup)
-       ("C-c l" . org-store-link)
-       ("C-c C-l" . org-insert-link)
-       ("C-c C-x C-j" . org-clock-goto)
-       ("C-c C-x C-r" . org-clock-report)
-       ("s-!" . insert-current-timestamp-inactive)
-       ("s-o" . org-open-at-point)
-       ("s-O" . org-open-at-point-global))
-    :chords
-    (("qq" . org-capture)
-     ("JJ" . org-agenda))
-    :config
-    (setq comment-start-skip "^\\s-*#\\(?: \\|$\\)"
-      ;; org-agenda-deadline-faces '((1.0 . '(:foreground "#cd4740"))
-      ;;                             (0.9 . '(:foreground "goldenrod1"))
-      ;;                             (0.0 . default))
-      org-agenda-dim-blocked-tasks t
-      org-agenda-start-with-follow-mode t
-      org-agenda-todo-ignore-scheduled nil
-      org-clock-out-remove-zero-time-clocks t
-      org-clock-persist 'history
-      org-confirm-babel-evaluate nil
-      org-deadline-warning-days 28
-      ;; We don't want to see days in the clock report
-      org-duration-format '((special . h:mm))
-      org-enforce-todo-dependencies t
-      org-fontify-whole-heading-line t
-      org-goto-interface 'outline-path-completion
-      org-hide-emphasis-markers t
-      org-image-actual-width 700
-      org-list-allow-alphabetical t
-      org-log-done t
-      ;; Timestamp of changes to deadline using C-c C-d/C-s
-      org-log-redeadline 'time
-      org-log-reschedule 'time
-      org-modules '()
-      org-outline-path-complete-in-steps nil
-      org-refile-targets '((org-agenda-files . (:maxlevel . 2))
-           (org-agenda-files . (:todo . "NEXTACTION"))
-           (nil . (:maxlevel . 2)))
-      org-refile-use-outline-path 'file
-      ;; In Sparse Trees, show the details below the matching entries
-      org-src-window-setup 'current-window
-      org-src-fontify-natively t
-      org-show-entry-below t
-      org-table-last-column-widths '(95 7 5)
-      org-use-property-inheritance t
-      org-use-speed-commands t
-      org-startup-with-inline-images t
-      org-speed-commands-user '(("S" . widen)
-            ("d" . org-deadline))
-      ;; We don't want to see days in the clock report
-      org-time-clocksum-format '(:hours "%d" :require-hours t :minutes ":%02d" :require-minutes t)
-      ;; don't show scheduled tasks in the TODO view of the agenda
-      org-agenda-todo-ignore-scheduled nil))
-
-  (require 'org-yt (expand-file-name "org-yt.el" "~/.emacs.d/"))
-
-  (defun org-image-link (protocol link _description)
-    "Interpret LINK as base64-encoded image data."
-    (cl-assert (string-match "\\`img" protocol) nil
-       "Expected protocol type starting with img")
-    (let ((buf (url-retrieve-synchronously (concat (substring protocol 3) ":" link))))
-      (cl-assert buf nil
-     "Download of image \"%s\" failed." link)
-      (with-current-buffer buf
-    (goto-char (point-min))
-    (re-search-forward "\r?\n\r?\n")
-    (buffer-substring-no-properties (point) (point-max)))))
-
-  (org-link-set-parameters
-   "imghttp"
-   :image-data-fun #'org-image-link)
-
-  (org-link-set-parameters
-   "imghttps"
-   :image-data-fun #'org-image-link)
-
-  (org-clock-persistence-insinuate)
-
-  (use-package orgalist)
-
-  (add-hook 'org-src-mode-hook
-    #'(lambda ()
-    (helm-mode 1)
-    (hack-dir-local-variables-non-file-buffer)))
-
-  (setq org-export-docbook-xslt-proc-command "xsltproc --output %o %s %i")
-  (setq org-export-docbook-xslt-proc-command "")
-
-  (eval-when-compile
-    (defvar org-agenda-mode-map))
-
-  (add-hook 'org-agenda-mode-hook
-    #'(lambda ()
-    (define-key org-agenda-mode-map (kbd ">") 'org-agenda-remove-restriction-lock)
-    (define-key org-agenda-mode-map (kbd "M") 'org-google-calendar-sync)))
-
-  (use-package htmlize)
-
-
-  (use-package org-protocol :straight nil)
-  (use-package ox-md :straight nil)
-  (use-package ox-publish :straight nil)
-  (use-package ox-taskjuggler :straight nil)
-  (use-package ox-freemind :straight nil)
-  (use-package ox-icalendar :straight nil)
-
-  (use-package ox-reveal
-    :config
-    (setq org-reveal-root "http://cdn.jsdelivr.net/reveal.js/3.0.0/"))
-
-  (setq
-   org-agenda-exporter-settings '((ps-number-of-columns 2)
-          (ps-landscape-mode t)
-          (org-agenda-add-entry-text-maxlines 5)
-          (htmlize-output-type 'css)))
-
-  (defun org-repair-property-drawers ()
-    "Fix properties drawers in current buffer.
-   Ignore non Org buffers."
-    (when (eq major-mode 'org-mode)
-      (org-with-wide-buffer
-       (goto-char (point-min))
-       (let ((case-fold-search t)
-     (inline-re (and (featurep 'org-inlinetask)
-         (concat (org-inlinetask-outline-regexp)
-             "END[ \t]*$"))))
-     (org-map-entries
-      (lambda ()
-    (unless (and inline-re (org-looking-at-p inline-re))
-      (save-excursion
-    (let ((end (save-excursion (outline-next-heading) (point))))
-      (forward-line)
-      (when (org-looking-at-p org-planning-line-re) (forward-line))
-      (when (and (< (point) end)
-         (not (org-looking-at-p org-property-drawer-re))
-         (save-excursion
-           (and (re-search-forward org-property-drawer-re end t)
-            (eq (org-element-type
-             (save-match-data (org-element-at-point)))
-            'drawer))))
-        (insert (delete-and-extract-region
-         (match-beginning 0)
-         (min (1+ (match-end 0)) end)))
-        (unless (bolp) (insert "\n"))))))))))))
 #+END_SRC
 
 
@@ -445,7 +245,7 @@
           nil
         (let* ((crumb-path (directory-file-name
                             (file-relative-name dir basedir)))
-               (crumb-parts (remove-if
+               (crumb-parts (cl-remove-if
                              (lambda (x) (string-equal x "."))
                              (reverse (split-string crumb-path "/"))))
                (crumbs (and crumb-parts
@@ -502,6 +302,180 @@
       (`latex
        (replace-regexp-in-string "[<>]" "" trans))))
 #+END_SRC
+
+
+
+** Load Org-mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (setq org-contrib-includes-list
+        '(ob-arduino ob-clojure-literate ob-csharp ob-eukleides ob-fomus ob-julia ob-mathematica
+                     ob-mathomatic ob-oz ob-php ob-redis ob-sclang ob-smiles ob-spice
+                     ob-stata ob-tcl ob-vbnet ol-bookmark ol-elisp-symbol ol-git-link ol-man
+                     ol-mew ol-notmuch ol-vm ol-wl org-annotate-file org-attach-embedded-images org-bibtex-extras
+                     org-checklist org-choose org-collector org-contacts org-contribdir org-depend org-effectiveness
+                     org-eldoc org-eval org-eval-light org-expiry org-interactive-query org-invoice org-learn
+                     org-license org-mac-iCal org-mac-link org-mairix org-notify org-panel org-passwords
+                     org-registry org-screen org-screenshot org-secretary org-static-mathjax org-sudoku orgtbl-sqlinsert
+                     org-toc org-track org-velocity org-wikinodes ox-bibtex ox-confluence ox-deck
+                     ox-extra ox-freemind ox-groff ox-koma-letter ox-rss ox-s5 ox-taskjuggler))
+  (use-package org-contrib
+    :straight
+    (org-contrib :type git
+                 :includes org-contrib-includes-list
+                 :repo "https://git.sr.ht/~bzg/org-contrib"
+                 :files (:defaults "lisp/*.el")))
+
+  (use-package org
+    :mode ("\\.org$" . org-mode)
+    :diminish
+    ((org-src-mode . " ℹ")
+     (org-indent-mode . " ⭾"))
+    :bind (("<s-tab>" . org-force-cycle-archived)
+       ("<s-down>" . org-forward-element)
+       ("<s-up>" . org-backward-element)
+       ("<s-left>" . org-up-element)
+       ("<s-right>" . org-down-element)
+       ("M-<down>" . org-metadown)
+       ("M-<up>" . org-metaup)
+       ("C-c l" . org-store-link)
+       ("C-c C-l" . org-insert-link)
+       ("C-c C-x C-j" . org-clock-goto)
+       ("C-c C-x C-r" . org-clock-report)
+       ("s-!" . insert-current-timestamp-inactive)
+       ("s-o" . org-open-at-point)
+       ("s-O" . org-open-at-point-global))
+    :chords
+    (("qq" . org-capture)
+     ("JJ" . org-agenda))
+    :config
+    (org-clock-persistence-insinuate)
+    (setq comment-start-skip "^\\s-*#\\(?: \\|$\\)"
+      org-agenda-dim-blocked-tasks t
+      org-agenda-start-with-follow-mode t
+      org-agenda-todo-ignore-scheduled nil
+      org-clock-out-remove-zero-time-clocks t
+      org-clock-persist 'history
+      org-confirm-babel-evaluate nil
+      org-deadline-warning-days 28
+      ;; We don't want to see days in the clock report
+      org-duration-format '((special . h:mm))
+      org-enforce-todo-dependencies t
+      org-fontify-whole-heading-line t
+      org-goto-interface 'outline-path-completion
+      org-hide-emphasis-markers t
+      org-image-actual-width 700
+      org-list-allow-alphabetical t
+      org-log-done t
+      ;; Timestamp of changes to deadline using C-c C-d/C-s
+      org-log-redeadline 'time
+      org-log-reschedule 'time
+      ;; org-modules '()
+      org-outline-path-complete-in-steps nil
+      org-refile-targets '((org-agenda-files . (:maxlevel . 2))
+           (org-agenda-files . (:todo . "NEXTACTION"))
+           (nil . (:maxlevel . 2)))
+      org-refile-use-outline-path 'file
+      ;; In Sparse Trees, show the details below the matching entries
+      org-src-window-setup 'current-window
+      org-src-fontify-natively t
+      org-show-entry-below t
+      org-table-last-column-widths '(95 7 5)
+      org-use-property-inheritance t
+      org-use-speed-commands t
+      org-speed-commands (nconc org-speed-commands
+                                '(("User commands") ("S" . widen) ("d" . org-deadline)))
+      org-startup-with-inline-images t
+      ;; don't show scheduled tasks in the TODO view of the agenda
+      org-agenda-todo-ignore-scheduled nil))
+
+  (require 'org-yt (expand-file-name "org-yt.el" "~/.emacs.d/"))
+
+  (defun org-image-link (protocol link _description)
+    "Interpret LINK as base64-encoded image data."
+    (cl-assert (string-match "\\`img" protocol) nil
+       "Expected protocol type starting with img")
+    (let ((buf (url-retrieve-synchronously (concat (substring protocol 3) ":" link))))
+      (cl-assert buf nil
+     "Download of image \"%s\" failed." link)
+      (with-current-buffer buf
+    (goto-char (point-min))
+    (re-search-forward "\r?\n\r?\n")
+    (buffer-substring-no-properties (point) (point-max)))))
+
+  (org-link-set-parameters
+   "imghttp"
+   :image-data-fun #'org-image-link)
+
+  (org-link-set-parameters
+   "imghttps"
+   :image-data-fun #'org-image-link)
+
+  (use-package orgalist)
+
+  (add-hook 'org-src-mode-hook
+    #'(lambda ()
+    (hack-dir-local-variables-non-file-buffer)))
+
+  (setq org-export-docbook-xslt-proc-command "xsltproc --output %o %s %i")
+  (setq org-export-docbook-xslt-proc-command "")
+
+  (eval-when-compile
+    (defvar org-agenda-mode-map))
+
+  (add-hook 'org-agenda-mode-hook
+    #'(lambda ()
+    (define-key org-agenda-mode-map (kbd ">") 'org-agenda-remove-restriction-lock)
+    (define-key org-agenda-mode-map (kbd "M") 'org-google-calendar-sync)))
+
+  (use-package htmlize)
+
+  (use-package org-protocol :straight nil :ensure nil)
+  (use-package ox-md :straight nil :ensure nil)
+  (use-package ox-publish :straight nil :ensure nil)
+  (use-package ox-taskjuggler :straight nil :ensure nil)
+  (use-package ox-freemind :straight nil :ensure nil)
+  (use-package ox-icalendar :straight nil :ensure nil)
+
+  (use-package ox-reveal
+    :config
+    (setq org-reveal-root "http://cdn.jsdelivr.net/reveal.js/3.0.0/"))
+
+  (setq
+   org-agenda-exporter-settings '((ps-number-of-columns 2)
+          (ps-landscape-mode t)
+          (org-agenda-add-entry-text-maxlines 5)
+          (htmlize-output-type 'css)))
+
+  (defun org-repair-property-drawers ()
+    "Fix properties drawers in current buffer.
+   Ignore non Org buffers."
+    (when (eq major-mode 'org-mode)
+      (org-with-wide-buffer
+       (goto-char (point-min))
+       (let ((case-fold-search t)
+     (inline-re (and (featurep 'org-inlinetask)
+         (concat (org-inlinetask-outline-regexp)
+             "END[ \t]*$"))))
+     (org-map-entries
+      (lambda ()
+    (unless (and inline-re (org-looking-at-p inline-re))
+      (save-excursion
+    (let ((end (save-excursion (outline-next-heading) (point))))
+      (forward-line)
+      (when (org-looking-at-p org-planning-line-re) (forward-line))
+      (when (and (< (point) end)
+         (not (org-looking-at-p org-property-drawer-re))
+         (save-excursion
+           (and (re-search-forward org-property-drawer-re end t)
+            (eq (org-element-type
+             (save-match-data (org-element-at-point)))
+            'drawer))))
+        (insert (delete-and-extract-region
+         (match-beginning 0)
+         (min (1+ (match-end 0)) end)))
+        (unless (bolp) (insert "\n"))))))))))))
+#+END_SRC
+
 
 
 ** Org Babel
@@ -561,7 +535,7 @@
 * Helm
 #+BEGIN_SRC emacs-lisp :tangle yes
   (org-babel-load-file (expand-file-name "emacs24.helm.org" user-emacs-directory))
-
+  (helm-mode 1)
  #+END_SRC
 
 
@@ -666,7 +640,7 @@
 
 ** Comint
 #+BEGIN_SRC emacs-lisp :tangle yes
-  ;; (use-package comint :ensure nil)
+  (use-package comint :straight nil :ensure nil)
 
  #+END_SRC
 
@@ -744,6 +718,7 @@
     (setq font-lock-defaults '(dbt-log-highlights)))
 
   ;; (use-package dbt-log-mode
+  ;;   :straight nil
   ;;   :ensure nil
   ;;   :mode "\\.dbt.log'"
   ;;   )
@@ -795,12 +770,11 @@
 
     )
 
-  (setq diredp-hide-details-initially-flag nil
-        diredp-bind-problematic-terminal-keys nil)
+  ;; (setq diredp-hide-details-initially-flag nil
+  ;;       diredp-bind-problematic-terminal-keys nil)
 
-  ;; (add-to-list 'load-path (expand-file-name "emacswiki/dired+" user-emacs-directory))
   ;; (use-package dired+
-  ;;   :ensure nil
+  ;;   ;; :ensure nil
   ;;   :config
   ;;   (setq diredp-hide-details-toggled nil))
 
@@ -821,8 +795,8 @@
   (use-package docker
     :bind (("<f7>" . docker-containers)
            ("<C-f7>" . docker-images)))
-  ;; (use-package docker-tramp)
-  ;; (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
+  (use-package docker-tramp)
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
 #+END_SRC
 
 
@@ -1069,10 +1043,16 @@ This is a system that makes `helm-apropos` more useful
 (define-key isearch-mode-map (kbd "C-o") 'isearch-occur)
 (define-key isearch-mode-map (kbd "<backspace>") 'conor-mydelete)
 (define-key isearch-mode-map (kbd "M-o") 'helm-swoop-from-isearch)
-(define-key isearch-mode-map (kbd "s-o") 'helm-swoop-from-isearch)
 (define-key isearch-mode-map (kbd "C-<return>") 'isearch-exit-other-end)
 
  #+END_SRC
+
+
+** Jinja2
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package jinja2-mode)
+#+END_SRC
+
 
 
 ** jq-mode
@@ -1209,30 +1189,31 @@ This is a system that makes `helm-apropos` more useful
      )
     )
 
-  (use-package lsp-docker
-    ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
-    :init
-    (defvar lsp-docker-client-packages
-      '(lsp-css lsp-clients lsp-bash lsp-go lsp-pyls lsp-html lsp-typescript
-                lsp-terraform lsp-clangd))
-    (setq lsp-docker-client-configs
-          '((:server-id bash-ls :docker-server-id bashls-docker :server-command "bash-language-server start")
-            (:server-id clangd :docker-server-id clangd-docker :server-command "clangd")
-            (:server-id css-ls :docker-server-id cssls-docker :server-command "css-languageserver --stdio")
-            ;; (:server-id dockerfile-ls :docker-server-id dockerfilels-docker :server-command "docker-langserver --stdio")
-            (:server-id gopls :docker-server-id gopls-docker :server-command "gopls")
-            (:server-id html-ls :docker-server-id htmls-docker :server-command "html-languageserver --stdio")
-            (:server-id pyls :docker-server-id pyls-docker :server-command "pyls")
-            ;; (:server-id ts-ls :docker-server-id tsls-docker :server-command "typescript-language-server --stdio")
-            ))
+  (use-package lsp-docker)
+  ;; This is difficult to configure and sometimes breaks randomly
 
-    :config
-    (setq lsp-keymap-prefix "s-l")
-    (lsp-docker-init-clients
-     :path-mappings '(("path-to-projects-you-want-to-use" . "/projects"))
-     :client-packages lsp-docker-client-packages
-     :client-configs lsp-docker-client-configs)
-    )
+  (require 'lsp-docker)
+  (defvar lsp-docker-client-packages
+    '(lsp-css lsp-clients lsp-bash lsp-go lsp-pylsp lsp-html lsp-typescript
+              lsp-terraform lsp-clangd))
+  (setq lsp-docker-client-configs
+        '((:server-id bash-ls :docker-server-id bashls-docker :server-command "bash-language-server start")
+          (:server-id clangd :docker-server-id clangd-docker :server-command "clangd")
+          (:server-id css-ls :docker-server-id cssls-docker :server-command "css-languageserver --stdio")
+          ;; (:server-id dockerfile-ls :docker-server-id dockerfilels-docker :server-command "docker-langserver --stdio")
+          (:server-id gopls :docker-server-id gopls-docker :server-command "gopls")
+          (:server-id html-ls :docker-server-id htmls-docker :server-command "html-languageserver --stdio")
+           (:server-id pylsp :docker-server-id pylsp-docker :server-command "pylsp" :docker-image-id "martini97/lsp-docker-langservers" :docker-container-name "martini97-lsp-pylsp")
+          ;; (:server-id pyls :docker-server-id pyls-docker :server-command "pyls")
+          ;; (:server-id ts-ls :docker-server-id tsls-docker :server-command "typescript-language-server --stdio")
+          ))
+  (require 'lsp-docker)
+
+  (setq lsp-keymap-prefix "s-l")
+  (lsp-docker-init-clients
+   :path-mappings '(("/Users/conornash/Dropbox/Documents" . "/projects"))
+   :client-packages lsp-docker-client-packages
+   :client-configs lsp-docker-client-configs)
 
   ;; optionally
   (use-package lsp-ui
@@ -1361,6 +1342,55 @@ This is a system that makes `helm-apropos` more useful
  #+END_SRC
 
 
+** Polymode
+#+BEGIN_SRC emacs-lisp :tangle yes
+  ;; Taken from:
+  ;; (use-package dbt-mode
+  ;;   :straight (:type git :host github :repo "CyberShadow/dbt-mode")
+  ;;   ;; Customize `sql-product' to set the flavor of the SQL syntax.
+  ;;   ;; :custom (sql-product 'mariadb)
+  ;;   )
+
+  ;; (setq polymode-prefix-key (kbd "s-n"))
+  (use-package polymode
+    :mode ("\.sql$" . poly-dbt-mode)
+    )
+
+  (define-hostmode dbt/sql-hostmode
+    :mode 'sql-mode)
+
+  (define-innermode dbt/sql-jinja2-innermode
+    :mode 'jinja2-mode
+    :head-matcher "{[%{][+-]?"
+    :tail-matcher "[+-]?[%}]}"
+    :head-mode 'body
+    :tail-mode 'body
+    :init-functions '((lambda (_)
+                        (setq-local indent-line-function ' jinja2-indent-line))))
+
+  ;; Comment blocks don't seem to work very well with jinja2/polymode,
+  ;; work around this by defining an inner mode just for the comments.
+  (define-innermode dbt/sql-jinja2-comments-innermode
+    :head-matcher "{#[+-]?"
+    :tail-matcher "[+-]?#}"
+    :head-mode 'body
+    :tail-mode 'body
+    :adjust-face 'font-lock-comment-face
+    :head-adjust-face 'font-lock-comment-face
+    :tail-adjust-face 'font-lock-comment-face
+    )
+
+  (define-polymode poly-dbt-mode
+    :hostmode 'dbt/sql-hostmode
+    :innermodes '(dbt/sql-jinja2-comments-innermode
+                  dbt/sql-jinja2-innermode))
+
+  ;; (add-to-list 'auto-mode-alist
+  ;;              '("/\\(dbt\\|queries\\|macros\\|dbt_modules\\)/.*\\.sql\\'" . dbt-mode))
+
+ #+END_SRC
+
+
 ** Powershell
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package powershell)
@@ -1464,7 +1494,6 @@ This is a system that makes `helm-apropos` more useful
     :mode ("\\.http\\'" . restclient-mode)
     :config
     (use-package restclient-helm)
-    ;; (use-package restclient-jq :ensure nil)
     (use-package ob-restclient))
 
   (add-hook 'restclient-mode-hook
@@ -1544,15 +1573,15 @@ This is a system that makes `helm-apropos` more useful
 
 ** Tramp
 #+BEGIN_SRC emacs-lisp :tangle yes
-  ;; (use-package tramp
-  ;;   :init
-  ;;   (setq tramp-use-ssh-controlmaster-options t)
-  ;;   :config
-  ;;   (setq tramp-default-method "ssh"
-  ;;         tramp-connection-timeout 5
-  ;;         tramp-use-ssh-controlmaster-options t
-  ;;         remote-file-name-inhibit-cache nil)
-  ;;   (defalias 'tcac 'tramp-cleanup-all-connections))
+  (use-package tramp
+    :init
+    (setq tramp-use-ssh-controlmaster-options t)
+    :config
+    (setq tramp-default-method "ssh"
+          tramp-connection-timeout 5
+          tramp-use-ssh-controlmaster-options t
+          remote-file-name-inhibit-cache nil)
+    (defalias 'tcac 'tramp-cleanup-all-connections))
  #+END_SRC
 
 
@@ -1592,12 +1621,12 @@ This is a system that makes `helm-apropos` more useful
 
 ** Visual line mode
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package simple
+  (use-package visual-line-mode
     :straight nil
     :ensure nil
+    :hook ((markdown-mode org-mode) . visual-line-mode)
     :diminish
     (visual-line-mode . " "))
-
  #+END_SRC
 
 
@@ -1821,6 +1850,7 @@ Currently causes Emacs in terminal to segfault
 
 #+end_src
 
+
 * Languages
 ** Elisp functions
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -1897,15 +1927,15 @@ Currently causes Emacs in terminal to segfault
                                    company-files
                                    )))
 
-  ;; (use-package lsp-lua-emmy
-  ;;   :demand
-  ;;   :straight nil
-  ;;   :ensure nil
-  ;;   :load-path "~/Dropbox/Documents/lsp-lua-emmy"
-  ;;   :hook (lua-mode . lsp)
-  ;;   :config
-  ;;   (setq lsp-lua-emmy-jar-path (expand-file-name "EmmyLua-LS-all.jar" user-emacs-directory))
-  ;;   )
+  (use-package lsp-lua-emmy
+    :demand
+    :straight nil
+    :ensure nil
+    :load-path "~/Dropbox/Documents/lsp-lua-emmy"
+    :hook (lua-mode . lsp)
+    :config
+    (setq lsp-lua-emmy-jar-path (expand-file-name "EmmyLua-LS-all.jar" user-emacs-directory))
+    )
 
 #+end_src
 
@@ -2044,6 +2074,8 @@ Currently causes Emacs in terminal to segfault
   (global-set-key [remap beginning-of-visual-line] 'my/smarter-move-beginning-of-line)
   (global-set-key [remap goto-line] 'goto-line-with-feedback)
   (global-unset-key (kbd "s-p"))
+  (global-unset-key (kbd "s-o"))
+  (global-unset-key (kbd "s-n"))
   (global-set-key (kbd "<f14>") 'scroll-lock-mode)
 #+END_SRC
 
@@ -2073,6 +2105,9 @@ Currently causes Emacs in terminal to segfault
 #+BEGIN_SRC emacs-lisp :tangle yes
   ;; In case another package turns this on
   ;; (setq auto-window-vscroll nil)
+  (setq
+   debug-on-quit nil
+   debug-on-error nil)
 #+END_SRC
 
 
@@ -2090,7 +2125,7 @@ Currently causes Emacs in terminal to segfault
        global-emojify-mode
        global-hungry-delete-mode
        global-undo-tree-mode
-       global-undo-tree-mode,
+       global-undo-tree-mode
        guide-key-mode
        key-chord-define-global
        key-chord-mode
@@ -2099,7 +2134,7 @@ Currently causes Emacs in terminal to segfault
        lua-send-string
        org-babel-load-file
        term-char-mode
-       term-in-line-mode,
+       term-in-line-mode
        term-line-mode
        unicode-fonts-setup
        window-number-meta-mode
@@ -2194,13 +2229,23 @@ Currently causes Emacs in terminal to segfault
   ;; (use-package atom-dark-theme)
   ;; (load-theme 'atom-dark t)
 
-  ;; (setq zenburn-use-variable-pitch nil
-  ;;       zenburn-scale-org-headlines t
-  ;;       zenburn-scale-outline-headlines t)
+  ;; (use-package nano-theme
+  ;;   :straight
+  ;;   (nano-theme :type git
+  ;;               :repo "https://github.com/rougier/nano-theme"))
+  ;; (nano-dark)
+
+  (setq zenburn-use-variable-pitch nil
+        zenburn-scale-org-headlines t
+        zenburn-scale-outline-headlines t
+        zenburn-override-colors-alist
+        '(("zenburn-bg-1"     . "#1B1B1B")
+          ("zenburn-bg-08"    . "#202020")
+          ("zenburn-bg-05"    . "#282828")
+          ("zenburn-bg"       . "#2F2F2F")))
 
   (use-package zenburn-theme)
   (load-theme 'zenburn t)
-
 
   ;; (modify-frame-parameters nil '((wait-for-wm . nil)))
   (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))

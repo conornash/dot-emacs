@@ -5,6 +5,7 @@
       '(
         backward-sexp
         beginning-of-visual-line
+        comment-dwim
         copy-to-register
         cua-copy-region
         cua-cut-region
@@ -27,6 +28,8 @@
         move-text-down
         move-text-up
         my/smarter-move-beginning-of-line
+        org-beginning-of-line
+        org-end-of-line
         org-force-self-insert
         org-metaright
         org-self-insert-command
@@ -49,12 +52,14 @@
         sp-splice-sexp
         sp-split-sexp
         sp-up-sexp
+        sql-end-of-statement
         tab-to-tab-stop
         transpose-sexps
         transpose-words
         undo-fu-only-undo
         upcase-region
         vr/replace
+        wdired--self-insert
         wdired-finish-edit
         yaml-electric-backspace
         yaml-electric-dash-and-dot

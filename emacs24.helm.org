@@ -74,7 +74,8 @@
     (setq
      helm-boring-buffer-regexp-list nil
      helm-buffer-max-length 40
-     helm-exit-idle-delay 0
+     helm-exit-idle-delay 0 ;; update fast sources immediately (doesn't).
+     helm-input-idle-delay 0.1  ;; this actually updates things relatively quickly.
      helm-multi-swoop-ignore-buffers-match "aaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
      ;; open helm buffer inside current window, not occupy whole other window
      helm-split-window-inside-p 1
@@ -87,10 +88,7 @@
      helm-ff-file-name-history-use-recentf t
      helm-ff-transformer-show-only-basename nil
      helm-follow-mode t
-     helm-idle-delay 0.0 ;; update fast sources immediately (doesn't).
-     helm-input-idle-delay 0.05  ;; this actually updates things reeeelatively quickly.
      helm-org-show-filename t
-     helm-quick-update t
      helm-scroll-amount 8)
 
     (helm-autoresize-mode 0)
@@ -103,9 +101,11 @@
     ;;               (setq gc-cons-percentage 0.8)))
     )
 
-  (use-package helm-ring :straight nil)
-  (use-package helm-x-files :straight nil)
+  (use-package helm-config :straight nil :ensure nil)
+  (use-package helm-ring :straight nil :ensure nil)
+  (use-package helm-x-files :straight nil :ensure nil)
   (use-package helm-for-files
+    :ensure nil
     :straight nil
     :defines helm-source-mac-spotlight
     :init
@@ -137,7 +137,9 @@
                       "Flask" "Jinja" "MySQL" "Org_Mode" "Pandas"
                       "PostgreSQL" "Python 3" "R" "Requests" "SQLAlchemy"
                       "SQLite" "boto3" "ggplot2" "ms-sql" "postgis"))
-    (use-package helm-pydoc))
+    )
+
+  (use-package helm-pydoc)
 
   (use-package helm-ag
     :ensure-system-package (ag . the_silver_searcher)

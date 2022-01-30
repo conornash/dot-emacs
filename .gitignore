@@ -50,7 +50,6 @@ flycheck_*.el
 
 # End of https://www.gitignore.io/api/emacs
 
-anaconda-mode/
 bookmarks
 custom.el
 private.org
@@ -60,6 +59,8 @@ init.el
 org-clock-save.el
 keyfreq
 recentf
+straight/
+transient/
 url/
 offlineimap-sync.py
 network-security.data

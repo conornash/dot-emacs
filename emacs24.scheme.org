@@ -23,12 +23,14 @@
           (xscheme-send-region (point) end)))))
 
   (use-package xscheme
-    :bind
-    (("C-c C-b" . xscheme-send-buffer)
-     ("C-c C-r" . xscheme-send-region)
-     ("C-\\" . my-xscheme-eval-line)
-     ("M-\\" . conor-xscheme-select-process-buffer))
-    :init
+    :after (context-coloring redshank)
+    :mode "\\.scm\\'"
+    :bind (:map scheme-mode-map
+                ("C-c C-b" . xscheme-send-buffer)
+                ("C-c C-r" . xscheme-send-region)
+                ("C-\\" . my-xscheme-eval-line)
+                ("M-\\" . conor-xscheme-select-process-buffer))
+    :config
     (setq scheme-program-name "/usr/local/bin/mit-scheme")
     (add-hook 'scheme-mode-hook
               #'(lambda ()

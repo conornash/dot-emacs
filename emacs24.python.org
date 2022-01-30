@@ -119,7 +119,7 @@
                      (turn-on-smartparens-strict-mode)
 
                      ;; (anaconda-mode 1)
-                     (lsp-mode 1)
+                     (lsp)
 
                      (flycheck-mode 1)
                      (flymake-mode 0)
@@ -149,4 +149,8 @@
                      (define-key python-mode-map (kbd "M-.") 'lsp-find-definition)
                      (define-key python-mode-map (kbd "s-.") 'lsp-find-references)
                      ))
+
+    (use-package lsp-python-ms
+      :init (setq lsp-python-ms-auto-install-server t)
+      :commands lsp)
   #+END_SRC
