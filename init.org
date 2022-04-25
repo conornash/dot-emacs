@@ -95,7 +95,8 @@
           (url-retrieve-synchronously
            "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
            'silent 'inhibit-cookies)
-        (goto-char (point-max))))
+        (goto-char (point-max))
+        (eval-print-last-sexp)))
     (load bootstrap-file nil 'nomessage))
 
   (straight-use-package 'use-package)
@@ -388,8 +389,6 @@
       ;; don't show scheduled tasks in the TODO view of the agenda
       org-agenda-todo-ignore-scheduled nil))
 
-  (require 'org-yt (expand-file-name "org-yt.el" "~/.emacs.d/"))
-
   (defun org-image-link (protocol link _description)
     "Interpret LINK as base64-encoded image data."
     (cl-assert (string-match "\\`img" protocol) nil
@@ -401,14 +400,6 @@
     (goto-char (point-min))
     (re-search-forward "\r?\n\r?\n")
     (buffer-substring-no-properties (point) (point-max)))))
-
-  (org-link-set-parameters
-   "imghttp"
-   :image-data-fun #'org-image-link)
-
-  (org-link-set-parameters
-   "imghttps"
-   :image-data-fun #'org-image-link)
 
   (use-package orgalist)
 
@@ -483,15 +474,12 @@
   (use-package ob-async)
   (use-package ob-sql-mode)
   (use-package restclient)
-  (use-package ob-restclient
-    :after restclient)
 
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((R          . t)
      (emacs-lisp . t)
      (js         . t)
-     (restclient . t)
      (lisp       . t)
      (plantuml   . t)
      (python     . t)
@@ -1494,7 +1482,11 @@ This is a system that makes `helm-apropos` more useful
     :mode ("\\.http\\'" . restclient-mode)
     :config
     (use-package restclient-helm)
-    (use-package ob-restclient))
+    (use-package ob-restclient
+      :config
+      (org-babel-do-load-languages
+       'org-babel-load-languages
+       '((restclient . t)))))
 
   (add-hook 'restclient-mode-hook
             #'(lambda ()
