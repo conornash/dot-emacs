@@ -646,6 +646,9 @@
 
 ** compile
 #+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package ansi-color
+    :hook (compilation-filter . ansi-color-compilation-filter))
+
   (setq clean-compile-command "say \"No clean compile command set\"")
   (defun conornash/compile-clean-func ()
     "This function does a clean compile."
@@ -912,10 +915,31 @@
 
 ** Flycheck
 #+BEGIN_SRC emacs-lisp :tangle yes
-(use-package flycheck
-  :bind (("s-[" . flycheck-previous-error)
-         ("s-]" . flycheck-next-error))
-  )
+  (use-package flycheck
+    :bind (("s-[" . flycheck-previous-error)
+           ("s-]" . flycheck-next-error))
+    :config  
+    (flycheck-define-checker sqlfluff
+      "A SQL syntax checker using the sqlfluff tool."
+      :command ("sqlfluff" "lint"
+                "--disable_progress_bar"
+                "--nocolor"              
+                "--dialect=postgres" source)
+      ;; :standard-input t
+      :error-patterns
+      ((error line-start
+              "L:" (zero-or-more space) line (zero-or-more space)
+              "| P:" (zero-or-more space) column (zero-or-more space)
+              "|" (message (one-or-more not-newline)) line-end))
+      ;; :predicate flycheck-buffer-saved-p
+      :modes (sql-mode))
+
+    (add-to-list 'flycheck-checkers 'sqlfluff)
+    (setq flycheck-sql-sqlint-executable "sql-lint"
+          flycheck-sqlfluff-executable "sqlfluff")
+
+    )
+
 #+END_SRC
 
 
@@ -986,7 +1010,6 @@ This is a system that makes `helm-apropos` more useful
 
 ** Hy
 #+BEGIN_SRC emacs-lisp :tangle yes
-
   (use-package hy-mode)
   (add-hook 'hy-mode-hook
             #'(lambda ()
@@ -994,10 +1017,7 @@ This is a system that makes `helm-apropos` more useful
                 (rainbow-mode 1)
                 (turn-on-smartparens-strict-mode)
                 (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
-                (setq tab-width 4
-                      ;; jedi:complete-on-dot t              ; optional
-                      ;; flycheck-checker 'python-flake8
-                      jit-lock-defer-time 0.25)
+                (setq tab-width 4)
                 (define-key hy-mode-map (kbd "M-\\") 'switch-to-lisp)
                 ))
 
@@ -1038,7 +1058,9 @@ This is a system that makes `helm-apropos` more useful
 
 ** Jinja2
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package jinja2-mode)
+  (use-package jinja2-mode
+    :config
+    (turn-on-smartparens-strict-mode))
 #+END_SRC
 
 
@@ -1341,37 +1363,39 @@ This is a system that makes `helm-apropos` more useful
 
   ;; (setq polymode-prefix-key (kbd "s-n"))
   (use-package polymode
-    :mode ("\.sql$" . poly-dbt-mode)
+    ;; :mode ("\.sql$" . poly-dbt-mode)
+    :config
+    (define-hostmode dbt/sql-hostmode
+      :mode 'sql-mode)
+
+    (define-innermode dbt/sql-jinja2-innermode
+      :mode 'jinja2-mode
+      :head-matcher "{[%{][+-]?"
+      :tail-matcher "[+-]?[%}]}"
+      :head-mode 'body
+      :tail-mode 'body
+      :init-functions '((lambda (_)
+                          (setq-local indent-line-function ' jinja2-indent-line))))
+
+    ;; Comment blocks don't seem to work very well with jinja2/polymode,
+    ;; work around this by defining an inner mode just for the comments.
+    (define-innermode dbt/sql-jinja2-comments-innermode
+      :head-matcher "{#[+-]?"
+      :tail-matcher "[+-]?#}"
+      :head-mode 'body
+      :tail-mode 'body
+      :adjust-face 'font-lock-comment-face
+      :head-adjust-face 'font-lock-comment-face
+      :tail-adjust-face 'font-lock-comment-face
+      )
+
+    (define-polymode poly-dbt-mode
+      :hostmode 'dbt/sql-hostmode
+      :innermodes '(dbt/sql-jinja2-comments-innermode
+                    dbt/sql-jinja2-innermode))
+
     )
 
-  (define-hostmode dbt/sql-hostmode
-    :mode 'sql-mode)
-
-  (define-innermode dbt/sql-jinja2-innermode
-    :mode 'jinja2-mode
-    :head-matcher "{[%{][+-]?"
-    :tail-matcher "[+-]?[%}]}"
-    :head-mode 'body
-    :tail-mode 'body
-    :init-functions '((lambda (_)
-                        (setq-local indent-line-function ' jinja2-indent-line))))
-
-  ;; Comment blocks don't seem to work very well with jinja2/polymode,
-  ;; work around this by defining an inner mode just for the comments.
-  (define-innermode dbt/sql-jinja2-comments-innermode
-    :head-matcher "{#[+-]?"
-    :tail-matcher "[+-]?#}"
-    :head-mode 'body
-    :tail-mode 'body
-    :adjust-face 'font-lock-comment-face
-    :head-adjust-face 'font-lock-comment-face
-    :tail-adjust-face 'font-lock-comment-face
-    )
-
-  (define-polymode poly-dbt-mode
-    :hostmode 'dbt/sql-hostmode
-    :innermodes '(dbt/sql-jinja2-comments-innermode
-                  dbt/sql-jinja2-innermode))
 
   ;; (add-to-list 'auto-mode-alist
   ;;              '("/\\(dbt\\|queries\\|macros\\|dbt_modules\\)/.*\\.sql\\'" . dbt-mode))
@@ -1570,9 +1594,10 @@ This is a system that makes `helm-apropos` more useful
     (setq tramp-use-ssh-controlmaster-options t)
     :config
     (setq tramp-default-method "ssh"
-          tramp-connection-timeout 5
+          ;; tramp-connection-timeout 5
           tramp-use-ssh-controlmaster-options t
-          remote-file-name-inhibit-cache nil)
+          ;; remote-file-name-inhibit-cache nil
+          )
     (defalias 'tcac 'tramp-cleanup-all-connections))
  #+END_SRC
 
@@ -2227,17 +2252,20 @@ Currently causes Emacs in terminal to segfault
   ;;               :repo "https://github.com/rougier/nano-theme"))
   ;; (nano-dark)
 
-  (setq zenburn-use-variable-pitch nil
+
+  (use-package zenburn-theme
+    :init
+    (setq zenburn-use-variable-pitch nil
         zenburn-scale-org-headlines t
         zenburn-scale-outline-headlines t
         zenburn-override-colors-alist
         '(("zenburn-bg-1"     . "#1B1B1B")
           ("zenburn-bg-08"    . "#202020")
           ("zenburn-bg-05"    . "#282828")
-          ("zenburn-bg"       . "#2F2F2F")))
+          ("zenburn-bg"       . "#2F2F2F"))))
 
-  (use-package zenburn-theme)
-  (load-theme 'zenburn t)
+  (load-theme 'zenburn t t)
+  (enable-theme 'zenburn)
 
   ;; (modify-frame-parameters nil '((wait-for-wm . nil)))
   (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
