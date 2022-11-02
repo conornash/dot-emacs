@@ -83,6 +83,9 @@
     (use-package pyenv-mode)
     (use-package pyenv-mode-auto)
     (use-package py-isort)
+    (use-package sphinx-doc
+      :config
+      (setq sphinx-doc-include-types t))
     ;; (use-package anaconda-mode)
     (define-key pyenv-mode-map (kbd "C-c C-s") nil)
     (define-key pyenv-mode-map (kbd "C-c s") 'pyenv-mode-set)
@@ -120,11 +123,12 @@
                      ;; (anaconda-mode 1)
                      (lsp)
 
-                     (flycheck-mode 1)
                      (flymake-mode 0)
+                     (flycheck-mode 1)
                      ;; (flycheck-add-next-checker 'python-flake8 'python-pylint)
                      ;; (flycheck-add-next-checker 'python-pylint 'python-pycompile)
                      ;; (flycheck-add-next-checker 'python-pycompile 'python-mypy)
+                     (sphinx-doc-mode 1)
                      (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
 
                      (guide-key/add-local-guide-key-sequence "C-c")
