@@ -87,7 +87,6 @@
     (define-key pyenv-mode-map (kbd "C-c C-s") nil)
     (define-key pyenv-mode-map (kbd "C-c s") 'pyenv-mode-set)
     (setq-default tab-width 4
-                  jit-lock-defer-time 0.25
                   lsp-prefer-flymake nil
                   python-indent-offset 4
                   python-shell-interpreter "ipython"

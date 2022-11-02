@@ -18,13 +18,14 @@
   (if (and (fboundp 'native-comp-available-p)
        (native-comp-available-p))
       (setq native-comp-speed 2
+            native-comp-async-report-warnings-errors nil
             package-native-compile t))
 
   (if (and (functionp 'json-serialize)
            (json-serialize nil))
       (progn
         (message "Native JSON is available")
-        (setq native-comp-deferred-compilation t))
+        (setq inhibit-automatic-native-compilation t))
     (message "Native JSON is *not* available"))
 
   (setq gc-cons-percentage (expt 10 -4)
@@ -37,7 +38,6 @@
         load-prefer-newer t
         mac-pass-command-to-system nil
         max-lisp-eval-depth 30000
-        max-specpdl-size 15000
         ring-bell-function 'ignore
         save-interprogram-paste-before-kill t)
 
@@ -619,8 +619,6 @@
 
 ** Column Number Mode
 #+BEGIN_SRC emacs-lisp :tangle yes
-
-  ;; column-number-mode
   (column-number-mode t)
 
 #+END_SRC
@@ -786,8 +784,6 @@
   (use-package docker
     :bind (("<f7>" . docker-containers)
            ("<C-f7>" . docker-images)))
-  (use-package docker-tramp)
-  (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
 #+END_SRC
 
 
@@ -1598,6 +1594,7 @@ This is a system that makes `helm-apropos` more useful
           tramp-use-ssh-controlmaster-options t
           ;; remote-file-name-inhibit-cache nil
           )
+    (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
     (defalias 'tcac 'tramp-cleanup-all-connections))
  #+END_SRC
 
@@ -2141,8 +2138,6 @@ Currently causes Emacs in terminal to segfault
        exec-path-from-shell-initialize
        global-emojify-mode
        global-hungry-delete-mode
-       global-undo-tree-mode
-       global-undo-tree-mode
        guide-key-mode
        key-chord-define-global
        key-chord-mode
@@ -2188,6 +2183,9 @@ Currently causes Emacs in terminal to segfault
     :config
     (unicode-fonts-setup))
 
+  (set-face-attribute 'default nil
+                      :height 135)
+
   (set-face-attribute 'font-lock-comment-face nil
                       :weight 'medium
                       :slant 'italic)
@@ -2197,12 +2195,11 @@ Currently causes Emacs in terminal to segfault
                       ;; :foreground "#FFB380"
                       :foreground "#FFBF94")
 
+
   ;; Requires font to be downloaded from https://www.fontsquirrel.com/fonts/inconsolata
   ;; (set-face-attribute 'default nil
   ;;                     :family "IBM Plex Mono")
-  (set-face-attribute 'default nil
-                      :height 135
-                      :family "Cascadia Code PL")
+
 
   ;; (when (functionp 'set-fontset-font)
   ;;   (set-fontset-font "fontset-default"
@@ -2211,9 +2208,9 @@ Currently causes Emacs in terminal to segfault
   ;;                                :weight 'normal)))
 
 
-  (setq face-font-family-alternatives '(("Cascadia Code PL" "Inconsolata")
-                                       ("Monospace Serif" "Courier 10 Pitch" "Consolas" "Courier Std" "FreeMono" "Nimbus Mono L")
-                                       ("Sans Serif" "Johnston ITC Std" "Effra")
+  (setq face-font-family-alternatives '(("Monospace" "Cascadia Code PL" "Inconsolata" "Catrinity" "Consolas" "Catrinity" "Symbola" "Noto Sans" "Noto Sans Symbols" "Noto Sans Egyptian Hieroglyphs")
+                                        ("Monospace Serif" "Courier 10 Pitch" "Consolas" "Courier Std" "FreeMono" "Nimbus Mono L" "Noto Sans" "Noto Sans Symbols" "Noto Sans Egyptian Hieroglyphs")
+                                        ("Sans Serif" "Johnston ITC Std" "Effra" "Noto Sans" "Noto Sans Symbols" "Noto Sans Egyptian Hieroglyphs")
                                        ))
 #+END_SRC
 
