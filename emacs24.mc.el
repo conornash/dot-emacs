@@ -49,6 +49,7 @@
         sp-kill-hybrid-sexp
         sp-kill-region
         sp-kill-word
+        sp-remove-active-pair-overlay
         sp-splice-sexp
         sp-split-sexp
         sp-up-sexp

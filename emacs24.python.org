@@ -86,11 +86,10 @@
     (use-package sphinx-doc
       :config
       (setq sphinx-doc-include-types t))
-    ;; (use-package anaconda-mode)
+
     (define-key pyenv-mode-map (kbd "C-c C-s") nil)
     (define-key pyenv-mode-map (kbd "C-c s") 'pyenv-mode-set)
-    (setq-default tab-width 4
-                  lsp-prefer-flymake nil
+    (setq-default tab-width 4              
                   python-indent-offset 4
                   python-shell-interpreter "ipython"
                   python-shell-interpreter-args "--simple-prompt -i --"
@@ -119,10 +118,7 @@
                      (rainbow-mode 1)
                      (smartscan-mode 1)
                      (turn-on-smartparens-strict-mode)
-
-                     ;; (anaconda-mode 1)
-                     (lsp)
-
+                     (require 'smartparens-python)
                      (flymake-mode 0)
                      (flycheck-mode 1)
                      ;; (flycheck-add-next-checker 'python-flake8 'python-pylint)
@@ -149,11 +145,5 @@
 
                      (define-key python-mode-map (kbd "C-c C-r") 'conor-python-shell-send-region)
 
-                     (define-key python-mode-map (kbd "M-.") 'lsp-find-definition)
-                     (define-key python-mode-map (kbd "s-.") 'lsp-find-references)
                      ))
-
-    (use-package lsp-python-ms
-      :init (setq lsp-python-ms-auto-install-server t)
-      :commands lsp)
   #+END_SRC

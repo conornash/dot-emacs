@@ -12,6 +12,7 @@
 #+SETUPFILE: theme-readtheorg.setup
 
 
+
 * Setup system
 ** Initial requirements
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -541,6 +542,13 @@
 #+END_SRC
 
 
+* Parsing
+
+** Tree-sitter
+ #+BEGIN_SRC emacs-lisp :tangle yes
+
+#+END_SRC
+
 * Rainbow Delimiters
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package rainbow-delimiters
@@ -834,16 +842,6 @@
  #+END_SRC
 
 
-** emojify
-#+BEGIN_SRC emacs-lisp :tangle yes
-  ;; (use-package emojify)
-  ;; ;; NEXTACTION: Inhibit emojify mode for certain buffers
-  ;; ;; https://github.com/iqbalansari/emacs-emojify#configuring-the-buffers-where-emojify-mode-is-enabled
-  ;; (global-emojify-mode -1)
-
- #+END_SRC
-
-
 ** Enable case-region
 #+BEGIN_SRC emacs-lisp :tangle yes
 (put 'downcase-region 'disabled nil)
@@ -1110,6 +1108,7 @@ This is a system that makes `helm-apropos` more useful
   (add-hook 'json-mode-hook
             #'(lambda ()
                 (origami-mode 1)
+                (rainbow-mode 1)
                 (smartparens-strict-mode 1)
                 (define-key json-mode-map (kbd "C-M-\\") 'json-pretty-print)
                 (define-key origami-mode-map (kbd "<M-tab>") 'origami-recursively-toggle-node)
@@ -1161,18 +1160,15 @@ This is a system that makes `helm-apropos` more useful
   ;; `goto-line-with-feedback' depends on it
   (setq line-number-display-limit-width 9000000)
 
-  (use-package nlinum
-    :commands (global-nlinum-mode nlinum-mode))
-
   (defun goto-line-with-feedback ()
     "Show line numbers temporarily, while prompting for the line number input"
     (interactive)
     (unwind-protect
         (progn
-          (nlinum-mode 1)
+          (display-line-numbers-mode 1)
           (goto-char (point-min))
           (forward-line (1- (read-number "Goto line: ")))
-          (nlinum-mode -1))))
+          (display-line-numbers-mode -1))))
 
 #+END_SRC
 
@@ -1182,66 +1178,66 @@ This is a system that makes `helm-apropos` more useful
 
   ;; (setq default-docker-container-name "lsp-container")
 
-  (use-package lsp-mode
-    :hook ((python-mode . lsp-deferred)
-           (lsp-mode . lsp-enable-which-key-integration))
-    :commands (lsp lsp-deferred)
+  ;; (use-package lsp-mode
+  ;;   :hook ((python-mode . lsp-deferred)
+  ;;          (lsp-mode . lsp-enable-which-key-integration))
+  ;;   :commands (lsp lsp-deferred)
 
-    :config
-    (setq
-     lsp-diagnostics-provider :flycheck
-     ;; lsp-pyls-plugins-pycodestyle-enabled t
-     ;; lsp-pyls-plugins-pylint-args '("--disable=W0301,W0312,C0103,W191,E127,E1102,E203,C0326,W1201")
-     )
-    )
+  ;;   :config
+  ;;   (setq
+  ;;    lsp-diagnostics-provider :flycheck
+  ;;    ;; lsp-pyls-plugins-pycodestyle-enabled t
+  ;;    ;; lsp-pyls-plugins-pylint-args '("--disable=W0301,W0312,C0103,W191,E127,E1102,E203,C0326,W1201")
+  ;;    )
+  ;;   )
 
-  (use-package lsp-docker)
-  ;; This is difficult to configure and sometimes breaks randomly
+  ;; (use-package lsp-docker)
+  ;; ;; This is difficult to configure and sometimes breaks randomly
 
-  (require 'lsp-docker)
-  (defvar lsp-docker-client-packages
-    '(lsp-css lsp-clients lsp-bash lsp-go lsp-pylsp lsp-html lsp-typescript
-              lsp-terraform lsp-clangd))
-  (setq lsp-docker-client-configs
-        '((:server-id bash-ls :docker-server-id bashls-docker :server-command "bash-language-server start")
-          (:server-id clangd :docker-server-id clangd-docker :server-command "clangd")
-          (:server-id css-ls :docker-server-id cssls-docker :server-command "css-languageserver --stdio")
-          ;; (:server-id dockerfile-ls :docker-server-id dockerfilels-docker :server-command "docker-langserver --stdio")
-          (:server-id gopls :docker-server-id gopls-docker :server-command "gopls")
-          (:server-id html-ls :docker-server-id htmls-docker :server-command "html-languageserver --stdio")
-           (:server-id pylsp :docker-server-id pylsp-docker :server-command "pylsp" :docker-image-id "martini97/lsp-docker-langservers" :docker-container-name "martini97-lsp-pylsp")
-          ;; (:server-id pyls :docker-server-id pyls-docker :server-command "pyls")
-          ;; (:server-id ts-ls :docker-server-id tsls-docker :server-command "typescript-language-server --stdio")
-          ))
-  (require 'lsp-docker)
+  ;; (require 'lsp-docker)
+  ;; (defvar lsp-docker-client-packages
+  ;;   '(lsp-css lsp-clients lsp-bash lsp-go lsp-pylsp lsp-html lsp-typescript
+  ;;             lsp-terraform lsp-clangd))
+  ;; (setq lsp-docker-client-configs
+  ;;       '((:server-id bash-ls :docker-server-id bashls-docker :server-command "bash-language-server start")
+  ;;         (:server-id clangd :docker-server-id clangd-docker :server-command "clangd")
+  ;;         (:server-id css-ls :docker-server-id cssls-docker :server-command "css-languageserver --stdio")
+  ;;         ;; (:server-id dockerfile-ls :docker-server-id dockerfilels-docker :server-command "docker-langserver --stdio")
+  ;;         (:server-id gopls :docker-server-id gopls-docker :server-command "gopls")
+  ;;         (:server-id html-ls :docker-server-id htmls-docker :server-command "html-languageserver --stdio")
+  ;;          (:server-id pylsp :docker-server-id pylsp-docker :server-command "pylsp" :docker-image-id "martini97/lsp-docker-langservers" :docker-container-name "martini97-lsp-pylsp")
+  ;;         ;; (:server-id pyls :docker-server-id pyls-docker :server-command "pyls")
+  ;;         ;; (:server-id ts-ls :docker-server-id tsls-docker :server-command "typescript-language-server --stdio")
+  ;;         ))
+  ;; (require 'lsp-docker)
 
-  (setq lsp-keymap-prefix "s-l")
-  (lsp-docker-init-clients
-   :path-mappings '(("/Users/conornash/Dropbox/Documents" . "/projects"))
-   :client-packages lsp-docker-client-packages
-   :client-configs lsp-docker-client-configs)
+  ;; (setq lsp-keymap-prefix "s-l")
+  ;; (lsp-docker-init-clients
+  ;;  :path-mappings '(("/Users/conornash/Dropbox/Documents" . "/projects"))
+  ;;  :client-packages lsp-docker-client-packages
+  ;;  :client-configs lsp-docker-client-configs)
 
-  ;; optionally
-  (use-package lsp-ui
-    :commands lsp-ui-mode
-    :config
-    (setq lsp-ui-sideline-ignore-duplicate t)
-    (add-hook 'lsp-mode-hook 'lsp-ui-mode)
-    (add-hook 'lsp-ui-doc-frame-mode-hook
-              #'(lambda ()
-                  (setq-local window-number-skip t))))
+  ;; ;; optionally
+  ;; (use-package lsp-ui
+  ;;   :commands lsp-ui-mode
+  ;;   :config
+  ;;   (setq lsp-ui-sideline-ignore-duplicate t)
+  ;;   (add-hook 'lsp-mode-hook 'lsp-ui-mode)
+  ;;   (add-hook 'lsp-ui-doc-frame-mode-hook
+  ;;             #'(lambda ()
+  ;;                 (setq-local window-number-skip t))))
 
-  (use-package helm-lsp
-    :commands helm-lsp-workspace-symbol
-    :config
-    (define-key lsp-mode-map [remap xref-find-apropos] #'helm-lsp-workspace-symbol))
+  ;; (use-package helm-lsp
+  ;;   :commands helm-lsp-workspace-symbol
+  ;;   :config
+  ;;   (define-key lsp-mode-map [remap xref-find-apropos] #'helm-lsp-workspace-symbol))
 
-  (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
+  ;; (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
 
-  ;; optional if you want which-key integration
-  (use-package which-key
-    :config
-    (which-key-mode))
+  ;; ;; optional if you want which-key integration
+  ;; (use-package which-key
+  ;;   :config
+  ;;   (which-key-mode))
 #+END_SRC
 
 
@@ -1280,8 +1276,8 @@ This is a system that makes `helm-apropos` more useful
                                        magit-insert-unpulled-from-upstream
                                        magit-insert-unpulled-from-pushremote
                                        magit-insert-unpushed-to-upstream
-                                       magit-insert-unpushed-to-pushremote))
-    )
+                                       magit-insert-unpushed-to-pushremote)
+          transient-default-level 5))
 
   (use-package forge
     :after magit)
@@ -1358,39 +1354,39 @@ This is a system that makes `helm-apropos` more useful
   ;;   )
 
   ;; (setq polymode-prefix-key (kbd "s-n"))
-  (use-package polymode
-    ;; :mode ("\.sql$" . poly-dbt-mode)
-    :config
-    (define-hostmode dbt/sql-hostmode
-      :mode 'sql-mode)
+  ;; (use-package polymode
+  ;;   ;; :mode ("\.sql$" . poly-dbt-mode)
+  ;;   :config
+  ;;   (define-hostmode dbt/sql-hostmode
+  ;;     :mode 'sql-mode)
 
-    (define-innermode dbt/sql-jinja2-innermode
-      :mode 'jinja2-mode
-      :head-matcher "{[%{][+-]?"
-      :tail-matcher "[+-]?[%}]}"
-      :head-mode 'body
-      :tail-mode 'body
-      :init-functions '((lambda (_)
-                          (setq-local indent-line-function ' jinja2-indent-line))))
+  ;;   (define-innermode dbt/sql-jinja2-innermode
+  ;;     :mode 'jinja2-mode
+  ;;     :head-matcher "{[%{][+-]?"
+  ;;     :tail-matcher "[+-]?[%}]}"
+  ;;     :head-mode 'body
+  ;;     :tail-mode 'body
+  ;;     :init-functions '((lambda (_)
+  ;;                         (setq-local indent-line-function ' jinja2-indent-line))))
 
-    ;; Comment blocks don't seem to work very well with jinja2/polymode,
-    ;; work around this by defining an inner mode just for the comments.
-    (define-innermode dbt/sql-jinja2-comments-innermode
-      :head-matcher "{#[+-]?"
-      :tail-matcher "[+-]?#}"
-      :head-mode 'body
-      :tail-mode 'body
-      :adjust-face 'font-lock-comment-face
-      :head-adjust-face 'font-lock-comment-face
-      :tail-adjust-face 'font-lock-comment-face
-      )
+  ;;   ;; Comment blocks don't seem to work very well with jinja2/polymode,
+  ;;   ;; work around this by defining an inner mode just for the comments.
+  ;;   (define-innermode dbt/sql-jinja2-comments-innermode
+  ;;     :head-matcher "{#[+-]?"
+  ;;     :tail-matcher "[+-]?#}"
+  ;;     :head-mode 'body
+  ;;     :tail-mode 'body
+  ;;     :adjust-face 'font-lock-comment-face
+  ;;     :head-adjust-face 'font-lock-comment-face
+  ;;     :tail-adjust-face 'font-lock-comment-face
+  ;;     )
 
-    (define-polymode poly-dbt-mode
-      :hostmode 'dbt/sql-hostmode
-      :innermodes '(dbt/sql-jinja2-comments-innermode
-                    dbt/sql-jinja2-innermode))
+  ;;   (define-polymode poly-dbt-mode
+  ;;     :hostmode 'dbt/sql-hostmode
+  ;;     :innermodes '(dbt/sql-jinja2-comments-innermode
+  ;;                   dbt/sql-jinja2-innermode))
 
-    )
+  ;;   )
 
 
   ;; (add-to-list 'auto-mode-alist
@@ -1856,6 +1852,11 @@ Currently causes Emacs in terminal to segfault
  #+END_SRC
 
 
+** fill-paragraph
+#+begin_src emacs-lisp :tangle yes
+  (setq fill-column 120)
+#+end_src
+
 ** indent-guide
 #+begin_src emacs-lisp :tangle yes
 
@@ -1864,6 +1865,80 @@ Currently causes Emacs in terminal to segfault
 
 #+end_src
 
+
+* Treesitter
+#+begin_src emacs-lisp :tangle yes
+  (use-package treesit-parser-manager
+    :straight (:host nil :repo "https://codeberg.org/ckruse/treesit-parser-manager" :files ("*.el"))
+    :commands (treesit-parser-manager-install-grammars
+               treesit-parser-manager-update-grammars
+               treesit-parser-manager-install-or-update-grammars
+               treesit-parser-manager-remove-grammar)
+    :custom
+    (treesit-parser-manager-grammars
+     '(("https://github.com/tree-sitter/tree-sitter-rust"
+        ("tree-sitter-rust"))
+
+       ("https://github.com/ikatyang/tree-sitter-toml"
+        ("tree-sitter-toml"))
+
+       ("https://github.com/elixir-lang/tree-sitter-elixir"
+        ("tree-sitter-elixir"))
+
+       ("https://github.com/tree-sitter/tree-sitter-typescript"
+        ("tree-sitter-typescript/tsx" "tree-sitter-typescript/typescript"))
+
+       ("https://github.com/tree-sitter/tree-sitter-javascript"
+        ("tree-sitter-javascript"))
+
+       ("https://github.com/tree-sitter/tree-sitter-css"
+        ("tree-sitter-css"))
+
+       ("https://github.com/serenadeai/tree-sitter-scss"
+        ("tree-sitter-scss"))
+
+       ("https://github.com/serenadeai/tree-sitter-python"
+        ("tree-sitter-python"))
+
+       ("https://github.com/tree-sitter/tree-sitter-json"
+        ("tree-sitter-json"))))
+    :config
+    (setq treesit-extra-load-path (list (expand-file-name "tree-sit" user-emacs-directory)))
+    :hook (emacs-startup . treesit-parser-manager-install-grammars))
+
+  ;; (use-package treesit
+  ;; :commands (treesit-install-language-grammar nf/treesit-install-all-languages)
+  ;; :init
+  ;; (setq treesit-language-source-alist
+  ;;  '((bash . ("https://github.com/tree-sitter/tree-sitter-bash"))
+  ;;    (c . ("https://github.com/tree-sitter/tree-sitter-c"))
+  ;;    (cpp . ("https://github.com/tree-sitter/tree-sitter-cpp"))
+  ;;    (css . ("https://github.com/tree-sitter/tree-sitter-css"))
+  ;;    (go . ("https://github.com/tree-sitter/tree-sitter-go"))
+  ;;    (html . ("https://github.com/tree-sitter/tree-sitter-html"))
+  ;;    (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript"))
+  ;;    (json . ("https://github.com/tree-sitter/tree-sitter-json"))
+  ;;    (lua . ("https://github.com/Azganoth/tree-sitter-lua"))
+  ;;    (make . ("https://github.com/alemuller/tree-sitter-make"))
+  ;;    (ocaml . ("https://github.com/tree-sitter/tree-sitter-ocaml" "ocaml/src" "ocaml"))
+  ;;    (python . ("https://github.com/tree-sitter/tree-sitter-python"))
+  ;;    (php . ("https://github.com/tree-sitter/tree-sitter-php"))
+  ;;    (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "typescript/src" "typescript"))
+  ;;    (ruby . ("https://github.com/tree-sitter/tree-sitter-ruby"))
+  ;;    (rust . ("https://github.com/tree-sitter/tree-sitter-rust"))
+  ;;    (sql . ("https://github.com/m-novikov/tree-sitter-sql"))
+  ;;    (toml . ("https://github.com/tree-sitter/tree-sitter-toml"))
+  ;;    (zig . ("https://github.com/GrayJack/tree-sitter-zig"))))
+  ;; :config
+  ;; (defun nf/treesit-install-all-languages ()
+  ;;   "Install all languages specified by `treesit-language-source-alist'."
+  ;;   (interactive)
+  ;;   (let ((languages (mapcar 'car treesit-language-source-alist)))
+  ;;     (dolist (lang languages)
+  ;;         (treesit-install-language-grammar lang)
+  ;;         (message "`%s' parser was installed." lang)
+  ;;         (sit-for 0.75)))))
+#+end_src
 
 * Languages
 ** Elisp functions
@@ -1902,7 +1977,7 @@ Currently causes Emacs in terminal to segfault
     :hook
     (lua-mode . (lambda ()
                   (set-company-backends-for-lua)
-                  (lsp-mode)
+
                   (turn-on-smartparens-strict-mode)
                   (define-key lua-mode-map (kbd "M-\\") 'lua-show-process-buffer)
                   (define-key lua-mode-map (kbd "C-c C-r") 'lua-send-region)
@@ -1940,16 +2015,6 @@ Currently causes Emacs in terminal to segfault
                                    company-dabbrev-code
                                    company-files
                                    )))
-
-  (use-package lsp-lua-emmy
-    :demand
-    :straight nil
-    :ensure nil
-    :load-path "~/Dropbox/Documents/lsp-lua-emmy"
-    :hook (lua-mode . lsp)
-    :config
-    (setq lsp-lua-emmy-jar-path (expand-file-name "EmmyLua-LS-all.jar" user-emacs-directory))
-    )
 
 #+end_src
 
@@ -2068,7 +2133,6 @@ Currently causes Emacs in terminal to segfault
   (global-set-key (kbd "C-\"") 'add-quoted-argument)
   (global-set-key (kbd "C-c !") 'org-time-stamp-inactive)
   (global-set-key (kbd "C-c C-f") 'ffap-next)
-  (global-set-key (kbd "C-c M-g") 'linum-relative-mode)
   (global-set-key (kbd "C-s-SPC") 'insert-char)
   (global-set-key (kbd "C-s-\\") 'uncomment-region)
   (global-set-key (kbd "C-x $") (lambda()(interactive)(insert "€")))
@@ -2266,5 +2330,6 @@ Currently causes Emacs in terminal to segfault
 
   ;; (modify-frame-parameters nil '((wait-for-wm . nil)))
   (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
+  (add-to-list 'default-frame-alist '(undecorated-round . t))
   ;; (add-to-list 'default-frame-alist '(ns-appearance . dark))
 #+END_SRC
