@@ -32,12 +32,9 @@
   (setq gc-cons-percentage (expt 10 -4)
         gc-cons-threshold (expt 2 22))
 
-  (setq apropos-do-all t
-        delete-active-region 'kill
-        enable-recursive-minibuffers t
+  (setq enable-recursive-minibuffers t
         inhibit-startup-screen t
         load-prefer-newer t
-        mac-pass-command-to-system nil
         max-lisp-eval-depth 30000
         ring-bell-function 'ignore
         save-interprogram-paste-before-kill t)
@@ -65,10 +62,6 @@
      (menu-bar-mode -1)
      (tool-bar-mode -1)))
 
-  ;; Emacs bug
-  (if (and (< emacs-major-version 27) (< emacs-minor-version 3))
-     (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
-
   ;; Don't say yes or no, just y or n
   (fset 'yes-or-no-p 'y-or-n-p)
 
@@ -86,15 +79,14 @@
 
 ** Package Management
 #+begin_src emacs-lisp :tangle yes
-
   (defvar bootstrap-version)
   (let ((bootstrap-file
          (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-        (bootstrap-version 5))
+        (bootstrap-version 6))
     (unless (file-exists-p bootstrap-file)
       (with-current-buffer
           (url-retrieve-synchronously
-           "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+           "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
            'silent 'inhibit-cookies)
         (goto-char (point-max))
         (eval-print-last-sexp)))
@@ -102,23 +94,8 @@
 
   (straight-use-package 'use-package)
   (setq straight-use-package-by-default t
-        package--init-file-ensured t
-        package-enable-at-startup nil
         use-package-always-ensure t
         use-package-verbose t)
-
-  ;; (package-initialize)
-  ;; (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/") t)
-  ;; (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
-  ;; (add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/")) ;; Goes down often
-  ;; ;; (add-to-list 'package-archives '("gnu" . "http://mirrors.163.com/elpa/gnu/"))
-  ;; (add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/") t)
-  ;; (package-refresh-contents)
-
-  ;; (mapc (lambda (elem)
-  ;;         (unless (package-installed-p elem)
-  ;;           (package-install elem)))
-  ;;       '(diminish use-package bind-key))
 
   (eval-when-compile
     (require 'use-package)
@@ -166,7 +143,7 @@
 #+END_SRC
 
 
-** Automatically refresh open files if changed on disk
+* Automatically refresh open files if changed on disk
 #+BEGIN_SRC emacs-lisp :tangle yes
 
   (global-auto-revert-mode t)
@@ -179,11 +156,14 @@
  #+END_SRC
 
 
-** Calendar
+* Calendar
 #+BEGIN_SRC emacs-lisp :tangle yes
-(setq calendar-latitude 38.6
-      calendar-longitude -90.1
-      calendar-location-name "St. Louis")
+  ;; (setq calendar-latitude 38.6
+  ;;       calendar-longitude -90.1
+  ;;       calendar-location-name "St. Louis")
+  (setq calendar-latitude 51.46
+        calendar-longitude 0.3
+        calendar-location-name "Richmond, London")
 
  #+END_SRC
 
@@ -309,24 +289,6 @@
 
 ** Load Org-mode
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (setq org-contrib-includes-list
-        '(ob-arduino ob-clojure-literate ob-csharp ob-eukleides ob-fomus ob-julia ob-mathematica
-                     ob-mathomatic ob-oz ob-php ob-redis ob-sclang ob-smiles ob-spice
-                     ob-stata ob-tcl ob-vbnet ol-bookmark ol-elisp-symbol ol-git-link ol-man
-                     ol-mew ol-notmuch ol-vm ol-wl org-annotate-file org-attach-embedded-images org-bibtex-extras
-                     org-checklist org-choose org-collector org-contacts org-contribdir org-depend org-effectiveness
-                     org-eldoc org-eval org-eval-light org-expiry org-interactive-query org-invoice org-learn
-                     org-license org-mac-iCal org-mac-link org-mairix org-notify org-panel org-passwords
-                     org-registry org-screen org-screenshot org-secretary org-static-mathjax org-sudoku orgtbl-sqlinsert
-                     org-toc org-track org-velocity org-wikinodes ox-bibtex ox-confluence ox-deck
-                     ox-extra ox-freemind ox-groff ox-koma-letter ox-rss ox-s5 ox-taskjuggler))
-  (use-package org-contrib
-    :straight
-    (org-contrib :type git
-                 :includes org-contrib-includes-list
-                 :repo "https://git.sr.ht/~bzg/org-contrib"
-                 :files (:defaults "lisp/*.el")))
-
   (use-package org
     :mode ("\\.org$" . org-mode)
     :diminish
@@ -371,7 +333,6 @@
       ;; Timestamp of changes to deadline using C-c C-d/C-s
       org-log-redeadline 'time
       org-log-reschedule 'time
-      ;; org-modules '()
       org-outline-path-complete-in-steps nil
       org-refile-targets '((org-agenda-files . (:maxlevel . 2))
            (org-agenda-files . (:todo . "NEXTACTION"))
@@ -408,64 +369,29 @@
     #'(lambda ()
     (hack-dir-local-variables-non-file-buffer)))
 
-  (setq org-export-docbook-xslt-proc-command "xsltproc --output %o %s %i")
-  (setq org-export-docbook-xslt-proc-command "")
-
   (eval-when-compile
     (defvar org-agenda-mode-map))
 
   (add-hook 'org-agenda-mode-hook
     #'(lambda ()
-    (define-key org-agenda-mode-map (kbd ">") 'org-agenda-remove-restriction-lock)
-    (define-key org-agenda-mode-map (kbd "M") 'org-google-calendar-sync)))
+    (define-key org-agenda-mode-map (kbd ">") 'org-agenda-remove-restriction-lock)))
 
   (use-package htmlize)
 
   (use-package org-protocol :straight nil :ensure nil)
   (use-package ox-md :straight nil :ensure nil)
   (use-package ox-publish :straight nil :ensure nil)
-  (use-package ox-taskjuggler :straight nil :ensure nil)
-  (use-package ox-freemind :straight nil :ensure nil)
   (use-package ox-icalendar :straight nil :ensure nil)
 
   (use-package ox-reveal
     :config
-    (setq org-reveal-root "http://cdn.jsdelivr.net/reveal.js/3.0.0/"))
+    (setq org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
 
   (setq
    org-agenda-exporter-settings '((ps-number-of-columns 2)
           (ps-landscape-mode t)
           (org-agenda-add-entry-text-maxlines 5)
           (htmlize-output-type 'css)))
-
-  (defun org-repair-property-drawers ()
-    "Fix properties drawers in current buffer.
-   Ignore non Org buffers."
-    (when (eq major-mode 'org-mode)
-      (org-with-wide-buffer
-       (goto-char (point-min))
-       (let ((case-fold-search t)
-     (inline-re (and (featurep 'org-inlinetask)
-         (concat (org-inlinetask-outline-regexp)
-             "END[ \t]*$"))))
-     (org-map-entries
-      (lambda ()
-    (unless (and inline-re (org-looking-at-p inline-re))
-      (save-excursion
-    (let ((end (save-excursion (outline-next-heading) (point))))
-      (forward-line)
-      (when (org-looking-at-p org-planning-line-re) (forward-line))
-      (when (and (< (point) end)
-         (not (org-looking-at-p org-property-drawer-re))
-         (save-excursion
-           (and (re-search-forward org-property-drawer-re end t)
-            (eq (org-element-type
-             (save-match-data (org-element-at-point)))
-            'drawer))))
-        (insert (delete-and-extract-region
-         (match-beginning 0)
-         (min (1+ (match-end 0)) end)))
-        (unless (bolp) (insert "\n"))))))))))))
 #+END_SRC
 
 
@@ -488,36 +414,6 @@
      (sql        . t)
      (sql-mode   . t)))
 
-  ;; (org-babel-lob-ingest "~/Dropbox/emacs/emacs24/elisp/emacs24.Babel.org")
-
-  (setq org-structure-template-alist '(("a" . "export ascii")
-               ("c" . "center")
-               ("C" . "comment")
-               ("e" . "example")
-               ("E" . "export")
-               ("h" . "export html")
-               ("l" . "export latex")
-               ("q" . "quote")
-               ("s" . "src")
-               ("v" . "verse")))
-  ;; (add-to-list 'org-structure-template-alist '("el" . "#+BEGIN_SRC emacs-lisp :tangle yes :eval never\n ?\n#+END_SRC"))
-  ;; (add-to-list 'org-structure-template-alist '("py" . "#+BEGIN_SRC python :results output :exports both :prologue (progn (setenv \"PYENV_VERSION\" \"scheduler-as-a-service-3.6.1\") \"\") :eval never\n ?\n#+END_SRC"))
-  ;; (add-to-list 'org-structure-template-alist '("rana" . "#+BEGIN_SRC R :results output :exports both :cache yes :eval never\n  library(nbs.analysis)\n  ?\n#+END_SRC"))
-
-  (setq org-babel-R-command "/usr/local/bin/R --slave --no-save"
-    org-html-keep-old-src t
-    org-babel-default-inline-header-args '((:session . "none")
-               (:cache . "yes")
-               (:eval . "never")
-               (:exports . "both")
-               (:tangle . "yes"))
-    org-babel-default-header-args '((:session . "none")
-            (:cache . "yes")
-            (:eval . "never")
-            (:exports . "both")
-            (:tangle . "yes")))
-
-
 #+END_SRC
 
 
@@ -538,35 +434,8 @@
 
 * Smartscan
  #+BEGIN_SRC emacs-lisp :tangle yes
-(use-package smartscan)
+   (use-package smartscan)
 #+END_SRC
-
-
-* Parsing
-
-** Tree-sitter
- #+BEGIN_SRC emacs-lisp :tangle yes
-
-#+END_SRC
-
-* Rainbow Delimiters
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package rainbow-delimiters
-    :diminish rainbow-delimiters-mode
-    :commands (rainbow-delimiters-mode rainbow-delimiters-mode-enable
-                                       rainbow-delimiters-mode-disable)
-    :config
-    (face-spec-set 'rainbow-delimiters-depth-1-face
-                   '((t :foreground "#e2e2e2")) 'face-defface-spec)
-    (face-spec-set 'rainbow-delimiters-depth-2-face
-                   '((t :foreground "#e1ffe1")) 'face-defface-spec)
-    (face-spec-set 'rainbow-delimiters-depth-3-face
-                   '((t :foreground "#ffdfbf")) 'face-defface-spec)
-    (face-spec-set 'rainbow-delimiters-depth-4-face
-                   '((t :foreground "#efefff")) 'face-defface-spec))
-
-#+END_SRC
-
 
 
 * Other Packages
@@ -623,6 +492,59 @@
     :bind (("s-b" . browse-at-remote)))
 
  #+END_SRC
+
+
+** Buffer/Window/Frame navigation
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (setq split-height-threshold 140
+        split-width-threshold 140)
+
+  (use-package buffer-move
+    :bind (("<C-s-down>" . buf-move-down)
+           ("<C-s-left>" . buf-move-left)
+           ("<C-s-right>" . buf-move-right)
+           ("<C-s-up>" . buf-move-up)))
+
+  (use-package window-number)
+  (window-number-meta-mode 1)
+
+  (defun back-window (&optional arg)
+    (interactive "P")
+    (other-window -1))
+
+  (defun my/vsplit-last-buffer (prefix)
+    "Split the window vertically and display the previous buffer."
+    (interactive "p")
+    (split-window-vertically)
+    (other-window 1 nil)
+    (if (= prefix 1)
+        (switch-to-next-buffer)))
+
+  (defun my/hsplit-last-buffer (prefix)
+    "Split the window horizontally and display the previous buffer."
+    (interactive "p")
+    (split-window-horizontally)
+    (other-window 1 nil)
+    (if (= prefix 1) (switch-to-next-buffer)))
+
+  (global-set-key (kbd "C-\]") 'other-window)
+  (global-set-key (kbd "C-M-\]") 'back-window)
+
+  (global-set-key (kbd "s-2") 'my/vsplit-last-buffer)
+  (global-set-key (kbd "s-3") 'my/hsplit-last-buffer)
+
+  (use-package transpose-frame
+    :bind (("C-<" . rotate-frame-anticlockwise)
+           ("C->" . rotate-frame-clockwise)))
+
+  (global-set-key (kbd "<M-f8>") 'kill-buffer-and-window)
+  (global-set-key (kbd "C-`") 'other-frame)
+  (global-set-key (kbd "C-s-]") 'other-frame)
+  (global-set-key (kbd "s-0") 'delete-window)
+  (global-set-key (kbd "s-1") 'delete-other-windows)
+  (global-set-key (kbd "s-\\") 'other-frame)
+#+END_SRC
+
 
 
 ** Column Number Mode
@@ -688,7 +610,7 @@
   (cua-mode t)
   (setq cua-enable-cua-keys nil
         cua-delete-selection nil
-        delete-active-region nil)
+        delete-active-region 'kill)
   (delete-selection-mode -1)
 
  #+END_SRC
@@ -721,6 +643,8 @@
   ;;   )
 
 #+end_src
+
+
 
 ** Dired
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -767,14 +691,6 @@
 
     )
 
-  ;; (setq diredp-hide-details-initially-flag nil
-  ;;       diredp-bind-problematic-terminal-keys nil)
-
-  ;; (use-package dired+
-  ;;   ;; :ensure nil
-  ;;   :config
-  ;;   (setq diredp-hide-details-toggled nil))
-
  #+END_SRC
 
 
@@ -788,9 +704,9 @@
 
 ** Docker
 #+BEGIN_SRC emacs-lisp :tangle yes
-
   (use-package docker
-    :bind (("<f7>" . docker-containers)
+    :bind (("<f7>" . docker)
+           ("<M-f7>" . docker-containers)
            ("<C-f7>" . docker-images)))
 #+END_SRC
 
@@ -862,9 +778,7 @@
 ** Encryption
 #+BEGIN_SRC emacs-lisp :tangle yes
   ;; EasyPG
-  (use-package epa-file
-    :ensure nil
-    :straight nil)
+  (require 'epa-file)
   (epa-file-enable)
 
  #+END_SRC
@@ -884,6 +798,13 @@
                                er/mark-outside-pairs er/mark-comment er/mark-url er/mark-email
                                er/mark-defun)))
  #+END_SRC
+
+
+** fill-paragraph
+#+begin_src emacs-lisp :tangle yes
+  (setq fill-column 120)
+#+end_src
+
 
 
 ** Find file at point
@@ -912,12 +833,12 @@
   (use-package flycheck
     :bind (("s-[" . flycheck-previous-error)
            ("s-]" . flycheck-next-error))
-    :config  
+    :config
     (flycheck-define-checker sqlfluff
       "A SQL syntax checker using the sqlfluff tool."
       :command ("sqlfluff" "lint"
                 "--disable_progress_bar"
-                "--nocolor"              
+                "--nocolor"
                 "--dialect=postgres" source)
       ;; :standard-input t
       :error-patterns
@@ -933,14 +854,6 @@
           flycheck-sqlfluff-executable "sqlfluff")
 
     )
-
-#+END_SRC
-
-
-** FontAwesome
-#+BEGIN_SRC emacs-lisp :tangle yes
-  ;; Requires font to be downloaded from http://fontawesome.io/
-  (use-package fontawesome)
 
 #+END_SRC
 
@@ -982,11 +895,7 @@ This is a system that makes `helm-apropos` more useful
 ** hmac
 #+BEGIN_SRC emacs-lisp :tangle yes :eval never
   (use-package hmac
-    :commands (hmac)
-    )
-
-
-
+    :commands (hmac))
 #+END_SRC
 
 
@@ -1002,36 +911,23 @@ This is a system that makes `helm-apropos` more useful
  #+END_SRC
 
 
-** Hy
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package hy-mode)
-  (add-hook 'hy-mode-hook
-            #'(lambda ()
-                (pyenv-mode 1)
-                (rainbow-mode 1)
-                (turn-on-smartparens-strict-mode)
-                (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
-                (setq tab-width 4)
-                (define-key hy-mode-map (kbd "M-\\") 'switch-to-lisp)
-                ))
-
-  (eval-when-compile
-    (defvar inferior-lisp-mode-map))
-  (add-hook 'inferior-lisp-mode-hook
-            #'(lambda ()
-                (define-key inferior-lisp-mode-map (kbd "C-M-p") 'backward-list)
-                (define-key inferior-lisp-mode-map (kbd "C-M-n") 'forward-list)))
-
-#+END_SRC
-
-
 ** iBuffer
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package ibuffer
     :ensure nil
-    :bind (("<f8>" . ibuffer) ("C-x C-b" . ibuffer)))
+    :bind (("<f8>" . ibuffer)
+           ("C-x C-b" . ibuffer)))
 
  #+END_SRC
+
+
+** indent-guide
+#+begin_src emacs-lisp :tangle yes
+
+  (use-package indent-guide)
+  (use-package highlight-indentation)
+
+#+end_src
 
 
 ** isearch
@@ -1063,7 +959,7 @@ This is a system that makes `helm-apropos` more useful
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package jq-mode
     :ensure-system-package jq
-    :mode "\\.json\\'" "\\.jsonl\\'")
+    :mode "\\.jq\\'")
 
  #+END_SRC
 
@@ -1099,6 +995,7 @@ This is a system that makes `helm-apropos` more useful
           (yaml-subparser (point-min) (point-max)))))
 
     )
+
   (use-package json-mode
     :after origami
     :mode "\\.json\\'" "\\.jsonl\\'"
@@ -1119,6 +1016,16 @@ This is a system that makes `helm-apropos` more useful
  #+END_SRC
 
 
+** Keychain
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  (use-package keychain-environment)
+  (keychain-refresh-environment)
+
+
+#+END_SRC
+
+
 ** Keyfreq
 #+BEGIN_SRC emacs-lisp :tangle yes
 
@@ -1132,16 +1039,6 @@ This is a system that makes `helm-apropos` more useful
         keyfreq-file (expand-file-name "keyfreq" user-emacs-directory))
   (keyfreq-mode 1)
   (keyfreq-autosave-mode 1))
-
-
-#+END_SRC
-
-
-** Keychain
-#+BEGIN_SRC emacs-lisp :tangle yes
-
-  (use-package keychain-environment)
-  (keychain-refresh-environment)
 
 
 #+END_SRC
@@ -1171,75 +1068,6 @@ This is a system that makes `helm-apropos` more useful
           (display-line-numbers-mode -1))))
 
 #+END_SRC
-
-
-** LSP (Language Server Protocol)
-#+BEGIN_SRC emacs-lisp :tangle yes
-
-  ;; (setq default-docker-container-name "lsp-container")
-
-  ;; (use-package lsp-mode
-  ;;   :hook ((python-mode . lsp-deferred)
-  ;;          (lsp-mode . lsp-enable-which-key-integration))
-  ;;   :commands (lsp lsp-deferred)
-
-  ;;   :config
-  ;;   (setq
-  ;;    lsp-diagnostics-provider :flycheck
-  ;;    ;; lsp-pyls-plugins-pycodestyle-enabled t
-  ;;    ;; lsp-pyls-plugins-pylint-args '("--disable=W0301,W0312,C0103,W191,E127,E1102,E203,C0326,W1201")
-  ;;    )
-  ;;   )
-
-  ;; (use-package lsp-docker)
-  ;; ;; This is difficult to configure and sometimes breaks randomly
-
-  ;; (require 'lsp-docker)
-  ;; (defvar lsp-docker-client-packages
-  ;;   '(lsp-css lsp-clients lsp-bash lsp-go lsp-pylsp lsp-html lsp-typescript
-  ;;             lsp-terraform lsp-clangd))
-  ;; (setq lsp-docker-client-configs
-  ;;       '((:server-id bash-ls :docker-server-id bashls-docker :server-command "bash-language-server start")
-  ;;         (:server-id clangd :docker-server-id clangd-docker :server-command "clangd")
-  ;;         (:server-id css-ls :docker-server-id cssls-docker :server-command "css-languageserver --stdio")
-  ;;         ;; (:server-id dockerfile-ls :docker-server-id dockerfilels-docker :server-command "docker-langserver --stdio")
-  ;;         (:server-id gopls :docker-server-id gopls-docker :server-command "gopls")
-  ;;         (:server-id html-ls :docker-server-id htmls-docker :server-command "html-languageserver --stdio")
-  ;;          (:server-id pylsp :docker-server-id pylsp-docker :server-command "pylsp" :docker-image-id "martini97/lsp-docker-langservers" :docker-container-name "martini97-lsp-pylsp")
-  ;;         ;; (:server-id pyls :docker-server-id pyls-docker :server-command "pyls")
-  ;;         ;; (:server-id ts-ls :docker-server-id tsls-docker :server-command "typescript-language-server --stdio")
-  ;;         ))
-  ;; (require 'lsp-docker)
-
-  ;; (setq lsp-keymap-prefix "s-l")
-  ;; (lsp-docker-init-clients
-  ;;  :path-mappings '(("/Users/conornash/Dropbox/Documents" . "/projects"))
-  ;;  :client-packages lsp-docker-client-packages
-  ;;  :client-configs lsp-docker-client-configs)
-
-  ;; ;; optionally
-  ;; (use-package lsp-ui
-  ;;   :commands lsp-ui-mode
-  ;;   :config
-  ;;   (setq lsp-ui-sideline-ignore-duplicate t)
-  ;;   (add-hook 'lsp-mode-hook 'lsp-ui-mode)
-  ;;   (add-hook 'lsp-ui-doc-frame-mode-hook
-  ;;             #'(lambda ()
-  ;;                 (setq-local window-number-skip t))))
-
-  ;; (use-package helm-lsp
-  ;;   :commands helm-lsp-workspace-symbol
-  ;;   :config
-  ;;   (define-key lsp-mode-map [remap xref-find-apropos] #'helm-lsp-workspace-symbol))
-
-  ;; (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
-
-  ;; ;; optional if you want which-key integration
-  ;; (use-package which-key
-  ;;   :config
-  ;;   (which-key-mode))
-#+END_SRC
-
 
 
 ** Magit
@@ -1281,13 +1109,19 @@ This is a system that makes `helm-apropos` more useful
 
   (use-package forge
     :after magit)
-  ;; (use-package magit-todos
-  ;;   :after magit
-  ;;   :config
-  ;;   (-map (lambda (elem)
-  ;;           (add-to-list 'magit-todos-keywords-list elem))
-  ;;         '("NEXTACTION" "INREVIEW" "DONE" "TRANSFERRED" "CANCELLED" "DUPLICATE")))
  #+END_SRC
+
+
+** Man pages
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package woman
+    :commands (helm-man-woman))
+
+  (add-hook 'woman-mode-hook
+            #'(lambda ()
+               (subword-mode -1)))
+#+END_SRC
+
 
 
 ** Markdown
@@ -1331,70 +1165,6 @@ This is a system that makes `helm-apropos` more useful
 #+end_src
 
 
-** Paradox Package Manager
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package paradox
-    :commands paradox-list-packages
-    :init
-    (setq paradox-automatically-star t
-          paradox-column-width-package 25
-          ;; Auth token in private.org
-          paradox-execute-asynchronously t))
-
- #+END_SRC
-
-
-** Polymode
-#+BEGIN_SRC emacs-lisp :tangle yes
-  ;; Taken from:
-  ;; (use-package dbt-mode
-  ;;   :straight (:type git :host github :repo "CyberShadow/dbt-mode")
-  ;;   ;; Customize `sql-product' to set the flavor of the SQL syntax.
-  ;;   ;; :custom (sql-product 'mariadb)
-  ;;   )
-
-  ;; (setq polymode-prefix-key (kbd "s-n"))
-  ;; (use-package polymode
-  ;;   ;; :mode ("\.sql$" . poly-dbt-mode)
-  ;;   :config
-  ;;   (define-hostmode dbt/sql-hostmode
-  ;;     :mode 'sql-mode)
-
-  ;;   (define-innermode dbt/sql-jinja2-innermode
-  ;;     :mode 'jinja2-mode
-  ;;     :head-matcher "{[%{][+-]?"
-  ;;     :tail-matcher "[+-]?[%}]}"
-  ;;     :head-mode 'body
-  ;;     :tail-mode 'body
-  ;;     :init-functions '((lambda (_)
-  ;;                         (setq-local indent-line-function ' jinja2-indent-line))))
-
-  ;;   ;; Comment blocks don't seem to work very well with jinja2/polymode,
-  ;;   ;; work around this by defining an inner mode just for the comments.
-  ;;   (define-innermode dbt/sql-jinja2-comments-innermode
-  ;;     :head-matcher "{#[+-]?"
-  ;;     :tail-matcher "[+-]?#}"
-  ;;     :head-mode 'body
-  ;;     :tail-mode 'body
-  ;;     :adjust-face 'font-lock-comment-face
-  ;;     :head-adjust-face 'font-lock-comment-face
-  ;;     :tail-adjust-face 'font-lock-comment-face
-  ;;     )
-
-  ;;   (define-polymode poly-dbt-mode
-  ;;     :hostmode 'dbt/sql-hostmode
-  ;;     :innermodes '(dbt/sql-jinja2-comments-innermode
-  ;;                   dbt/sql-jinja2-innermode))
-
-  ;;   )
-
-
-  ;; (add-to-list 'auto-mode-alist
-  ;;              '("/\\(dbt\\|queries\\|macros\\|dbt_modules\\)/.*\\.sql\\'" . dbt-mode))
-
- #+END_SRC
-
-
 ** Powershell
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package powershell)
@@ -1411,74 +1181,59 @@ This is a system that makes `helm-apropos` more useful
  #+END_SRC
 
 
+** pulse
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  (defun conor-pulse-hook (&rest arg)
+    (pulse-line-hook-function))
+
+  (use-package pulse
+    :ensure nil
+    :config
+    (setq
+     pulse-command-advice-flag  	t
+     pulse-iterations           	25
+     pulse-delay                	0.05)
+    (face-spec-set 'pulse-highlight-start-face	'((((class color) (background dark))
+                                                     (:background "#AAAAAA"))
+                                                    (((class color) (background light))
+                                                     (:background "#FFFFFF"))))
+    (face-spec-set 'pulse-highlight-face '((((class color) (background dark))
+                                            (:background "#AAAAAA"))
+                                           (((class color) (background light))
+                                            (:background "#FFFFFF"))))
+    (dolist (command '(scroll-up
+                       scroll-down
+                       recenter-top-bottom
+                       other-window))
+      (advice-add command :filter-return #'conor-pulse-hook)))
+
+ #+END_SRC
+
+
+
+** Rainbow Delimiters
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package rainbow-delimiters
+    :diminish rainbow-delimiters-mode
+    :commands (rainbow-delimiters-mode rainbow-delimiters-mode-enable
+                                       rainbow-delimiters-mode-disable)
+    :config
+    (face-spec-set 'rainbow-delimiters-depth-1-face
+                   '((t :foreground "#e2e2e2")) 'face-defface-spec)
+    (face-spec-set 'rainbow-delimiters-depth-2-face
+                   '((t :foreground "#e1ffe1")) 'face-defface-spec)
+    (face-spec-set 'rainbow-delimiters-depth-3-face
+                   '((t :foreground "#ffdfbf")) 'face-defface-spec)
+    (face-spec-set 'rainbow-delimiters-depth-4-face
+                   '((t :foreground "#efefff")) 'face-defface-spec))
+
+#+END_SRC
+
 ** rainbow-mode
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package rainbow-mode
     :diminish (rainbow-mode . " 🌈"))
- #+END_SRC
-
-
-** RealGUD
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package realgud
-    :commands (realgud:cmd-eval
-    realgud:zshdb-customize realgud:ipdb-remote realgud:terminate
-    realgud:window-bt-undisturb-src realgud:cmd-break
-    realgud:trepan-goto-syntax-error-line realgud:cmd-delete
-    realgud:unload-features realgud:remake realgud:rdebug-customize
-    realgud:cmd-frame realgud:trepanjs-reset
-    realgud:trepan-goto-control-frame-line realgud:trepan2-customize
-    realgud:cmd-newer-frame realgud:gdb-reset
-    realgud:trepanjs-goto-syntax-error-line realgud:reload-features
-    realgud:cmd-enable realgud:send-input realgud:bashdb-customize
-    realgud:cmd-until realgud:cmd-terminate
-    realgud:perl-goto-errmsg-line realgud:backtrace-init
-    realgud:goto-loc-hist-9 realgud:goto-loc-hist-8
-    realgud:goto-loc-hist-7 realgud:goto-loc-hist-6
-    realgud:goto-loc-hist-5 realgud:goto-loc-hist-4
-    realgud:cmd-eval-dwim realgud:gub-customize realgud:pdb
-    realgud:nodejs-customize realgud:ipdb-customize realgud:cmd-next
-    realgud:jdb realgud:nodejs-reset realgud:cmd-continue
-    realgud:pdb-customize realgud:jdb-goto-control-frame-line
-    realgud:ipdb-backend-complete realgud:backtrace-describe
-    realgud:trepan3k-delayed realgud:jdb-goto-syntax-error-line
-    realgud:trepanjs realgud:follow-event realgud:cmd-step
-    realgud:cmd-repeat-last realgud:zshdb realgud:ipdb
-    realgud:track-set-debugger realgud:pdb-remote
-    realgud:cmd-eval-region realgud:reset realgud:loc-describe
-    realgud:track-from-region realgud:kshdb-customize
-    realgud:trepanpl-track-mode realgud:cmd-jump
-    realgud:gub-goto-location realgud:goto-lang-backtrace-line
-    realgud:cmd-next-no-arg realgud:follow-point
-    realgud:perldb-customize realgud:pdb-delayed
-    realgud:rspec-goto-backtrace-line realgud:flake8-goto-msg-line
-    realgud:gdb-pid realgud:goto-debugger-backtrace-line
-    realgud:cmd-finish realgud:ruby-goto-dollar-bang-line
-    realgud:info-mode realgud:pytest-goto-errmsg-line realgud:cmd-quit
-    realgud:trepan realgud:remake-customize realgud:trepan\.pl
-    realgud:window-bt realgud:jdb-track-mode
-    realgud:srcbuf-info-describe realgud:ruby-goto-backtrace-line
-    realgud:goto-maven-errmsg-line realgud:bashdb
-    realgud:track-mode-enable realgud:remove-ansi-schmutz
-    realgud:cmdbuf-follow-buffer realgud:rails-goto-backtrace-line
-    realgud:perldb realgud:follow realgud:cmd-shell
-    realgud:rubinius-goto-Xagent-backtrace-line
-    realgud:trepanpl-goto-syntax-error-line realgud:gdb-pid-associate
-    realgud:cmd-backtrace realgud:track-mode-disable realgud:gdb
-    realgud:trepanpl-reset realgud:tooltip-eval realgud:gdb-customize
-    realgud:cmd-disable realgud:cmdbuf-info-describe
-    realgud:trepan2-delayed realgud:gub-goto-panic-location
-    realgud:cmd-restart realgud:goto-debugger-loc-line
-    realgud:trepanpl-customize realgud:cmd-kill
-    realgud:terminate-srcbuf realgud:trepan2 realgud:gdb-track-mode
-    realgud:rdebug realgud:cmd-older-frame realgud:trepan3k
-    realgud:cmd-clear realgud:nodejs realgud:cmd-step-no-arg
-    realgud:jdb-customize realgud:trepan3k-customize
-    realgud:trepanjs-customize realgud:trepan-customize realgud:kshdb
-    realgud:perldb-reset)
-    :config
-    (setq realgud:ipdb-command-name "python -m ipdb"))
-
  #+END_SRC
 
 
@@ -1488,7 +1243,6 @@ This is a system that makes `helm-apropos` more useful
   :config
   (setq recentf-max-saved-items nil))
 
-(require 'prog-mode)
  #+END_SRC
 
 
@@ -1573,6 +1327,12 @@ This is a system that makes `helm-apropos` more useful
  #+END_SRC
 
 
+** Terraform
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package terraform-mode)
+ #+END_SRC
+
+
 ** Toml
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package toml)
@@ -1595,12 +1355,6 @@ This is a system that makes `helm-apropos` more useful
  #+END_SRC
 
 
-** Terraform
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package terraform-mode)
- #+END_SRC
-
-
 ** Undo Fu
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package undo-fu
@@ -1608,6 +1362,8 @@ This is a system that makes `helm-apropos` more useful
            ("C-?" . undo-fu-only-redo)))
 
  #+END_SRC
+
+
 
 ** Uniquify
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -1650,7 +1406,6 @@ This is a system that makes `helm-apropos` more useful
 
 ** w3m
 #+BEGIN_SRC emacs-lisp :tangle yes
-;;(setq browse-url-browser-function 'w3m-browse-url)
 (setq browse-url-browser-function 'browse-url-default-macosx-browser)
 
  #+END_SRC
@@ -1677,128 +1432,22 @@ This is a system that makes `helm-apropos` more useful
  #+END_SRC
 
 
-** pulse
+** Whitespace mode
 #+BEGIN_SRC emacs-lisp :tangle yes
-
-  (defun conor-pulse-hook (&rest arg)
-    (pulse-line-hook-function))
-
-  (use-package pulse
-    :ensure nil
+  (use-package whitespace
+    :bind (("C-c w" . whitespace-mode))
     :config
-    (setq
-     pulse-command-advice-flag  	t
-     pulse-iterations           	25
-     pulse-delay                	0.05)
-    (face-spec-set 'pulse-highlight-start-face	'((((class color) (background dark))
-                                                     (:background "#AAAAAA"))
-                                                    (((class color) (background light))
-                                                     (:background "#FFFFFF"))))
-    (face-spec-set 'pulse-highlight-face '((((class color) (background dark))
-                                            (:background "#AAAAAA"))
-                                           (((class color) (background light))
-                                            (:background "#FFFFFF"))))
-    (dolist (command '(scroll-up
-                       scroll-down
-                       recenter-top-bottom
-                       other-window))
-      (advice-add command :filter-return #'conor-pulse-hook)))
-
-
-
-
+    (setq whitespace-display-mappings
+          ;; all numbers are Unicode codepoint in decimal. try (insert-char 182 ) to see it
+          '(
+            (space-mark 32 [183] [46]) ; 32 SPACE, 183 MIDDLE DOT 「·」, 46 FULL STOP 「.」
+            (newline-mark 10 [182 10]) ; 10 LINE FEED
+            (tab-mark 9 [9655 9] [92 9]) ; 9 TAB, 9655 WHITE RIGHT-POINTING TRIANGLE 「▷」
+            )
+          whitespace-style '(face tabs spaces trailing space-before-tab::space newline indentation::space indentation indentation::tab empty space-after-tab::space space-mark tab-mark newline-mark)))
 
  #+END_SRC
 
-
-
-** Buffer/Window/Frame navigation
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (setq split-height-threshold 140
-        split-width-threshold 140)
-
-  (use-package buffer-move
-    :bind (("<C-s-down>" . buf-move-down)
-           ("<C-s-left>" . buf-move-left)
-           ("<C-s-right>" . buf-move-right)
-           ("<C-s-up>" . buf-move-up)))
-
-  (use-package window-number)
-  (window-number-meta-mode 1)
-
-  (defun back-window (&optional arg)
-    (interactive "P")
-    (other-window -1))
-
-  (defun my/vsplit-last-buffer (prefix)
-    "Split the window vertically and display the previous buffer."
-    (interactive "p")
-    (split-window-vertically)
-    (other-window 1 nil)
-    (if (= prefix 1)
-        (switch-to-next-buffer)))
-
-  (defun my/hsplit-last-buffer (prefix)
-    "Split the window horizontally and display the previous buffer."
-    (interactive "p")
-    (split-window-horizontally)
-    (other-window 1 nil)
-    (if (= prefix 1) (switch-to-next-buffer)))
-
-  (global-set-key (kbd "C-\]") 'other-window)
-  (global-set-key (kbd "C-M-\]") 'back-window)
-
-  (global-set-key (kbd "s-2") 'my/vsplit-last-buffer)
-  (global-set-key (kbd "s-3") 'my/hsplit-last-buffer)
-
-  (use-package transpose-frame
-    :bind (("C-<" . rotate-frame-anticlockwise)
-           ("C->" . rotate-frame-clockwise)))
-
-  ;; (defun conornash/scroll-up (prefix)
-  ;;   (interactive "p")
-  ;;   (previous-line prefix)
-  ;;   (scroll-lock-previous-line prefix))
-
-  ;; (defun conornash/scroll-down (prefix)
-  ;;   (interactive "p")
-  ;;   (next-line prefix)
-  ;;   (scroll-lock-next-line prefix))
-
-  ;; (global-set-key (kbd "s-<down>") 'conornash/scroll-down)
-  ;; (global-set-key (kbd "s-<up>") 'conornash/scroll-up)
-
-  (global-set-key (kbd "<M-f8>") 'kill-buffer-and-window)
-  (global-set-key (kbd "C-`") 'other-frame)
-  (global-set-key (kbd "C-s-]") 'other-frame)
-  (global-set-key (kbd "s-0") 'delete-window)
-  (global-set-key (kbd "s-1") 'delete-other-windows)
-  (global-set-key (kbd "s-\\") 'other-frame)
-#+END_SRC
-
-
-
-** Man pages
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package woman
-    :commands (helm-man-woman))
-
-  (add-hook 'woman-mode-hook
-            #'(lambda ()
-               (subword-mode -1)))
-#+END_SRC
-
-
-** vterm
-Currently causes Emacs in terminal to segfault
-#+BEGIN_SRC  emacs-lisp :tangle yes
-  ;; (use-package vterm
-  ;;   :commands (vterm)
-  ;;   :config
-  ;;   (add-hook 'vterm-mode-hook
-  ;;             #'(lambda ()
-  ;;                (define-key vterm-mode-map (kbd "C-y") 'vterm-yank))))
-#+END_SRC
 
 ** YAML
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -1835,110 +1484,7 @@ Currently causes Emacs in terminal to segfault
  #+END_SRC
 
 
-** Whitespace mode
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package whitespace
-    :bind (("C-c w" . whitespace-mode))
-    :config
-    (setq whitespace-display-mappings
-          ;; all numbers are Unicode codepoint in decimal. try (insert-char 182 ) to see it
-          '(
-            (space-mark 32 [183] [46]) ; 32 SPACE, 183 MIDDLE DOT 「·」, 46 FULL STOP 「.」
-            (newline-mark 10 [182 10]) ; 10 LINE FEED
-            (tab-mark 9 [9655 9] [92 9]) ; 9 TAB, 9655 WHITE RIGHT-POINTING TRIANGLE 「▷」
-            )
-          whitespace-style '(face tabs spaces trailing space-before-tab::space newline indentation::space indentation indentation::tab empty space-after-tab::space space-mark tab-mark newline-mark)))
 
- #+END_SRC
-
-
-** fill-paragraph
-#+begin_src emacs-lisp :tangle yes
-  (setq fill-column 120)
-#+end_src
-
-** indent-guide
-#+begin_src emacs-lisp :tangle yes
-
-  (use-package indent-guide)
-  (use-package highlight-indentation)
-
-#+end_src
-
-
-* Treesitter
-#+begin_src emacs-lisp :tangle yes
-  (use-package treesit-parser-manager
-    :straight (:host nil :repo "https://codeberg.org/ckruse/treesit-parser-manager" :files ("*.el"))
-    :commands (treesit-parser-manager-install-grammars
-               treesit-parser-manager-update-grammars
-               treesit-parser-manager-install-or-update-grammars
-               treesit-parser-manager-remove-grammar)
-    :custom
-    (treesit-parser-manager-grammars
-     '(("https://github.com/tree-sitter/tree-sitter-rust"
-        ("tree-sitter-rust"))
-
-       ("https://github.com/ikatyang/tree-sitter-toml"
-        ("tree-sitter-toml"))
-
-       ("https://github.com/elixir-lang/tree-sitter-elixir"
-        ("tree-sitter-elixir"))
-
-       ("https://github.com/tree-sitter/tree-sitter-typescript"
-        ("tree-sitter-typescript/tsx" "tree-sitter-typescript/typescript"))
-
-       ("https://github.com/tree-sitter/tree-sitter-javascript"
-        ("tree-sitter-javascript"))
-
-       ("https://github.com/tree-sitter/tree-sitter-css"
-        ("tree-sitter-css"))
-
-       ("https://github.com/serenadeai/tree-sitter-scss"
-        ("tree-sitter-scss"))
-
-       ("https://github.com/serenadeai/tree-sitter-python"
-        ("tree-sitter-python"))
-
-       ("https://github.com/tree-sitter/tree-sitter-json"
-        ("tree-sitter-json"))))
-    :config
-    (setq treesit-extra-load-path (list (expand-file-name "tree-sit" user-emacs-directory)))
-    :hook (emacs-startup . treesit-parser-manager-install-grammars))
-
-  ;; (use-package treesit
-  ;; :commands (treesit-install-language-grammar nf/treesit-install-all-languages)
-  ;; :init
-  ;; (setq treesit-language-source-alist
-  ;;  '((bash . ("https://github.com/tree-sitter/tree-sitter-bash"))
-  ;;    (c . ("https://github.com/tree-sitter/tree-sitter-c"))
-  ;;    (cpp . ("https://github.com/tree-sitter/tree-sitter-cpp"))
-  ;;    (css . ("https://github.com/tree-sitter/tree-sitter-css"))
-  ;;    (go . ("https://github.com/tree-sitter/tree-sitter-go"))
-  ;;    (html . ("https://github.com/tree-sitter/tree-sitter-html"))
-  ;;    (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript"))
-  ;;    (json . ("https://github.com/tree-sitter/tree-sitter-json"))
-  ;;    (lua . ("https://github.com/Azganoth/tree-sitter-lua"))
-  ;;    (make . ("https://github.com/alemuller/tree-sitter-make"))
-  ;;    (ocaml . ("https://github.com/tree-sitter/tree-sitter-ocaml" "ocaml/src" "ocaml"))
-  ;;    (python . ("https://github.com/tree-sitter/tree-sitter-python"))
-  ;;    (php . ("https://github.com/tree-sitter/tree-sitter-php"))
-  ;;    (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "typescript/src" "typescript"))
-  ;;    (ruby . ("https://github.com/tree-sitter/tree-sitter-ruby"))
-  ;;    (rust . ("https://github.com/tree-sitter/tree-sitter-rust"))
-  ;;    (sql . ("https://github.com/m-novikov/tree-sitter-sql"))
-  ;;    (toml . ("https://github.com/tree-sitter/tree-sitter-toml"))
-  ;;    (zig . ("https://github.com/GrayJack/tree-sitter-zig"))))
-  ;; :config
-  ;; (defun nf/treesit-install-all-languages ()
-  ;;   "Install all languages specified by `treesit-language-source-alist'."
-  ;;   (interactive)
-  ;;   (let ((languages (mapcar 'car treesit-language-source-alist)))
-  ;;     (dolist (lang languages)
-  ;;         (treesit-install-language-grammar lang)
-  ;;         (message "`%s' parser was installed." lang)
-  ;;         (sit-for 0.75)))))
-#+end_src
 
 * Languages
 ** Elisp functions
@@ -2029,31 +1575,12 @@ Currently causes Emacs in terminal to segfault
 
 
 
-** PICO-8
-#+begin_src emacs-lisp :tangle yes
-  (use-package pico8-mode
-    :mode "\\.p8\\'"
-    :straight nil
-    :demand
-    :ensure nil
-    :load-path "~/Dropbox/Documents/pico8-mode"
-    :config
-    (setq pico8-documentation-file "/Users/conornash/Library/Application Support/pico-8/pico-8.txt")
-    )
-
-#+end_src
-
 ** Scheme
 #+BEGIN_SRC emacs-lisp :tangle yes
 (org-babel-load-if-exists (expand-file-name "emacs24.scheme.org" user-emacs-directory))
 
 #+END_SRC
 
-
-** Racket
-#+BEGIN_SRC emacs-lisp :tangle yes
-(org-babel-load-if-exists (expand-file-name "emacs24.racket.org" user-emacs-directory))
-#+end_src
 
 ** Smalltalk
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -2078,14 +1605,6 @@ Currently causes Emacs in terminal to segfault
 
 
 
-
-** Visual Basic
-#+begin_src emacs-lisp :tangle yes
-  (org-babel-load-if-exists (expand-file-name "emacs24.vb.org" user-emacs-directory))
-  (use-package visual-basic-mode
-    :mode "\\.frm\\'" "\\.vb6\\'" "\\.vb\\'"
-    :ensure nil)
-#+end_src
 
 
 * Gnus
@@ -2158,31 +1677,12 @@ Currently causes Emacs in terminal to segfault
 #+END_SRC
 
 
-* Scratch buffer
-#+BEGIN_SRC emacs-lisp :tangle yes
-
-  ;; (defun scratch-fortune (file)
-  ;;   (fortune-in-buffer t file)
-  ;;   (save-current-buffer
-  ;;     (set-buffer fortune-buffer-name)
-  ;;     (s-concat
-  ;;      (replace-regexp-in-string "^[A-Za-z(\"-]" ";; " (buffer-string))
-  ;;      "\n\n")))
-
-  ;; (use-package fortune
-  ;;   :config
-  ;;   (setq fortune-dir "/Users/conornash/Dropbox/Settings/fortunes"
-  ;;         initial-scratch-message (scratch-fortune "/Users/conornash/Dropbox/Settings/fortunes/quotes.fortune")))
-
-#+END_SRC
 
 
 * End of Config
 
 ** Back to usual parameters
 #+BEGIN_SRC emacs-lisp :tangle yes
-  ;; In case another package turns this on
-  ;; (setq auto-window-vscroll nil)
   (setq
    debug-on-quit nil
    debug-on-error nil)
@@ -2304,16 +1804,6 @@ Currently causes Emacs in terminal to segfault
 
 ** Themes
 #+BEGIN_SRC emacs-lisp :tangle yes
-  ;; (use-package atom-dark-theme)
-  ;; (load-theme 'atom-dark t)
-
-  ;; (use-package nano-theme
-  ;;   :straight
-  ;;   (nano-theme :type git
-  ;;               :repo "https://github.com/rougier/nano-theme"))
-  ;; (nano-dark)
-
-
   (use-package zenburn-theme
     :init
     (setq zenburn-use-variable-pitch nil
