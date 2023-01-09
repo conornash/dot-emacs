@@ -566,4 +566,13 @@
       (when (and files search-term grep-command)
         (compilation-start grep-command 'grep-mode (lambda (mode) "*grep*") nil))))
 
+  (defun generate-secure-password ()
+    (interactive)
+    (let* ((raw-auth-key (server-generate-key))
+           (replaced-auth-key (s-replace-regexp "[][%/\\\"'`,.(){}]" "" raw-auth-key))
+           (auth-key (s-left 16 replaced-auth-key)))
+      (if (called-interactively-p 'interactive)
+          (progn (insert auth-key)
+                 (kill-new auth-key)))
+      auth-key))
 #+END_SRC
