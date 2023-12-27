@@ -11,8 +11,6 @@
 #+STARTUP: hidestars
 #+SETUPFILE: theme-readtheorg.setup
 
-
-
 * Setup system
 ** Initial requirements
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -73,6 +71,8 @@
   ;; Unicode coding
   (set-language-environment "UTF-8")
 
+  (set-face-attribute 'default nil
+                      :height 150)
 
 #+END_SRC
 
@@ -140,6 +140,8 @@
 
   (setenv "LC_ALL" "en_US.UTF-8")
   (setenv "LANG" "en_US.UTF-8")
+
+  (use-package dotenv-mode)
 #+END_SRC
 
 
@@ -294,7 +296,7 @@
     :diminish
     ((org-src-mode . " ℹ")
      (org-indent-mode . " ⭾"))
-    :bind (("<s-tab>" . org-force-cycle-archived)
+    :bind (("<s-tab>" . org-cycle-force-archived)
        ("<s-down>" . org-forward-element)
        ("<s-up>" . org-backward-element)
        ("<s-left>" . org-up-element)
@@ -351,37 +353,39 @@
       ;; don't show scheduled tasks in the TODO view of the agenda
       org-agenda-todo-ignore-scheduled nil))
 
+#+END_SRC
+
+
+
+** Org Packages
+#+begin_src emacs-lisp :tangle yes
   (defun org-image-link (protocol link _description)
     "Interpret LINK as base64-encoded image data."
     (cl-assert (string-match "\\`img" protocol) nil
-       "Expected protocol type starting with img")
+               "Expected protocol type starting with img")
     (let ((buf (url-retrieve-synchronously (concat (substring protocol 3) ":" link))))
       (cl-assert buf nil
-     "Download of image \"%s\" failed." link)
+                 "Download of image \"%s\" failed." link)
       (with-current-buffer buf
-    (goto-char (point-min))
-    (re-search-forward "\r?\n\r?\n")
-    (buffer-substring-no-properties (point) (point-max)))))
+        (goto-char (point-min))
+        (re-search-forward "\r?\n\r?\n")
+        (buffer-substring-no-properties (point) (point-max)))))
 
   (use-package orgalist)
 
   (add-hook 'org-src-mode-hook
-    #'(lambda ()
-    (hack-dir-local-variables-non-file-buffer)))
+            #'(lambda ()
+                (hack-dir-local-variables-non-file-buffer)))
 
   (eval-when-compile
     (defvar org-agenda-mode-map))
 
   (add-hook 'org-agenda-mode-hook
-    #'(lambda ()
-    (define-key org-agenda-mode-map (kbd ">") 'org-agenda-remove-restriction-lock)))
+            #'(lambda ()
+                (define-key org-agenda-mode-map (kbd ">") 'org-agenda-remove-restriction-lock)))
 
   (use-package htmlize)
-
-  (use-package org-protocol :straight nil :ensure nil)
-  (use-package ox-md :straight nil :ensure nil)
-  (use-package ox-publish :straight nil :ensure nil)
-  (use-package ox-icalendar :straight nil :ensure nil)
+  (use-package markdown-mode)
 
   (use-package ox-reveal
     :config
@@ -389,10 +393,35 @@
 
   (setq
    org-agenda-exporter-settings '((ps-number-of-columns 2)
-          (ps-landscape-mode t)
-          (org-agenda-add-entry-text-maxlines 5)
-          (htmlize-output-type 'css)))
-#+END_SRC
+                                  (ps-landscape-mode t)
+                                  (org-agenda-add-entry-text-maxlines 5)
+                                  (htmlize-output-type 'css)))
+
+  (use-package shell-maker
+    :straight (:host github :repo "xenodium/chatgpt-shell" :files ("shell-maker.el")))
+
+  (use-package chatgpt-shell
+    :requires shell-maker
+    :straight (:host github :repo "xenodium/chatgpt-shell" :files ("chatgpt-shell.el")))
+
+  (use-package dall-e-shell
+    :requires shell-maker
+    :straight (:host github :repo "xenodium/chatgpt-shell" :files ("dall-e-shell.el")))
+
+  (use-package ob-chatgpt-shell
+    :requires chatgpt-shell
+    :straight (:host github :repo "xenodium/chatgpt-shell" :files ("ob-chatgpt-shell.el")))
+
+  (use-package ob-dall-e-shell
+    :requires dall-e-shell
+    :straight (:host github :repo "xenodium/chatgpt-shell" :files ("ob-dall-e-shell.el")))
+
+  (use-package gptel  
+    :straight (:host github :repo "karthink/gptel"))
+
+  ;; (use-package gptel-extensions.el
+  ;;   :straight (:host github :repo "kamushadenes/gptel-extensions.el"))
+#+end_src
 
 
 
@@ -414,6 +443,8 @@
      (sql        . t)
      (sql-mode   . t)))
 
+  (add-to-list 'org-structure-template-alist
+               '("G" . "src chatgpt-shell"))
 #+END_SRC
 
 
@@ -435,6 +466,12 @@
 * Smartscan
  #+BEGIN_SRC emacs-lisp :tangle yes
    (use-package smartscan)
+#+END_SRC
+
+
+* Hacky scripts
+ #+BEGIN_SRC emacs-lisp :tangle yes
+  (org-babel-load-if-exists (expand-file-name "emacs24.hacky.org" user-emacs-directory))
 #+END_SRC
 
 
@@ -496,8 +533,8 @@
 
 ** Buffer/Window/Frame navigation
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (setq split-height-threshold 140
-        split-width-threshold 140)
+  (setq split-height-threshold 160
+        split-width-threshold 230)
 
   (use-package buffer-move
     :bind (("<C-s-down>" . buf-move-down)
@@ -691,6 +728,7 @@
 
     )
 
+  (use-package reveal-in-osx-finder)
  #+END_SRC
 
 
@@ -963,21 +1001,23 @@ This is a system that makes `helm-apropos` more useful
 
  #+END_SRC
 
-
+ 
 ** JSON
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package origami
+    :functions
+    origami-yaml-parser
+    yaml-subparser
     :config
     (define-key origami-mode-map (kbd "C-M-n") 'origami-next-fold)
     (define-key origami-mode-map (kbd "C-M-p") 'origami-previous-fold)
     (define-key origami-mode-map (kbd "C-M-b") 'origami-backward-fold-same-level)
     (define-key origami-mode-map (kbd "C-M-f") 'origami-forward-fold-same-level)
 
+
     (defun origami-yaml-parser (create)
       (lambda (content)
         (with-temp-buffer
-          (insert content)
-          (yaml-mode)
           (defun yaml-subparser (beg end)
             "find all fold block between beg and end."
             (goto-char beg)
@@ -992,8 +1032,9 @@ This is a system that makes `helm-apropos` more useful
                                   acc))
                   (goto-char new-end)))
               acc))
+          (insert content)
+          (yaml-mode)      
           (yaml-subparser (point-min) (point-max)))))
-
     )
 
   (use-package json-mode
@@ -1078,6 +1119,7 @@ This is a system that makes `helm-apropos` more useful
     :config
     (add-hook 'with-editor-mode-hook
               #'(lambda ()
+                  (orgtbl-mode 1)
                   (orgalist-mode 1)))
 
     (setq magit-push-always-verify nil
@@ -1282,8 +1324,10 @@ This is a system that makes `helm-apropos` more useful
   (use-package term
     :commands (term)
     :ensure nil
-    :config
-    (setq explicit-shell-file-name "/usr/local/bin/bash"))
+    )
+
+  (setq shell-file-name "/usr/local/bin/bash"
+        explicit-shell-file-name "/usr/local/bin/bash")
  #+END_SRC
 
 
@@ -1332,6 +1376,37 @@ This is a system that makes `helm-apropos` more useful
   (use-package terraform-mode)
  #+END_SRC
 
+
+** Tiktoken
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package tiktoken
+    :straight (:host github :repo "zkry/tiktoken.el"))
+
+  (defun tiktoken-count-tokens-in-region (arg)
+    (interactive "p")
+    (let ((enc (tiktoken-encoding-for-model "gpt-3.5-turbo")))    
+      (message
+       (number-to-string (tiktoken-count-tokens enc
+                               (buffer-substring (region-beginning) (region-end)))))))
+
+  (defun tiktoken-encode-region (arg)
+    (interactive "p")
+    (let* ((enc (tiktoken-encoding-for-model "gpt-3.5-turbo"))
+           (start (region-beginning))
+           (end (region-end))
+           (replacement (s-join " " (-map 'number-to-string (tiktoken-encode enc (buffer-substring-no-properties start end) nil)))))
+      (replace-regexp (buffer-substring start end) replacement nil start end)))
+
+  (defun tiktoken-decode-region (arg)
+    (interactive "p")
+    (let* ((enc (tiktoken-encoding-for-model "gpt-3.5-turbo"))
+           (start (region-beginning))
+           (end (region-end))
+           (replacement (tiktoken-decode enc (-map 'string-to-number (s-split " " (buffer-substring-no-properties start end))))))
+      (replace-regexp (buffer-substring start end) replacement nil start end)))
+
+
+#+end_src
 
 ** Toml
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -1391,16 +1466,22 @@ This is a system that makes `helm-apropos` more useful
     :straight nil
     :ensure nil
     :hook ((markdown-mode org-mode) . visual-line-mode)
-    :diminish
-    (visual-line-mode . " "))
+    :diminish (visual-line-mode . " ↩️"))
  #+END_SRC
 
 
 ** visual-regexp
 #+BEGIN_SRC emacs-lisp :tangle yes
-    (use-package visual-regexp
-      :bind (("s-:" . query-replace-regexp)
-             ("s-;" . vr/replace)))
+  (use-package visual-regexp
+    :bind (("s-:" . query-replace-regexp)
+           ("s-;" . vr/replace)))
+
+  ;; (defun ignore-read-only-replacements (orig-func &rest args)
+  ;;   "Advise the `vr/replace` function to ignore read-only text being replaced."
+  ;;   (let ((inhibit-read-only t))
+  ;;     (apply orig-func args)))
+
+  ;; (advice-add 'vr/replace :around #'ignore-read-only-replacements)
  #+END_SRC
 
 
@@ -1492,8 +1573,6 @@ This is a system that makes `helm-apropos` more useful
   ;; Emacs Lisp
   (org-babel-load-if-exists (expand-file-name "emacs24.elisp.org" user-emacs-directory))
 
-  ;; Hacky functions
-  (org-babel-load-if-exists (expand-file-name "emacs24.hacky.org" user-emacs-directory))
 
 #+END_SRC
 
@@ -1605,6 +1684,126 @@ This is a system that makes `helm-apropos` more useful
 
 
 
+
+
+
+* Themes
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package zenburn-theme
+    :defines
+    zenburn-use-variable-pitch
+    zenburn-scale-org-headlines
+    zenburn-scale-outline-headlines
+    zenburn-override-colors-alist
+    :init
+    (setq zenburn-use-variable-pitch nil
+        zenburn-scale-org-headlines t
+        zenburn-scale-outline-headlines t
+        zenburn-override-colors-alist
+        '(("zenburn-bg-1"     . "#1B1B1B")
+          ("zenburn-bg-08"    . "#202020")
+          ("zenburn-bg-05"    . "#282828")
+          ("zenburn-bg"       . "#2F2F2F"))))
+
+  (load-theme 'zenburn t t)
+  (enable-theme 'zenburn)
+
+  ;; (modify-frame-parameters nil '((wait-for-wm . nil)))
+  (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
+  (add-to-list 'default-frame-alist '(undecorated-round . t))
+  ;; (add-to-list 'default-frame-alist '(ns-appearance . dark))
+
+#+END_SRC
+
+
+* Fonts
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  (add-to-list 'default-frame-alist '(font . "Inconsolata-lig"))
+  ;; (add-to-list 'default-frame-alist '(height . 150))
+
+  ;; (set-face-attribute 'font-lock-comment-face nil
+  ;;                     :weight 'medium
+  ;;                     :slant 'italic)
+
+  ;; (set-face-attribute 'font-lock-variable-name-face nil
+  ;;                     :weight 'medium
+  ;;                     ;; :foreground "#FFB380"
+  ;;                     :foreground "#FFBF94")
+
+
+
+  (setq face-font-family-alternatives '(("Monospace" "Cascadia Code PL" "Inconsolata" "Catrinity" "Consolas" "Catrinity" "Noto Sans" "Noto Sans Symbols" "Noto Sans Egyptian Hieroglyphs")
+                                        ("Monospace Serif" "Courier 10 Pitch" "Consolas" "Courier Std" "FreeMono" "Nimbus Mono L" "Noto Sans" "Noto Sans Symbols" "Noto Sans Egyptian Hieroglyphs")
+                                        ("Sans Serif" "Johnston ITC Std" "Effra" "Noto Sans" "Noto Sans Symbols" "Noto Sans Egyptian Hieroglyphs")
+                                        ))
+
+  (use-package ligature
+    :functions
+    global-ligature-mode
+    ligature-set-ligatures
+    :config
+    ;; Enable the "www" ligature in every possible major mode
+    (ligature-set-ligatures 't '("www"))
+    ;; Enable traditional ligature support in eww-mode, if the
+    ;; `variable-pitch' face supports it
+    (ligature-set-ligatures 'eww-mode '("ff" "fi" "ffi"))
+    ;; Enable all Cascadia Code ligatures in programming modes
+    (ligature-set-ligatures 'prog-mode '("|||>" "<|||" "<==>" "<!--" "####" "~~>" "***" "||=" "||>"
+                                         ":::" "::=" "=:=" "===" "==>" "=!=" "=>>" "=<<" "=/=" "!=="
+                                         "!!." ">=>" ">>=" ">>>" ">>-" ">->" "->>" "-->" "---" "-<<"
+                                         "<~~" "<~>" "<*>" "<||" "<|>" "<$>" "<==" "<=>" "<=<" "<->"
+                                         "<--" "<-<" "<<=" "<<-" "<<<" "<+>" "</>" "###" "#_(" "..<"
+                                         "..." "+++" "/==" "///" "_|_" "www" "&&" "^=" "~~" "~@" "~="
+                                         "~>" "~-" "**" "*>" "*/" "||" "|}" "|]" "|=" "|>" "|-" "{|"
+                                         "[|" "]#" "::" ":=" ":>" ":<" "$>" "==" "=>" "!=" "!!" ">:"
+                                         ">=" ">>" ">-" "-~" "-|" "->" "--" "-<" "<~" "<*" "<|" "<:"
+                                         "<$" "<=" "<>" "<-" "<<" "<+" "</" "#{" "#[" "#:" "#=" "#!"
+                                         "##" "#(" "#?" "#_" "%%" ".=" ".-" ".." ".?" "+>" "++" "?:"
+                                         "?=" "?." "??" ";;" "/*" "/=" "/>" "//" "__" "~~" "(*" "*)"
+                                         "\\\\" "://"))
+    ;; Enables ligature checks globally in all buffers. You can also do it
+    ;; per mode with `ligature-mode'.
+    (global-ligature-mode t))
+
+  ;; (use-package unicode-fonts
+  ;;   :config
+  ;;   (unicode-fonts-setup))
+#+END_SRC
+
+
+* Parsing
+
+** Tree-sitter
+#+begin_src emacs-lisp :tangle yes
+  (if (treesit-available-p)
+      (message "Tree-sitter available"))
+
+  (treesit-ready-p 'c)
+  (treesit-ready-p 'css)
+  (treesit-ready-p 'go)
+  (treesit-ready-p 'html)
+  (treesit-ready-p 'javascript)
+  (treesit-ready-p 'json)
+  (treesit-ready-p 'python)
+
+  ;; (use-package json-ts-mode
+  ;;   :after origami
+  ;;   :mode "\\.json\\'" "\\.jsonl\\'"
+  ;;   :config
+  ;;   (setq json-reformat:indent-width 2))
+
+  ;; (add-hook 'json-ts-mode-hook
+  ;;           #'(lambda ()
+  ;;               (origami-mode 1)
+  ;;               (rainbow-mode 1)
+  ;;               (smartparens-strict-mode 1)
+  ;;               (define-key json-ts-mode-map (kbd "C-M-\\") 'json-pretty-print)
+  ;;               (define-key origami-mode-map (kbd "<M-tab>") 'origami-recursively-toggle-node)
+  ;;               (define-key origami-mode-map (kbd "<S-tab>") 'origami-toggle-all-nodes)
+  ;;               ))
+
+#+end_src
 
 
 * Gnus
@@ -1722,9 +1921,7 @@ This is a system that makes `helm-apropos` more useful
 
 ** Private settings
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (when (file-exists-p (expand-file-name "private.org" user-emacs-directory))
-    (org-babel-load-if-exists (expand-file-name "private.org" user-emacs-directory)))
-
+  (org-babel-load-if-exists (file-symlink-p (expand-file-name "private.org" user-emacs-directory)))
 
 #+END_SRC
 
@@ -1740,86 +1937,28 @@ This is a system that makes `helm-apropos` more useful
 #+END_SRC
 
 
-** Fonts
-#+BEGIN_SRC emacs-lisp :tangle yes
-  ;; unicode-fonts package
-  (use-package unicode-fonts
-    :config
-    (unicode-fonts-setup))
-
-  (set-face-attribute 'default nil
-                      :height 135)
-
-  (set-face-attribute 'font-lock-comment-face nil
-                      :weight 'medium
-                      :slant 'italic)
-
-  (set-face-attribute 'font-lock-variable-name-face nil
-                      :weight 'medium
-                      ;; :foreground "#FFB380"
-                      :foreground "#FFBF94")
-
-
-  ;; Requires font to be downloaded from https://www.fontsquirrel.com/fonts/inconsolata
-  ;; (set-face-attribute 'default nil
-  ;;                     :family "IBM Plex Mono")
-
-
-  ;; (when (functionp 'set-fontset-font)
-  ;;   (set-fontset-font "fontset-default"
-  ;;                     'unicode
-  ;;                     (font-spec :family "Inconsolata"
-  ;;                                :weight 'normal)))
-
-
-  (setq face-font-family-alternatives '(("Monospace" "Cascadia Code PL" "Inconsolata" "Catrinity" "Consolas" "Catrinity" "Symbola" "Noto Sans" "Noto Sans Symbols" "Noto Sans Egyptian Hieroglyphs")
-                                        ("Monospace Serif" "Courier 10 Pitch" "Consolas" "Courier Std" "FreeMono" "Nimbus Mono L" "Noto Sans" "Noto Sans Symbols" "Noto Sans Egyptian Hieroglyphs")
-                                        ("Sans Serif" "Johnston ITC Std" "Effra" "Noto Sans" "Noto Sans Symbols" "Noto Sans Egyptian Hieroglyphs")
-                                       ))
-#+END_SRC
 
 ** Byte Compile
 #+BEGIN_SRC emacs-lisp :tangle yes
   (defun tangle-init ()
-    "If the current buffer is an org file in the user directory the code-blocks are
-  tangled, and the tangled file is compiled."
-    (when (and
-           (or
-            (equal (file-name-directory (buffer-file-name))
-                   (expand-file-name user-emacs-directory))
-            (and
-             (boundp 'user-private-directory)
-             (equal (file-name-directory (buffer-file-name))
-                    (expand-file-name user-private-directory))))
-           (file-exists-p (buffer-file-name))
-           (string= "org" (file-name-extension (buffer-file-name))))
-      ;; Avoid running hooks when tangling.
-      (let ((prog-mode-hook nil)
-            (org-file-to-compile (expand-file-name (buffer-file-name))))
-        (org-babel-tangle)
-        (byte-compile-file (expand-file-name (concat (file-name-sans-extension org-file-to-compile) ".el"))))))
+      "If the current buffer is an org file in the user directory the code-blocks are
+    tangled, and the tangled file is compiled."
+      (when (and
+             (or
+              (equal (file-name-directory (buffer-file-name))
+                     (expand-file-name user-emacs-directory))
+              (and
+               (boundp 'user-private-directory)
+               (equal (file-name-directory (buffer-file-name))
+                      (expand-file-name user-private-directory))))
+             (file-exists-p (buffer-file-name))
+             (string= "org" (file-name-extension (buffer-file-name))))
+        ;; Avoid running hooks when tangling.
+        (let ((prog-mode-hook nil)
+              (org-file-to-compile (expand-file-name (buffer-file-name))))
+          (org-babel-tangle)
+          (byte-compile-file (expand-file-name (concat (file-name-sans-extension org-file-to-compile) ".el"))))))
 
-  (add-hook 'after-save-hook #'tangle-init)
+    (add-hook 'after-save-hook #'tangle-init)
 #+END_SRC
 
-** Themes
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package zenburn-theme
-    :init
-    (setq zenburn-use-variable-pitch nil
-        zenburn-scale-org-headlines t
-        zenburn-scale-outline-headlines t
-        zenburn-override-colors-alist
-        '(("zenburn-bg-1"     . "#1B1B1B")
-          ("zenburn-bg-08"    . "#202020")
-          ("zenburn-bg-05"    . "#282828")
-          ("zenburn-bg"       . "#2F2F2F"))))
-
-  (load-theme 'zenburn t t)
-  (enable-theme 'zenburn)
-
-  ;; (modify-frame-parameters nil '((wait-for-wm . nil)))
-  (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
-  (add-to-list 'default-frame-alist '(undecorated-round . t))
-  ;; (add-to-list 'default-frame-alist '(ns-appearance . dark))
-#+END_SRC

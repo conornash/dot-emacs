@@ -363,20 +363,36 @@
         (move-beginning-of-line 1))))
 
 
-  ;; Convert camelCase to dot.separated
   (defun camel-to-dot ()
+    "Convert camelCase to dot.separated"
     (interactive)
     (progn
       (replace-regexp "\\([A-Z]\\)" ".\\1" nil (region-beginning) (region-end))
       (downcase-region (region-beginning) (region-end))))
 
-
-
   (defun camel-to-snake ()
+    "Convert camelCase to snake_case"
     (interactive)
     (progn
-      (replace-regexp " " "_" nil (region-beginning) (region-end))
+      (replace-regexp "\\([a-z]+\\)\\([A-Z]\\)" "\\1_\\2" nil (region-beginning) (region-end))
       (downcase-region (region-beginning) (region-end))))
+
+  (defun snake-to-camel (prefix)
+    "Convert snake_case to camelCase"
+    (interactive "p")
+    (save-excursion
+      (let ((reg-beg (region-beginning))
+            (reg-end (region-end)))
+        (progn
+          (replace-regexp "_" " " nil reg-beg reg-end)
+          (capitalize-region reg-beg reg-end)
+          (if (= prefix 4)
+              (progn 
+                (goto-char reg-beg)
+                (insert "\"")
+                (goto-char (+ 1 reg-end))
+                (insert "\"")))))))
+
   (defvar conornash/say-what-im-doing-common-commands
     '(
       backward-char
@@ -566,6 +582,7 @@
       (when (and files search-term grep-command)
         (compilation-start grep-command 'grep-mode (lambda (mode) "*grep*") nil))))
 
+  (require 'server)
   (defun generate-secure-password ()
     (interactive)
     (let* ((raw-auth-key (server-generate-key))
@@ -575,4 +592,30 @@
           (progn (insert auth-key)
                  (kill-new auth-key)))
       auth-key))
+#+END_SRC
+
+** Negative occur
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (defun noccur ()
+    (interactive)
+    (let ((orig-re-search-forward (symbol-function 're-search-forward)))
+      (fset 're-search-forward 'noccur-re-search-forward)
+      (unwind-protect
+          (call-interactively 'occur)
+        (fset 're-search-forward orig-re-search-forward))))
+
+
+  (defun noccur-re-search-forward (regexp bound noerror &optional count)
+    (unless (eq (aref regexp 0) ?^)
+      (setq regexp (concat ".*" regexp)))
+
+    (while (and (not (eobp))
+                (looking-at regexp))
+      (forward-line 1))
+
+    (if (eobp)
+        nil
+      (set-match-data (list (line-beginning-position)
+                            (line-end-position)))
+      (line-end-position)))
 #+END_SRC

@@ -1,3 +1,35 @@
+* Helper functions
+  #+BEGIN_SRC emacs-lisp :tangle yes
+
+    (defun sql-connect-preset (name)
+      "Connect to a predefined SQL connection listed in `sql-connection-alist'"
+      (eval `(let ,(cdr (assoc name sql-connection-alist))
+               (cl-flet ((sql-get-login (&rest what)))
+                 (sql-product-interactive sql-product)))))
+
+    (defun sqlup-buffer ()
+      "Appropriately upcase all SQL commands in the buffer"
+      (interactive)
+      (save-excursion
+        (let ((start (point-min))
+              (end (point-max)))
+          (sqlup-capitalize-keywords-in-region start end))))
+
+    (defun conor-sql-send-paragraph ()
+      "Send SQL paragraph to SQLi buffer, plus some convenience"
+      (interactive)
+      (save-selected-window
+        (unless (sql-find-sqli-buffer)
+          (let ((connection (if sql-connection-alist
+                                (sql-read-connection "Connection: " nil '(nil))
+                              (user-error "No SQL Connections defined"))))
+            (sql-connect connection)))
+        (unless sql-buffer
+          (sql-set-sqli-buffer))
+        (sql-send-paragraph)))
+
+  #+END_SRC
+
 * SQL
   #+BEGIN_SRC emacs-lisp :tangle yes
     (use-package sql-indent)
@@ -7,14 +39,17 @@
     (use-package sqlformat
       :config
       (setq sqlformat-command 'pgformatter
-            sqlformat-args '(
+            sqlformat-args '("--comma-break"
                              "--comma-start"
                              "--function-case=2"
-                             "--keyword-case=2"
                              "--keep-newline"
-                             "--format-type"
-                             "--type-case=2"
-                             "--spaces=2")))
+                             "--keyword-case=2"
+                             "--nogrouping"
+                             "--no-space-function"
+                             "--numbering"
+                             "--redshift"
+                             "--spaces=2"
+                             "--type-case=2")))
 
     (defun conornash/sqlformat-sqlformat ()
       (interactive)
@@ -36,15 +71,18 @@
 
     (defun conornash/sqlformat-pgformatter ()
       (interactive)
-        (setq sqlformat-command 'pgformatter
+      (setq sqlformat-command 'pgformatter
             sqlformat-args '(
+                             "--comma-break"
                              "--comma-start"
                              "--function-case=2"
-                             "--keyword-case=2"
                              "--keep-newline"
-                             "--format-type"
-                             "--type-case=2"
-                             "--spaces=2"))
+                             "--keyword-case=2"
+                             "--nogrouping"
+                             "--no-space-function"
+                             "--redshift"
+                             "--spaces=2"
+                             "--type-case=2"))
         (sqlformat-buffer))
 
     (use-package sql
@@ -78,41 +116,8 @@
                     (turn-on-smartparens-strict-mode)
                     (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
                     (flycheck-mode 1)
+                    (smartscan-mode 1)
                     (sqlup-mode 1)
                     )))
-  #+END_SRC
-
-
-
-* Helper functions
-  #+BEGIN_SRC emacs-lisp :tangle yes
-
-    (defun sql-connect-preset (name)
-      "Connect to a predefined SQL connection listed in `sql-connection-alist'"
-      (eval `(let ,(cdr (assoc name sql-connection-alist))
-               (cl-flet ((sql-get-login (&rest what)))
-                 (sql-product-interactive sql-product)))))
-
-    (defun sqlup-buffer ()
-      "Appropriately upcase all SQL commands in the buffer"
-      (interactive)
-      (save-excursion
-        (let ((start (point-min))
-              (end (point-max)))
-          (sqlup-capitalize-keywords-in-region start end))))
-
-    (defun conor-sql-send-paragraph ()
-      "Send SQL paragraph to SQLi buffer, plus some convenience"
-      (interactive)
-      (save-selected-window
-        (unless (sql-find-sqli-buffer)
-          (let ((connection (if sql-connection-alist
-                                (sql-read-connection "Connection: " nil '(nil))
-                              (user-error "No SQL Connections defined"))))
-            (sql-connect connection)))
-        (unless sql-buffer
-          (sql-set-sqli-buffer))
-        (sql-send-paragraph)))
-
   #+END_SRC
 

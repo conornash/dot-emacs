@@ -9,12 +9,12 @@
         (helm-make-source "Buffers" 'helm-source-buffers)))
     (let ((helm-ff-transformer-show-only-basename nil)
       (helm-search-all-files (cl-case (window-system)
-                   ('ns helm-source-mac-spotlight)
+                   (ns helm-source-mac-spotlight)
                    (nil helm-source-locate)
                    (t helm-source-locate))))
       (helm :sources '(helm-source-buffers-list
                helm-source-recentf
-               helm-search-all-files
+               helm-source-mac-spotlight
                helm-source-bookmarks
                helm-source-files-in-current-dir
                helm-source-buffer-not-found)
@@ -93,15 +93,13 @@
 
     (helm-autoresize-mode 0)
 
-    ;; (add-hook 'helm-cleanup-hook
-    ;;           #'(lambda ()
-    ;;               (setq gc-cons-percentage 0.2)))
-    ;; (add-hook 'helm-before-initialize-hook
-    ;;           #'(lambda ()
-    ;;               (setq gc-cons-percentage 0.8)))
     )
 
-  (use-package helm-config :straight nil :ensure nil)
+#+END_SRC
+
+* Helm packages
+#+BEGIN_SRC emacs-lisp :tangle yes
+    ;; (use-package helm-config :straight nil :ensure nil)
   (use-package helm-ring :straight nil :ensure nil)
   (use-package helm-x-files :straight nil :ensure nil)
   (use-package helm-for-files

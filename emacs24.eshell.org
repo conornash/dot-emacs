@@ -1,13 +1,13 @@
 * Helper functions
 #+BEGIN_SRC emacs-lisp :tangle yes
- 
+
   (defun fish-path (path max-len)
     "Return a potentially trimmed-down version of the directory PATH, replacing
   parent directories with their initial characters to try to get the character
   length of PATH (sans directory slashes) down to MAX-LEN."
     (let* ((components (split-string (abbreviate-file-name path) "/"))
            (len (+ (1- (length components))
-                   (reduce '+ components :key 'length)))
+                   (cl-reduce '+ components :key 'length)))
            (str ""))
       (while (and (> len max-len)
                   (cdr components))
@@ -23,7 +23,7 @@
                                    (string (elt (car components) 0) ?/)))))
               len (- len (1- (length (car components))))
               components (cdr components)))
-      (concat str (reduce (lambda (a b) (concat a "/" b)) components))))
+      (concat str (cl-reduce (lambda (a b) (concat a "/" b)) components))))
 
   ;; (setq eshell-prompt-function
   ;;   (lambda ()
@@ -117,7 +117,7 @@
       ;; not the starting directory
       (mapc #'find-file
             (mapcar #'expand-file-name
-                    (eshell-flatten-list (reverse args))))))
+                    (flatten-tree (reverse args))))))
 
 
   ;;(add-to-list 'ac-modes 'eshell-mode)
@@ -133,7 +133,6 @@
              pcomplete-seen pcomplete-norm-func
              pcomplete-args pcomplete-last pcomplete-index
              (pcomplete-autolist pcomplete-autolist)
-             (pcomplete-suffix-list pcomplete-suffix-list)
              (candidates (pcomplete-completions))
              (beg (pcomplete-begin))
              ;; note, buffer text and completion argument may be
@@ -193,10 +192,7 @@
           eshell-visual-commands '("vi" "screen" "top" "less" "more"
           "lynx" "ncftp" "ssh" "pine" "tin" "trn" "elm" "htop")
           eshell-where-to-jump 'begin
-          pcomplete-cycle-completions nil)
-      (use-package helm-eshell :ensure nil)
-      (use-package em-smart    :ensure nil))
-
+          pcomplete-cycle-completions nil))
 
   (defvar ac-source-pcomplete
     '((candidates . ac-pcomplete)))

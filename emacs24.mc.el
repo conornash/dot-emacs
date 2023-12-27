@@ -13,6 +13,7 @@
         cua-paste
         cua-paste-pop
         cycle-spacing
+        djcb-duplicate-line
         downcase-region
         electric-newline-and-maybe-indent
         end-of-visual-line
@@ -36,6 +37,7 @@
         org-transpose-words
         python-indent-dedent-line
         restclient-toggle-body-visibility-or-indent
+        snake-to-camel
         sp-backward-delete-char
         sp-backward-kill-word
         sp-backward-sexp
@@ -64,10 +66,9 @@
         wdired-finish-edit
         yaml-electric-backspace
         yaml-electric-dash-and-dot
-        yas-expand
-        ))
+        yas-expand)
 
-(setq mc/cmds-to-run-once
+      mc/cmds-to-run-once
       '(
         conor-helm-files
         cua-scroll-up

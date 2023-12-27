@@ -113,37 +113,40 @@
 
     (add-hook 'python-mode-hook
               #'(lambda ()
-                     (pyenv-mode 1)
-                     (rainbow-delimiters-mode 1)
-                     (rainbow-mode 1)
-                     (smartscan-mode 1)
-                     (turn-on-smartparens-strict-mode)
-                     (require 'smartparens-python)
-                     (flymake-mode 0)
-                     (flycheck-mode 1)
-                     ;; (flycheck-add-next-checker 'python-flake8 'python-pylint)
-                     ;; (flycheck-add-next-checker 'python-pylint 'python-pycompile)
-                     ;; (flycheck-add-next-checker 'python-pycompile 'python-mypy)
-                     (sphinx-doc-mode 1)
-                     (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
+                  (pyenv-mode 1)
+                  (rainbow-delimiters-mode 1)
+                  (rainbow-mode 1)
+                  (smartscan-mode 1)
+                  (turn-on-smartparens-strict-mode)
+                  (require 'smartparens-python)
+                  (flymake-mode 0)
+                  (flycheck-mode 1)
+                  ;; (flycheck-add-next-checker 'python-flake8 'python-pylint)
+                  ;; (flycheck-add-next-checker 'python-pylint 'python-pycompile)
+                  ;; (flycheck-add-next-checker 'python-pycompile 'python-mypy)
+                  (sphinx-doc-mode 1)
+                  (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
 
-                     (guide-key/add-local-guide-key-sequence "C-c")
+                  (guide-key/add-local-guide-key-sequence "C-c")
 
-                     (define-key python-mode-map (kbd "<M-up>") 'move-text-up)
-                     (define-key python-mode-map (kbd "<M-down>") 'move-text-down)
+                  (define-key python-mode-map (kbd "<M-up>") 'move-text-up)
+                  (define-key python-mode-map (kbd "<M-down>") 'move-text-down)
 
-                     (define-key python-mode-map (kbd "M-\\") 'display-python-instance)
-                     (define-key python-mode-map (kbd "C-|") 'eval-at-cursor)
-                     (define-key python-mode-map (kbd "C-\\") 'my-python-eval-line)
+                  (define-key python-mode-map (kbd "M-\\") 'display-python-instance)
+                  (define-key python-mode-map (kbd "C-|") 'eval-at-cursor)
+                  (define-key python-mode-map (kbd "C-\\") 'my-python-eval-line)
 
-                     (define-key python-mode-map (kbd "C-S-a") 'python-nav-beginning-of-statement)
-                     (define-key python-mode-map (kbd "C-a") 'beginning-of-visual-line)
-                     (define-key python-mode-map (kbd "C-S-e") 'python-nav-end-of-statement)
-                     (define-key python-mode-map (kbd "C-e") 'end-of-visual-line)
+                  (define-key python-mode-map (kbd "C-S-a") 'python-nav-beginning-of-statement)
+                  (define-key python-mode-map (kbd "C-a") 'beginning-of-visual-line)
+                  (define-key python-mode-map (kbd "C-S-e") 'python-nav-end-of-statement)
+                  (define-key python-mode-map (kbd "C-e") 'end-of-visual-line)
 
-                     (local-unset-key (kbd "C-c C-d"))
+                  (local-unset-key (kbd "C-c C-d"))
 
-                     (define-key python-mode-map (kbd "C-c C-r") 'conor-python-shell-send-region)
+                  (define-key python-mode-map (kbd "C-c C-r") 'conor-python-shell-send-region)
 
-                     ))
+                  (setq flycheck-python-pylint-executable "~/.pyenv/shims/pylint"
+                        flycheck-python-flake8-executable "~/.pyenv/shims/flake8")
+
+                  ))
   #+END_SRC
