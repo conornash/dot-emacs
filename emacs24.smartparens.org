@@ -23,7 +23,7 @@
       :bind (("s-j" . sp-join-sexp)
              ("s-s" . sp-split-sexp)
              ("s-p" . sp-emit-sexp))
-
+      :defer t
       :diminish
       ((smartparens-mode . " ()")
        (smartparens-global-mode . " ()")

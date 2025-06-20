@@ -8,27 +8,16 @@
 #+PRIORITIES: A E A
 #+DRAWERS: PROPERTIES ARCHIVE
 #+LATEX_HEADER: \hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
-#+STARTUP: hidestars
 #+SETUPFILE: theme-readtheorg.setup
+
 
 * Setup system
 ** Initial requirements
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (if (and (fboundp 'native-comp-available-p)
-       (native-comp-available-p))
-      (setq native-comp-speed 2
-            native-comp-async-report-warnings-errors nil
-            package-native-compile t))
 
-  (if (and (functionp 'json-serialize)
-           (json-serialize nil))
-      (progn
-        (message "Native JSON is available")
-        (setq inhibit-automatic-native-compilation t))
-    (message "Native JSON is *not* available"))
+  ;; (setq gc-cons-percentage (expt 10 -4)
+  ;;       gc-cons-threshold (expt 2 22))
 
-  (setq gc-cons-percentage (expt 10 -4)
-        gc-cons-threshold (expt 2 22))
 
   (setq enable-recursive-minibuffers t
         inhibit-startup-screen t
@@ -36,6 +25,7 @@
         max-lisp-eval-depth 30000
         ring-bell-function 'ignore
         save-interprogram-paste-before-kill t)
+
 
   (pcase (window-system)
     ('x
@@ -63,22 +53,25 @@
   ;; Don't say yes or no, just y or n
   (fset 'yes-or-no-p 'y-or-n-p)
 
-  ;; Coding system
-  (prefer-coding-system 'utf-8)
-  (set-default-coding-systems 'utf-8)
-  (set-terminal-coding-system 'utf-8)
-  (set-keyboard-coding-system 'utf-8)
-  ;; Unicode coding
-  (set-language-environment "UTF-8")
+  ;; ;; Coding system
+  ;; (prefer-coding-system 'utf-8)
+  ;; (set-default-coding-systems 'utf-8)
+  ;; (set-terminal-coding-system 'utf-8)
+  ;; (set-keyboard-coding-system 'utf-8)
+  ;; ;; Unicode coding
+  ;; (set-language-environment "UTF-8")
 
-  (set-face-attribute 'default nil
-                      :height 150)
+  ;; (set-face-attribute 'default nil
+  ;;                     :height 150)
+
 
 #+END_SRC
 
 
 ** Package Management
 #+begin_src emacs-lisp :tangle yes
+  ;; (add-to-list 'load-path "/Users/conornash/.emacs.d/straight/build/org")
+  ;; (require 'org "/Users/conornash/.emacs.d/straight/build/org/org.el")
   (defvar bootstrap-version)
   (let ((bootstrap-file
          (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
@@ -95,6 +88,7 @@
   (straight-use-package 'use-package)
   (setq straight-use-package-by-default t
         use-package-always-ensure t
+        use-package-compute-statistics t
         use-package-verbose t)
 
   (eval-when-compile
@@ -105,58 +99,74 @@
   (use-package bind-key)
   (use-package diminish)
 
-  (use-package use-package-ensure-system-package)
+  ;; (straight-use-package 'org)
+  ;; (use-package use-package-ensure-system-package)
   (use-package use-package-chords
     :config (key-chord-mode 1))
+  (straight-use-package 'project)
 #+end_src
 
 
 ** Environment Variables
 #+BEGIN_SRC emacs-lisp :tangle yes
   ;; Pull in environment variables
-  (defvar exec-path-from-shell-warn-duration-millis)
+  ;; (defvar exec-path-from-shell-warn-duration-millis)
   (use-package exec-path-from-shell)
 
   (when (memq window-system '(mac ns))
     (exec-path-from-shell-initialize))
 
   ;; To allow Python to be in UTF-8
-  (defvar universal-coding-system-env-list '("PYTHONIOENCODING")
-    "List of environment variables \\[universal-coding-system-argument] should set")
+  ;; (defvar universal-coding-system-env-list '("PYTHONIOENCODING")
+  ;;   "List of environment variables \\[universal-coding-system-argument] should set")
 
-  (defadvice universal-coding-system-argument (around provide-env-handler activate)
-    "Augments \\[universal-coding-system-argument] so it also sets environment variables
+  ;; (defadvice universal-coding-system-argument (around provide-env-handler activate)
+  ;;   "Augments \\[universal-coding-system-argument] so it also sets environment variables
 
-  Naively sets all environment variables specified in
-  `universal-coding-system-env-list' to the literal string
-  representation of the argument `coding-system'.
+  ;; Naively sets all environment variables specified in
+  ;; `universal-coding-system-env-list' to the literal string
+  ;; representation of the argument `coding-system'.
 
-  No guarantees are made that the environment variables set by this advice support
-  the same coding systems as Emacs."
-    (let ((process-environment (copy-alist process-environment)))
-      (dolist (extra-env universal-coding-system-env-list)
-        (setenv extra-env (symbol-name (ad-get-arg 0))))
-      ad-do-it))
+  ;; No guarantees are made that the environment variables set by this advice support
+  ;; the same coding systems as Emacs."
+  ;;   (let ((process-environment (copy-alist process-environment)))
+  ;;     (dolist (extra-env universal-coding-system-env-list)
+  ;;       (setenv extra-env (symbol-name (ad-get-arg 0))))
+  ;;     ad-do-it))
 
-  (setenv "LC_ALL" "en_US.UTF-8")
-  (setenv "LANG" "en_US.UTF-8")
+  ;; (setenv "LC_ALL" "en_US.UTF-8")
+  ;; (setenv "LANG" "en_US.UTF-8")
 
-  (use-package dotenv-mode)
+
 #+END_SRC
 
 
-* Automatically refresh open files if changed on disk
-#+BEGIN_SRC emacs-lisp :tangle yes
+** Async compilation
+#+begin_src emacs-lisp :tangle yes
+  ;; (use-package emacs-async
+  ;;   :straight (:host github :repo "jwiegley/emacs-async")
+  ;;   :config
+  ;;   (async-bytecomp-package-mode 1))
 
-  (global-auto-revert-mode t)
-  (setq auto-revert-interval 2
-        ;; Also auto refresh dired, but be quiet about it
-        global-auto-revert-non-file-buffers t
-        auto-revert-verbose nil)
+#+end_src
 
 
- #+END_SRC
 
+** Safe variables
+#+begin_src emacs-lisp :tangle yes
+  ;; allow remembering risky variables
+  (advice-add 'risky-local-variable-p :override #'ignore)
+  ;; Above can be removed with advice-remove
+
+#+end_src
+
+
+** Backwards compatibility
+#+begin_src emacs-lisp :tangle yes
+(use-package compat
+  :straight (:host github :repo "emacs-compat/compat"))
+
+#+end_src
 
 * Calendar
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -174,34 +184,34 @@
 ** Get Org version
   For straight.el
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (require 'subr-x)
-  (straight-use-package 'git)
+  ;; (require 'subr-x)
+  ;; (straight-use-package 'git)
 
-  (defun org-git-version ()
-    "The Git version of org-mode.
-  Inserted by installing org-mode or when a release is made."
-    (require 'git)
-    (let ((git-repo (expand-file-name
-                     "straight/repos/org/" user-emacs-directory)))
-      (string-trim
-       (git-run "describe"
-                "--match=release\*"
-                "--abbrev=6"
-                "HEAD"))))
+  ;; (defun org-git-version ()
+  ;;   "The Git version of org-mode.
+  ;; Inserted by installing org-mode or when a release is made."
+  ;;   (require 'git)
+  ;;   (let ((git-repo (expand-file-name
+  ;;                    "straight/repos/org/" user-emacs-directory)))
+  ;;     (string-trim
+  ;;      (git-run "describe"
+  ;;               "--match=release\*"
+  ;;               "--abbrev=6"
+  ;;               "HEAD"))))
 
-  (defun org-release ()
-    "The release version of org-mode.
-  Inserted by installing org-mode or when a release is made."
-    (require 'git)
-    (let ((git-repo (expand-file-name
-                     "straight/repos/org/" user-emacs-directory)))
-      (string-trim
-       (string-remove-prefix
-        "release_"
-        (git-run "describe"
-                 "--match=release\*"
-                 "--abbrev=0"
-                 "HEAD")))))
+  ;; (defun org-release ()
+  ;;   "The release version of org-mode.
+  ;; Inserted by installing org-mode or when a release is made."
+  ;;   (require 'git)
+  ;;   (let ((git-repo (expand-file-name
+  ;;                    "straight/repos/org/" user-emacs-directory)))
+  ;;     (string-trim
+  ;;      (string-remove-prefix
+  ;;       "release_"
+  ;;       (git-run "describe"
+  ;;                "--match=release\*"
+  ;;                "--abbrev=0"
+  ;;                "HEAD")))))
 
 #+END_SRC
 
@@ -218,140 +228,149 @@
     (let ((current-prefix-arg '(16)))
       (org-time-stamp-inactive current-prefix-arg)))
 
-  (defun caolan/repeated-string (n str)
-    (string-join (make-list (+ n 1) "") str))
+  ;; (defun caolan/repeated-string (n str)
+  ;;   (string-join (make-list (+ n 1) "") str))
 
-  (defun path-to-breadcrumbs (file basedir)
-    (let ((dir (expand-file-name (file-name-directory file))))
-      (if (and (string-equal dir (expand-file-name basedir))
-               (string-equal (file-name-base file) "index"))
-          ;; empty breadcrumbs to show we're at root index page
-          nil
-        (let* ((crumb-path (directory-file-name
-                            (file-relative-name dir basedir)))
-               (crumb-parts (cl-remove-if
-                             (lambda (x) (string-equal x "."))
-                             (reverse (split-string crumb-path "/"))))
-               (crumbs (and crumb-parts
-                            (list (cons (car crumb-parts) "index.html")))))
-          ;; parent directories
-          (dotimes (i (length (cdr crumb-parts)))
-            (setq crumbs
-                  (cons (cons (nth i (cdr crumb-parts))
-                              (concat (caolan/repeated-string (+ i 1) "../")
-                                      "index.html"))
-                        crumbs)))
-          (setq crumbs
-                (cons `("NBS" . ,(if (> (length crumb-parts) 0)
-                                     (concat (caolan/repeated-string
-                                              (length crumb-parts)
-                                              "../")
-                                             "index.html")
-                                   "index.html"))
-                      crumbs))
-          (if (string-equal (file-name-base file) "index")
-              (butlast crumbs)
-            crumbs)))))
+  ;; (defun path-to-breadcrumbs (file basedir)
+  ;;   (let ((dir (expand-file-name (file-name-directory file))))
+  ;;     (if (and (string-equal dir (expand-file-name basedir))
+  ;;              (string-equal (file-name-base file) "index"))
+  ;;         ;; empty breadcrumbs to show we're at root index page
+  ;;         nil
+  ;;       (let* ((crumb-path (directory-file-name
+  ;;                           (file-relative-name dir basedir)))
+  ;;              (crumb-parts (cl-remove-if
+  ;;                            (lambda (x) (string-equal x "."))
+  ;;                            (reverse (split-string crumb-path "/"))))
+  ;;              (crumbs (and crumb-parts
+  ;;                           (list (cons (car crumb-parts) "index.html")))))
+  ;;         ;; parent directories
+  ;;         (dotimes (i (length (cdr crumb-parts)))
+  ;;           (setq crumbs
+  ;;                 (cons (cons (nth i (cdr crumb-parts))
+  ;;                             (concat (caolan/repeated-string (+ i 1) "../")
+  ;;                                     "index.html"))
+  ;;                       crumbs)))
+  ;;         (setq crumbs
+  ;;               (cons `("NBS" . ,(if (> (length crumb-parts) 0)
+  ;;                                    (concat (caolan/repeated-string
+  ;;                                             (length crumb-parts)
+  ;;                                             "../")
+  ;;                                            "index.html")
+  ;;                                  "index.html"))
+  ;;                     crumbs))
+  ;;         (if (string-equal (file-name-base file) "index")
+  ;;             (butlast crumbs)
+  ;;           crumbs)))))
 
-  (defun my-website-preamble (plist project-name)
-    (let* ((file (expand-file-name (plist-get plist :input-file)))
-           (basedir (file-name-as-directory (plist-get plist :base-directory)))
-           (crumbs (path-to-breadcrumbs file basedir))
-           (date (org-publish-find-date file project-name)))
-      (concat
-       "<ol class=\"breadcrumbs\">"
-       (if crumbs
-           (mapconcat (lambda (crumb)
-                        (concat "<li>"
-                                "<a href=\"" (cdr crumb) "\">"
-                                (car crumb)
-                                "</a>"
-                                "</li>"))
-                      crumbs
-                      "")
-         "<li class=\"current\"><a href=\"index.html\">NBS</a></li>")
-       "</ol>"
-       (if date
-           (concat "<div class=\"date\">"
-                   (format-time-string "%d %b %Y" date)
-                   "</div>")
-         ""))))
+  ;; (defun my-website-preamble (plist project-name)
+  ;;   (let* ((file (expand-file-name (plist-get plist :input-file)))
+  ;;          (basedir (file-name-as-directory (plist-get plist :base-directory)))
+  ;;          (crumbs (path-to-breadcrumbs file basedir))
+  ;;          (date (org-publish-find-date file project-name)))
+  ;;     (concat
+  ;;      "<ol class=\"breadcrumbs\">"
+  ;;      (if crumbs
+  ;;          (mapconcat (lambda (crumb)
+  ;;                       (concat "<li>"
+  ;;                               "<a href=\"" (cdr crumb) "\">"
+  ;;                               (car crumb)
+  ;;                               "</a>"
+  ;;                               "</li>"))
+  ;;                     crumbs
+  ;;                     "")
+  ;;        "<li class=\"current\"><a href=\"index.html\">NBS</a></li>")
+  ;;      "</ol>"
+  ;;      (if date
+  ;;          (concat "<div class=\"date\">"
+  ;;                  (format-time-string "%d %b %Y" date)
+  ;;                  "</div>")
+  ;;        ""))))
 
-  (defun endless/filter-timestamp (trans back _comm)
-    "Remove <> around time-stamps."
-    (pcase back
-      ((or `jekyll `html)
-       (progn
-         (replace-regexp-in-string "&[lg]t;" "" trans)))
-      (`latex
-       (replace-regexp-in-string "[<>]" "" trans))))
+  ;; (defun endless/filter-timestamp (trans back _comm)
+  ;;   "Remove <> around time-stamps."
+  ;;   (pcase back
+  ;;     ((or `jekyll `html)
+  ;;      (progn
+  ;;        (replace-regexp-in-string "&[lg]t;" "" trans)))
+  ;;     (`latex
+  ;;      (replace-regexp-in-string "[<>]" "" trans))))
 #+END_SRC
 
 
 
 ** Load Org-mode
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package org
-    :mode ("\\.org$" . org-mode)
-    :diminish
-    ((org-src-mode . " ℹ")
-     (org-indent-mode . " ⭾"))
-    :bind (("<s-tab>" . org-cycle-force-archived)
-       ("<s-down>" . org-forward-element)
-       ("<s-up>" . org-backward-element)
-       ("<s-left>" . org-up-element)
-       ("<s-right>" . org-down-element)
-       ("M-<down>" . org-metadown)
-       ("M-<up>" . org-metaup)
-       ("C-c l" . org-store-link)
-       ("C-c C-l" . org-insert-link)
-       ("C-c C-x C-j" . org-clock-goto)
-       ("C-c C-x C-r" . org-clock-report)
-       ("s-!" . insert-current-timestamp-inactive)
-       ("s-o" . org-open-at-point)
-       ("s-O" . org-open-at-point-global))
-    :chords
-    (("qq" . org-capture)
-     ("JJ" . org-agenda))
-    :config
+  (require 'seq)
+  ;; (require 's.el "/Users/conornash/.emacs.d/straight/build/s/s.el")
+  ;; (setq load-path (seq-filter #'(lambda (x) (and (not (string-equal "/Applications/Emacs.app/Contents/Resources/lisp/org" x))
+  ;;                                                (not (string-equal "/Applications/Emacs.app/Contents/Resources/lisp/use-package" x)))) load-path))
+  (use-package verb)
+  (require 'org)
+  ;; (use-package org
+  ;;   :mode ("\\.org$" . org-mode)
+  ;;   :diminish
+  ;;   ((org-src-mode . " ℹ")
+  ;;    (org-indent-mode . " ⭾"))
+  ;;   :bind (("<s-tab>" . org-cycle-force-archived)
+  ;;          ("<s-down>" . org-forward-element)
+  ;;          ("<s-up>" . org-backward-element)
+  ;;          ("<s-left>" . org-up-element)
+  ;;          ("<s-right>" . org-down-element)
+  ;;          ("M-<down>" . org-metadown)
+  ;;          ("M-<up>" . org-metaup)
+  ;;          ("C-c l" . org-store-link)
+  ;;          ("C-c C-l" . org-insert-link)
+  ;;          ("C-c C-x C-j" . org-clock-goto)
+  ;;          ("C-c C-x C-r" . org-clock-report)
+  ;;          ("s-!" . insert-current-timestamp-inactive)
+  ;;          ("s-o" . org-open-at-point)
+  ;;          ("s-O" . org-open-at-point-global))
+  ;;   :chords
+  ;;   (("qq" . org-capture)
+  ;;    ("JJ" . org-agenda)))
+  (key-chord-define-global "qq" 'org-capture)
+  (key-chord-define-global "JJ" 'org-agenda)
+
     (org-clock-persistence-insinuate)
     (setq comment-start-skip "^\\s-*#\\(?: \\|$\\)"
-      org-agenda-dim-blocked-tasks t
-      org-agenda-start-with-follow-mode t
-      org-agenda-todo-ignore-scheduled nil
-      org-clock-out-remove-zero-time-clocks t
-      org-clock-persist 'history
-      org-confirm-babel-evaluate nil
-      org-deadline-warning-days 28
-      ;; We don't want to see days in the clock report
-      org-duration-format '((special . h:mm))
-      org-enforce-todo-dependencies t
-      org-fontify-whole-heading-line t
-      org-goto-interface 'outline-path-completion
-      org-hide-emphasis-markers t
-      org-image-actual-width 700
-      org-list-allow-alphabetical t
-      org-log-done t
-      ;; Timestamp of changes to deadline using C-c C-d/C-s
-      org-log-redeadline 'time
-      org-log-reschedule 'time
-      org-outline-path-complete-in-steps nil
-      org-refile-targets '((org-agenda-files . (:maxlevel . 2))
-           (org-agenda-files . (:todo . "NEXTACTION"))
-           (nil . (:maxlevel . 2)))
-      org-refile-use-outline-path 'file
-      ;; In Sparse Trees, show the details below the matching entries
-      org-src-window-setup 'current-window
-      org-src-fontify-natively t
-      org-show-entry-below t
-      org-table-last-column-widths '(95 7 5)
-      org-use-property-inheritance t
-      org-use-speed-commands t
-      org-speed-commands (nconc org-speed-commands
-                                '(("User commands") ("S" . widen) ("d" . org-deadline)))
-      org-startup-with-inline-images t
-      ;; don't show scheduled tasks in the TODO view of the agenda
-      org-agenda-todo-ignore-scheduled nil))
+          org-agenda-dim-blocked-tasks t
+          org-agenda-start-with-follow-mode t
+          org-agenda-todo-ignore-scheduled nil
+          org-clock-out-remove-zero-time-clocks t
+          org-clock-persist 'history
+          org-confirm-babel-evaluate nil
+          org-deadline-warning-days 28
+          ;; We don't want to see days in the clock report
+          org-duration-format '((special . h:mm))
+          org-enforce-todo-dependencies t
+          org-fontify-whole-heading-line t
+          org-goto-interface 'outline-path-completion
+          org-hide-emphasis-markers t
+          org-image-actual-width 700
+          org-list-allow-alphabetical t
+          org-log-done t
+          ;; Timestamp of changes to deadline using C-c C-d/C-s
+          org-log-redeadline 'time
+          org-log-reschedule 'time
+          org-outline-path-complete-in-steps nil
+          org-refile-targets '((org-agenda-files . (:maxlevel . 2))
+                               (org-agenda-files . (:todo . "NEXTACTION"))
+                               (nil . (:maxlevel . 2)))
+          org-refile-use-outline-path 'file
+          ;; In Sparse Trees, show the details below the matching entries
+          org-src-window-setup 'current-window
+          org-src-fontify-natively t
+          org-show-entry-below t
+          org-table-last-column-widths '(95 7 5)
+          org-use-property-inheritance t
+          org-use-speed-commands t
+          org-speed-commands (nconc org-speed-commands
+                                    '(("User commands") ("S" . widen) ("d" . org-deadline)))
+          org-startup-with-inline-images t
+          ;; don't show scheduled tasks in the TODO view of the agenda
+          org-agenda-todo-ignore-scheduled nil)
+    (define-key org-mode-map (kbd "C-c C-r") verb-command-map)
 
 #+END_SRC
 
@@ -385,11 +404,10 @@
                 (define-key org-agenda-mode-map (kbd ">") 'org-agenda-remove-restriction-lock)))
 
   (use-package htmlize)
-  (use-package markdown-mode)
-
-  (use-package ox-reveal
-    :config
-    (setq org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
+  (require 'ox-md)
+  ;; (use-package ox-reveal
+  ;;   :custom
+  ;;   (org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
 
   (setq
    org-agenda-exporter-settings '((ps-number-of-columns 2)
@@ -397,76 +415,173 @@
                                   (org-agenda-add-entry-text-maxlines 5)
                                   (htmlize-output-type 'css)))
 
-  (use-package shell-maker
-    :straight (:host github :repo "xenodium/chatgpt-shell" :files ("shell-maker.el")))
-
-  (use-package chatgpt-shell
-    :requires shell-maker
-    :straight (:host github :repo "xenodium/chatgpt-shell" :files ("chatgpt-shell.el")))
-
-  (use-package dall-e-shell
-    :requires shell-maker
-    :straight (:host github :repo "xenodium/chatgpt-shell" :files ("dall-e-shell.el")))
-
-  (use-package ob-chatgpt-shell
-    :requires chatgpt-shell
-    :straight (:host github :repo "xenodium/chatgpt-shell" :files ("ob-chatgpt-shell.el")))
-
-  (use-package ob-dall-e-shell
-    :requires dall-e-shell
-    :straight (:host github :repo "xenodium/chatgpt-shell" :files ("ob-dall-e-shell.el")))
-
-  (use-package gptel  
-    :straight (:host github :repo "karthink/gptel"))
-
-  ;; (use-package gptel-extensions.el
-  ;;   :straight (:host github :repo "kamushadenes/gptel-extensions.el"))
+  (use-package verb
+    :config (define-key org-mode-map (kbd "C-c C-r") verb-command-map))
 #+end_src
-
 
 
 ** Org Babel
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package ob-async)
-  (use-package ob-sql-mode)
+  ;; (use-package ob-async)
+  ;; (use-package ob-sql-mode)
   (use-package restclient)
 
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((R          . t)
-     (emacs-lisp . t)
-     (js         . t)
-     (lisp       . t)
-     (plantuml   . t)
-     (python     . t)
-     (shell      . t)
-     (sql        . t)
-     (sql-mode   . t)))
+  ;; (org-babel-do-load-languages
+  ;;  'org-babel-load-languages
+  ;;  '((R          . t)
+  ;;    (emacs-lisp . t)
+  ;;    (js         . t)
+  ;;    (lisp       . t)
+  ;;    (plantuml   . t)
+  ;;    (python     . t)
+  ;;    (shell      . t)
+  ;;    (sql        . t)
+  ;;    (sql-mode   . t)))
 
   (add-to-list 'org-structure-template-alist
                '("G" . "src chatgpt-shell"))
+  (add-to-list 'org-structure-template-alist
+               '("M" . "src markdown"))
 #+END_SRC
 
 
 * Helm
 #+BEGIN_SRC emacs-lisp :tangle yes
   (org-babel-load-file (expand-file-name "emacs24.helm.org" user-emacs-directory))
-  (helm-mode 1)
  #+END_SRC
 
 
-* Smartparens
+* Used in language major modes
+
+** Smartparens
 #+BEGIN_SRC emacs-lisp :tangle yes
 
-(org-babel-load-file (expand-file-name "emacs24.smartparens.org" user-emacs-directory))
+  (org-babel-load-file (expand-file-name "emacs24.smartparens.org" user-emacs-directory))
 
  #+END_SRC
 
 
-* Smartscan
+** Origami
+ #+BEGIN_SRC emacs-lisp :tangle yes
+   (use-package origami
+     :functions
+     origami-yaml-parser
+     yaml-subparser
+     :bind
+     (("C-M-n" . origami-next-fold)
+      ("C-M-p" . origami-previous-fold)
+      ("C-M-b" . origami-backward-fold-same-level)
+      ("C-M-f" . origami-forward-fold-same-level)))
+
+   (defun origami-yaml-parser (create)
+       (lambda (content)
+         (with-temp-buffer
+           (defun yaml-subparser (beg end)
+             "find all fold block between beg and end."
+             (goto-char beg)
+             (let (acc)
+               ;; iterate all same level children.
+               (while (and (beginning-of-defun -1) (<= (point) end)) ;; have children between beg and end?
+                 (let* ((new-beg (point))
+                        (new-offset (progn (search-forward-regexp ":" nil t) (- (point) new-beg)))
+                        (new-end (progn (end-of-defun) (point))))
+                   (setq acc (cons (funcall create new-beg new-end new-offset
+                                            (yaml-subparser new-beg new-end))
+                                   acc))
+                   (goto-char new-end)))
+               acc))
+           (insert content)
+           (yaml-subparser (point-min) (point-max)))))
+ #+END_SRC
+
+** Smartscan
  #+BEGIN_SRC emacs-lisp :tangle yes
    (use-package smartscan)
 #+END_SRC
+
+
+* LLMs
+
+** Aider
+Requires https://aider.chat/ to be installed.
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (global-unset-key (kbd "s-l"))
+  ;; (use-package aider
+  ;;   :config
+  ;;   (setq aider-args '("--model" "openrouter/deepseek/deepseek-chat-v3-0324:free" "--no-auto-accept-architect"))
+  ;;   ;; Or use your personal config file
+  ;;   ;; (setq aider-args `("--config" ,(expand-file-name "~/.aider.conf.yml")))
+  ;;   ;; Optional: Set a key binding for the transient menu
+  ;;   (global-set-key (kbd "s-l") 'aider-transient-menu) ;; for wider screen
+  ;;   ;; or use aider-transient-menu-2cols / aider-transient-menu-1col, for narrow screen
+  ;;   ;; add aider magit function to magit menu
+  ;;   (aider-magit-setup-transients))
+  (use-package aidermacs
+    :bind (("s-l" . aidermacs-transient-menu))
+    :config
+    (setq aidermacs-default-chat-mode 'architect
+          aidermacs-comint-multiline-newline-key "S-<return>"
+          aidermacs-vterm-multiline-newline-key "S-<return>"
+          aidermacs-default-model "openrouter/deepseek/deepseek-chat-v3-0324:free"))
+#+end_src
+
+** tiktoken
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package tiktoken
+    :straight (:host github :repo "zkry/tiktoken.el"))
+
+  (defun tiktoken-count-tokens-in-region (arg)
+    (interactive "p")
+    (let ((enc (tiktoken-encoding-for-model "gpt-3.5-turbo")))
+      (message
+       (number-to-string (tiktoken-count-tokens enc
+                                                (buffer-substring (region-beginning) (region-end)))))))
+
+  (defun tiktoken-encode-region (arg)
+    (interactive "p")
+    (let* ((enc (tiktoken-encoding-for-model "gpt-3.5-turbo"))
+           (start (region-beginning))
+           (end (region-end))
+           (replacement (s-join " " (-map 'number-to-string (tiktoken-encode enc (buffer-substring-no-properties start end) nil)))))
+      (replace-regexp (buffer-substring start end) replacement nil start end)))
+
+  (defun tiktoken-decode-region (arg)
+    (interactive "p")
+    (let* ((enc (tiktoken-encoding-for-model "gpt-3.5-turbo"))
+           (start (region-beginning))
+           (end (region-end))
+           (replacement (tiktoken-decode enc (-map 'string-to-number (s-split " " (buffer-substring-no-properties start end))))))
+      (replace-regexp (buffer-substring start end) replacement nil start end)))
+
+#+end_src
+
+** gptel
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package gptel
+    :straight (:host github :repo "karthink/gptel")
+    :config
+    (add-hook 'org-mode-hook
+              #'(lambda ()
+                  (setq-local gptel-org-branching-context t)))
+    (setq gptel-default-mode 'org-mode
+          gptel-expert-commands t
+          gptel-log-level 'info)
+    )
+
+  (defvar global-gptel-map (make-sparse-keymap) "A keymap for gptel commands")
+  (define-prefix-command 'global-gptel-map)
+  (define-key global-map (kbd "s-c") 'global-gptel-map)
+  (define-key global-gptel-map (kbd "c") 'gptel-send)
+  (define-key global-gptel-map (kbd "v") 'gptel-menu)
+  (define-key global-gptel-map (kbd "s") 'gptel-org-set-topic)
+  (define-key global-gptel-map (kbd "g") 'gptel-abort)
+  (define-key global-gptel-map (kbd "o") 'tiktoken-count-tokens-in-region)
+  (define-key global-gptel-map (kbd "t") 'gptel-tools)
+#+end_src
+
+#+RESULTS:
+: gptel-set-topic
+
 
 
 * Hacky scripts
@@ -489,9 +604,19 @@
 
 ** Auto-revert
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package autorevert :ensure nil
+  (use-package autorevert
     :diminish (auto-revert-mode . " ⎌"))
-#+END_SRC
+
+  (global-auto-revert-mode t)
+  (setq auto-revert-interval 2
+        ;; Also auto refresh dired, but be quiet about it
+        global-auto-revert-non-file-buffers t
+        auto-revert-verbose nil)
+
+
+ #+END_SRC
+
+
 
 
 ** Backup each save
@@ -574,12 +699,24 @@
     :bind (("C-<" . rotate-frame-anticlockwise)
            ("C->" . rotate-frame-clockwise)))
 
+  (defun delete-or-hide-frame (&optional frame force)
+    "On macOS if there is a single frame, hide it, instead of deleting it"
+    (interactive)
+    (if (= 1 (length (frame-list)))
+        (ns-do-hide-emacs)
+      (delete-frame frame force)))
+
+  (global-set-key (kbd "s-w") #'delete-or-hide-frame)
+  (global-set-key (kbd "s-n") 'make-frame-command)
+
+
   (global-set-key (kbd "<M-f8>") 'kill-buffer-and-window)
   (global-set-key (kbd "C-`") 'other-frame)
   (global-set-key (kbd "C-s-]") 'other-frame)
   (global-set-key (kbd "s-0") 'delete-window)
   (global-set-key (kbd "s-1") 'delete-other-windows)
   (global-set-key (kbd "s-\\") 'other-frame)
+
 #+END_SRC
 
 
@@ -619,11 +756,12 @@
     "This function does a clean compile."
     (interactive)
     (setq-local original-compile-command compile-command)
-    (compile clean-compile-command)
+    (async-shell-command clean-compile-command)
     (setq-local compile-command original-compile-command))
 
-  (global-set-key (kbd "<f5>") 'compile)
+  (global-set-key (kbd "<f5>") 'projectile-compile-project)
   (global-set-key (kbd "<C-f5>") 'compile)
+  (global-set-key (kbd "<C-M-f5>") 'shell)
   (global-set-key (kbd "<M-f5>") 'conornash/compile-clean-func)
  #+END_SRC
 
@@ -652,12 +790,6 @@
 
  #+END_SRC
 
-
-** Dash
-#+BEGIN_SRC emacs-lisp :tangle yes
-  ;; (use-package dash-at-point
-  ;;   :bind (("C-c C-d" . dash-at-point)))
- #+END_SRC
 
 
 ** dbt
@@ -699,7 +831,6 @@
     (setq ls-lisp-use-insert-directory-program nil
           dired-dwim-target t
           dired-listing-switches "-alh")
-
     (add-hook 'dired-mode-hook
               #'(lambda ()
                   (hl-line-mode 1)))
@@ -722,21 +853,100 @@
       (goto-char (point-max))
       (dired-next-line -1))
 
+    (unbind-key "j" dired-mode-map)
+    (define-key dired-mode-map (kbd "C-w") 'dired-copy-filename-sans-extension)
     (define-key dired-mode-map (vector 'remap 'beginning-of-buffer) 'dired-back-to-top)
     (define-key dired-mode-map (vector 'remap 'end-of-buffer) 'dired-jump-to-bottom)
     (define-key dired-mode-map (kbd "s-o") 'dired-open-file)
 
-    )
+    (defun dired-mark-files-older-than (days)
+      "Mark files older than DAYS days in dired."
+      (interactive "nMark files older than (days): ")
+      (let ((now (current-time))
+            (seconds-per-day (* 24 60 60)))
+        (dired-mark-if
+         (and (not (looking-at-p dired-re-dot))
+              (not (looking-at-p dired-re-dir))
+              (let* ((file-attrs (file-attributes (dired-get-filename t t)))
+                     (modtime (nth 5 file-attrs))
+                     (diff-time (time-subtract now modtime))
+                     (diff-days (/ (float-time diff-time) seconds-per-day)))
+                (> diff-days days)))
+         "older")))
+
+    (defun dired-copy-filename-sans-extension (&optional arg)
+    "Copy the current file name without extension to the kill ring.
+  With prefix ARG, copy the full path including extension."
+    (interactive "P")
+    (let* ((file (dired-get-filename nil t))
+           (text-to-copy
+            (if arg
+                file  ; With prefix: full path with extension
+              (file-name-sans-extension (file-name-nondirectory file)))))
+      (when file
+        (kill-new text-to-copy)
+        (message "Copied: %s" text-to-copy))))
+
+    (defun dired-stage-file ()
+      "Stage the file at point in Dired using Git."
+      (interactive)
+      (let ((file (dired-get-file-for-visit)))
+        (if (file-exists-p file)
+            (progn
+              (shell-command (concat "git add -f " (shell-quote-argument file)))
+              (message "Staged: %s" file))
+          (message "File does not exist")))))
+
+  ;; (use-package dirvish
+  ;;   :init
+  ;;   (dirvish-override-dired-mode)
+  ;;   :config
+  ;;   (defun dired-open-file ()
+  ;;     "In dired, open the file named on this line."
+  ;;     (interactive)
+  ;;     (let* ((file (dired-get-filename nil t)))
+  ;;       (message "Opening %s..." file)
+  ;;       (async-shell-command (format "open \"%s\"" file))
+  ;;       (message "Opening %s done" file)))
+  ;;   (setq insert-directory-program "gls"
+  ;;         dired-rsync-command "/opt/homebrew/bin/rsync"
+  ;;         dired-dwim-target t)
+  ;;   :bind
+  ;;   (:map dired-mode-map
+  ;;         ("s-o" . dired-open-file)
+  ;;         ("a" . dired-stage-file)
+  ;;         ("C-w" . dirvish-copy-file-name)))
 
   (use-package reveal-in-osx-finder)
+  (use-package dired-rsync-transient
+    :bind (:map dired-mode-map
+                ("C-c C-x" . dired-rsync-transient)))
+
  #+END_SRC
 
 
+*** Write a function in Elisp for dired that recursively lists all directories in the same buffer
+
+#+begin_src emacs-lisp :tangle yes
+  (defun dired-list-recursive ()
+    "List all subdirectories recursively in the current dired buffer."
+    (interactive)
+    (let ((dir (dired-current-directory)))
+      (find-name-dired
+       dir
+       "*")
+      (rename-buffer (format "*Dired recursive: %s*" dir))))
+
+#+end_src
+
+This function uses `find-name-dired` with the `-type d` option to recursively list all directories starting from the current dired directory. It also renames the buffer to indicate it's showing a recursive directory listing.
+
 ** Direnv
 #+BEGIN_SRC emacs-lisp :tangle yes
-
-  ;; direnv
-  (org-babel-load-file (expand-file-name "emacs24.direnv.org" user-emacs-directory))
+  (use-package direnv
+    :config
+    (direnv-mode))
+  (use-package dotenv-mode)
 #+END_SRC
 
 
@@ -796,6 +1006,21 @@
  #+END_SRC
 
 
+** Eglot
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package track-changes
+    :straight (:host github :repo "emacs-straight/track-changes"))
+  (use-package eglot
+    :ensure t
+    :hook (sql-mode . eglot-ensure)
+    :config
+    (add-to-list 'eglot-server-programs '(sql-mode . ("/Users/conornash/go/bin/sqls")))
+    :custom
+    (eglot-extend-to-xref t))
+
+#+end_src
+
+
 ** Enable case-region
 #+BEGIN_SRC emacs-lisp :tangle yes
 (put 'downcase-region 'disabled nil)
@@ -840,28 +1065,28 @@
 
 ** fill-paragraph
 #+begin_src emacs-lisp :tangle yes
-  (setq fill-column 120)
+  (setq fill-column 160)
 #+end_src
 
 
 
 ** Find file at point
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (setq abbrev-file-name "~/.emacs.d/abbrev_defs"
-        save-abbrevs nil
-        hippie-expand-try-functions-list
-        '(try-expand-dabbrev-all-buffers
-          try-complete-file-name
-          try-complete-file-name-partially
-          try-complete-lisp-symbol
-          try-complete-lisp-symbol-partially
-          try-expand-all-abbrevs
-          try-expand-dabbrev
-          try-expand-dabbrev-from-kill
-          try-expand-dabbrev-visible
-          try-expand-line
-          try-expand-list
-          yas-hippie-try-expand))
+  ;; (setq abbrev-file-name "~/.emacs.d/abbrev_defs"
+  ;;       save-abbrevs nil
+  ;;       hippie-expand-try-functions-list
+  ;;       '(try-expand-dabbrev-all-buffers
+  ;;         try-complete-file-name
+  ;;         try-complete-file-name-partially
+  ;;         try-complete-lisp-symbol
+  ;;         try-complete-lisp-symbol-partially
+  ;;         try-expand-all-abbrevs
+  ;;         try-expand-dabbrev
+  ;;         try-expand-dabbrev-from-kill
+  ;;         try-expand-dabbrev-visible
+  ;;         try-expand-line
+  ;;         try-expand-list
+  ;;         yas-hippie-try-expand))
 
  #+END_SRC
 
@@ -874,8 +1099,8 @@
     :config
     (flycheck-define-checker sqlfluff
       "A SQL syntax checker using the sqlfluff tool."
-      :command ("sqlfluff" "lint"
-                "--disable_progress_bar"
+      :command ("sqlfluff" "fix"
+                "--disable-progress-bar"
                 "--nocolor"
                 "--dialect=postgres" source)
       ;; :standard-input t
@@ -889,11 +1114,10 @@
 
     (add-to-list 'flycheck-checkers 'sqlfluff)
     (setq flycheck-sql-sqlint-executable "sql-lint"
-          flycheck-sqlfluff-executable "sqlfluff")
-
-    )
+          flycheck-sqlfluff-executable "sqlfluff"))
 
 #+END_SRC
+
 
 
 ** Guide-key
@@ -902,7 +1126,7 @@
   (use-package guide-key
     :diminish guide-key-mode
     :config
-    (setq guide-key/guide-key-sequence '("C-x r" "C-x 4" "C-x v" "C-x j" "<C-f1>" "C-;" "C-c" "<f2>")
+    (setq guide-key/guide-key-sequence '("C-x r" "C-x 4" "C-x v" "C-x j" "<C-f1>" "C-;" "C-c" "<f2>" "s-p" "C-c p")
           guide-key/idle-delay 0.5
           guide-key/recursive-key-sequence-flag t))
   (guide-key-mode 1)
@@ -984,11 +1208,20 @@ This is a system that makes `helm-apropos` more useful
  #+END_SRC
 
 
+** ispell
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package ispell
+    :config
+    (setq ispell-program-name "aspell"))
+ #+END_SRC
+
+
 ** Jinja2
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package jinja2-mode
-    :config
-    (turn-on-smartparens-strict-mode))
+    :defer t
+    ;; (turn-on-smartparens-strict-mode)
+    )
 #+END_SRC
 
 
@@ -1001,41 +1234,9 @@ This is a system that makes `helm-apropos` more useful
 
  #+END_SRC
 
- 
+
 ** JSON
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package origami
-    :functions
-    origami-yaml-parser
-    yaml-subparser
-    :config
-    (define-key origami-mode-map (kbd "C-M-n") 'origami-next-fold)
-    (define-key origami-mode-map (kbd "C-M-p") 'origami-previous-fold)
-    (define-key origami-mode-map (kbd "C-M-b") 'origami-backward-fold-same-level)
-    (define-key origami-mode-map (kbd "C-M-f") 'origami-forward-fold-same-level)
-
-
-    (defun origami-yaml-parser (create)
-      (lambda (content)
-        (with-temp-buffer
-          (defun yaml-subparser (beg end)
-            "find all fold block between beg and end."
-            (goto-char beg)
-            (let (acc)
-              ;; iterate all same level children.
-              (while (and (beginning-of-defun -1) (<= (point) end)) ;; have children between beg and end?
-                (let* ((new-beg (point))
-                       (new-offset (progn (search-forward-regexp ":" nil t) (- (point) new-beg)))
-                       (new-end (progn (end-of-defun) (point))))
-                  (setq acc (cons (funcall create new-beg new-end new-offset
-                                           (yaml-subparser new-beg new-end))
-                                  acc))
-                  (goto-char new-end)))
-              acc))
-          (insert content)
-          (yaml-mode)      
-          (yaml-subparser (point-min) (point-max)))))
-    )
 
   (use-package json-mode
     :after origami
@@ -1111,8 +1312,13 @@ This is a system that makes `helm-apropos` more useful
 #+END_SRC
 
 
+
 ** Magit
 #+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package llama
+    :straight (:host github :repo "tarsius/llama"))
+  ;; (use-package git-commit)
+  (use-package dash)
   (use-package magit
     :commands magit-status
     :bind (("<f6>" . magit-status))
@@ -1121,7 +1327,7 @@ This is a system that makes `helm-apropos` more useful
               #'(lambda ()
                   (orgtbl-mode 1)
                   (orgalist-mode 1)))
-
+    (add-to-list 'Info-directory-list "/Users/conornash/.emacs.d/straight/build/magit/")
     (setq magit-push-always-verify nil
           magit-diff-refine-hunk t
           magit-diff-use-overlays nil
@@ -1149,8 +1355,8 @@ This is a system that makes `helm-apropos` more useful
                                        magit-insert-unpushed-to-pushremote)
           transient-default-level 5))
 
-  (use-package forge
-    :after magit)
+  ;; (use-package forge
+  ;;   :after magit)
  #+END_SRC
 
 
@@ -1180,11 +1386,10 @@ This is a system that makes `helm-apropos` more useful
     :bind (("C-M-@" . mc/mark-previous-like-this)
            ("M-@" . mc/mark-next-like-this)
            ("s-a" . mc/edit-beginnings-of-lines)
-           ("s-c" . mc/add-multiple-cursors-to-region-lines)
            ("s-e" . mc/edit-ends-of-lines))
 
     :config
-    (setq mc/list-file (expand-file-name "emacs24.mc.el" user-emacs-directory)
+    (setq mc/list-file (expand-file-name "emacs30.mc.el" user-emacs-directory)
           mc/insert-numbers-default 1))
 
  #+END_SRC
@@ -1222,6 +1427,19 @@ This is a system that makes `helm-apropos` more useful
 
  #+END_SRC
 
+
+** Projectile
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package projectile
+    :ensure t
+    :init
+    (projectile-mode +1)
+    :bind (:map projectile-mode-map
+                ("s-p" . projectile-command-map)
+                ("C-c p" . projectile-command-map))
+    :config
+    (setq projectile-per-project-compilation-buffer t))
+#+end_src
 
 ** pulse
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -1294,11 +1512,12 @@ This is a system that makes `helm-apropos` more useful
     :mode ("\\.http\\'" . restclient-mode)
     :config
     (use-package restclient-helm)
-    (use-package ob-restclient
-      :config
-      (org-babel-do-load-languages
-       'org-babel-load-languages
-       '((restclient . t)))))
+    ;; (use-package ob-restclient
+    ;;   :config
+    ;;   (org-babel-do-load-languages
+    ;;    'org-babel-load-languages
+    ;;    '((restclient . t))))
+    )
 
   (add-hook 'restclient-mode-hook
             #'(lambda ()
@@ -1313,7 +1532,9 @@ This is a system that makes `helm-apropos` more useful
 #+BEGIN_SRC emacs-lisp :tangle yes
   (add-hook 'sh-mode-hook
             #'(lambda()
-               (define-key sh-mode-map (kbd "C-\\") 'shell-eval-line)))
+                (define-key sh-mode-map (kbd "C-\\") 'shell-eval-line)
+                (define-key shell-mode-map (kbd "s-q") 'bury-buffer)
+                ))
 
   (defun term-toggle-mode ()
     (interactive)
@@ -1326,8 +1547,8 @@ This is a system that makes `helm-apropos` more useful
     :ensure nil
     )
 
-  (setq shell-file-name "/usr/local/bin/bash"
-        explicit-shell-file-name "/usr/local/bin/bash")
+  (setq shell-file-name "/opt/homebrew/bin/bash"
+      explicit-shell-file-name "/opt/homebrew/bin/bash")
  #+END_SRC
 
 
@@ -1377,37 +1598,6 @@ This is a system that makes `helm-apropos` more useful
  #+END_SRC
 
 
-** Tiktoken
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package tiktoken
-    :straight (:host github :repo "zkry/tiktoken.el"))
-
-  (defun tiktoken-count-tokens-in-region (arg)
-    (interactive "p")
-    (let ((enc (tiktoken-encoding-for-model "gpt-3.5-turbo")))    
-      (message
-       (number-to-string (tiktoken-count-tokens enc
-                               (buffer-substring (region-beginning) (region-end)))))))
-
-  (defun tiktoken-encode-region (arg)
-    (interactive "p")
-    (let* ((enc (tiktoken-encoding-for-model "gpt-3.5-turbo"))
-           (start (region-beginning))
-           (end (region-end))
-           (replacement (s-join " " (-map 'number-to-string (tiktoken-encode enc (buffer-substring-no-properties start end) nil)))))
-      (replace-regexp (buffer-substring start end) replacement nil start end)))
-
-  (defun tiktoken-decode-region (arg)
-    (interactive "p")
-    (let* ((enc (tiktoken-encoding-for-model "gpt-3.5-turbo"))
-           (start (region-beginning))
-           (end (region-end))
-           (replacement (tiktoken-decode enc (-map 'string-to-number (s-split " " (buffer-substring-no-properties start end))))))
-      (replace-regexp (buffer-substring start end) replacement nil start end)))
-
-
-#+end_src
-
 ** Toml
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package toml)
@@ -1417,16 +1607,44 @@ This is a system that makes `helm-apropos` more useful
 ** Tramp
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package tramp
-    :init
-    (setq tramp-use-ssh-controlmaster-options t)
     :config
-    (setq tramp-default-method "ssh"
-          ;; tramp-connection-timeout 5
-          tramp-use-ssh-controlmaster-options t
-          ;; remote-file-name-inhibit-cache nil
-          )
-    (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
-    (defalias 'tcac 'tramp-cleanup-all-connections))
+    ;; (setq remote-file-name-inhibit-cache nil
+    ;;       remote-file-name-inhibit-locks t
+
+    ;;       vc-ignore-dir-regexp
+    ;;       (format "%s\\|%s"
+    ;;               vc-ignore-dir-regexp
+    ;;               tramp-file-name-regexp)
+    ;;       tramp-verbose 1)
+
+    ;; Enable full-featured Dirvish over TRAMP on certain connections
+    ;; https://www.gnu.org/software/tramp/#Improving-performance-of-asynchronous-remote-processes-1.
+    ;; (add-to-list 'tramp-connection-properties
+    ;;              (list (regexp-quote "/ssh:YOUR_HOSTNAME:")
+    ;;                    "direct-async-process" t))
+    ;; (require 'tramp-container)
+    (defalias 'tcac 'tramp-cleanup-all-connections)
+    ;; ;; Tips to speed up connections
+    ;; (setq tramp-verbose 0
+    ;;       tramp-chunksize 2000
+    ;;       tramp-use-ssh-controlmaster-options nil)
+    )
+
+  ;; (use-package tramp
+  ;;   ;; :init
+  ;;   ;; (setq tramp-use-ssh-controlmaster-options t)
+  ;;   :config
+  ;;   (setq tramp-default-method "ssh"
+  ;;         ;; tramp-connection-timeout 5
+  ;;         tramp-use-ssh-controlmaster-options t
+  ;;         ;; remote-file-name-inhibit-cache nil
+  ;;         tramp-docker-program "/usr/local/bin/docker"
+  ;;         )
+  ;;   (require 'tramp-container)
+  ;;   (defalias 'tcac 'tramp-cleanup-all-connections)
+  ;;   (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
+  ;; )
+
  #+END_SRC
 
 
@@ -1475,6 +1693,9 @@ This is a system that makes `helm-apropos` more useful
   (use-package visual-regexp
     :bind (("s-:" . query-replace-regexp)
            ("s-;" . vr/replace)))
+
+  ;; (use-package visual-regexp-steroids
+  ;;   :straight (:host github :repo "benma/visual-regexp-steroids.el"))
 
   ;; (defun ignore-read-only-replacements (orig-func &rest args)
   ;;   "Advise the `vr/replace` function to ignore read-only text being replaced."
@@ -1548,6 +1769,7 @@ This is a system that makes `helm-apropos` more useful
                 ))
 
 
+  (use-package yaml-pro)
  #+END_SRC
 
 
@@ -1556,18 +1778,21 @@ This is a system that makes `helm-apropos` more useful
   (use-package yasnippet
     :diminish
     ((yas-minor-mode . " ✀")
-     (yas-global-mode . " ✀"))
+     (yas-global-mode . " ✀✀"))
     :bind (("C-z" . yas-expand))
-    :config
-    (add-to-list 'yas-snippet-dirs (expand-file-name "snippets" user-emacs-directory)))
+    ;; :config
+    ;; (add-to-list 'yas-snippet-dirs (expand-file-name "snippets" user-emacs-directory))
+    )
   (yas-global-mode 1)
 
  #+END_SRC
 
 
-
-
 * Languages
+** Coffeescript
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package coffee-mode)
+#+end_src
 ** Elisp functions
 #+BEGIN_SRC emacs-lisp :tangle yes
   ;; Emacs Lisp
@@ -1585,10 +1810,57 @@ This is a system that makes `helm-apropos` more useful
 
 
 
-** js2 stuff
+** Javascript / Typescript
 #+BEGIN_SRC emacs-lisp :tangle yes
-;; (org-babel-load-if-exists (expand-file-name "emacs24.js2.org" user-emacs-directory))
+  (org-babel-load-if-exists (expand-file-name "emacs24.js2.org" user-emacs-directory))
+  (use-package tide
+    :config
+    ;; aligns annotation to the right hand side
+    (setq company-tooltip-align-annotations t))
 
+  (use-package typescript-mode
+    :mode "\\.ts\\'"
+    :config
+    (setq flycheck-check-syntax-automatically '(save mode-enabled))
+    :hook
+    (typescript-mode . (lambda ()
+
+                         (flycheck-mode +1)
+                         (turn-on-smartparens-strict-mode)
+                         (add-hook 'before-save-hook 'tide-format-before-save nil t)
+                         (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
+
+                         (eldoc-mode +1)
+                         (tide-hl-identifier-mode +1)
+                         ;; company is an optional dependency. You have to
+                         ;; install it separately via package-install
+                         ;; `M-x package-install [ret] company`
+                         (company-mode +1))))
+
+
+
+  ;; (defun setup-tide-mode ()
+  ;;   (interactive)
+  ;;   (tide-setup)
+  ;;   (flycheck-mode +1)
+  ;;   (smartparens-strict-mode +1)
+  ;;   (add-hook 'before-save-hook 'tide-format-before-save)
+  ;;   (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
+  ;;   (setq flycheck-check-syntax-automatically '(save mode-enabled))
+  ;;   (eldoc-mode +1)
+  ;;   (tide-hl-identifier-mode +1)
+  ;;   ;; company is an optional dependency. You have to
+  ;;   ;; install it separately via package-install
+  ;;   ;; `M-x package-install [ret] company`
+  ;;   (company-mode +1))
+
+
+
+  ;; formats the buffer before saving
+
+  ;; if you use typescript-mode
+  ;; if you use treesitter based typescript-ts-mode (emacs 29+)
+  ;; (add-hook 'typescript-ts-mode-hook #'setup-tide-mode)
  #+END_SRC
 
 
@@ -1603,7 +1875,7 @@ This is a system that makes `helm-apropos` more useful
     (lua-mode . (lambda ()
                   (set-company-backends-for-lua)
 
-                  (turn-on-smartparens-strict-mode)
+                  ;; (turn-on-smartparens-strict-mode)
                   (define-key lua-mode-map (kbd "M-\\") 'lua-show-process-buffer)
                   (define-key lua-mode-map (kbd "C-c C-r") 'lua-send-region)
                   (define-key lua-mode-map (kbd "C-c C-d") 'lua-search-documentation)
@@ -1651,9 +1923,6 @@ This is a system that makes `helm-apropos` more useful
    (org-babel-load-file (expand-file-name "emacs24.python.org" user-emacs-directory))
 #+END_SRC
 
-
-
-
 ** Scheme
 #+BEGIN_SRC emacs-lisp :tangle yes
 (org-babel-load-if-exists (expand-file-name "emacs24.scheme.org" user-emacs-directory))
@@ -1682,9 +1951,26 @@ This is a system that makes `helm-apropos` more useful
  #+END_SRC
 
 
+** STScript (SillyTavern)
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package stscript-mode
+    :mode "\\.stscript\\'"
+    :straight (:host github :repo "conornash/stscript-mode")
+    :config
+    (add-hook 'stscript-mode-hook
+              #'(lambda ()
+                  (turn-on-smartparens-strict-mode)
+                  (sp-local-pair 'stscript-mode "{:" ":}" :trigger ":{")
+                  )))
 
 
+#+end_src
 
+
+** Toolscript
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (add-to-list 'auto-mode-alist '("\\.rsx\\'" . nxml-mode))
+#+end_src
 
 
 * Themes
@@ -1712,7 +1998,6 @@ This is a system that makes `helm-apropos` more useful
   (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
   (add-to-list 'default-frame-alist '(undecorated-round . t))
   ;; (add-to-list 'default-frame-alist '(ns-appearance . dark))
-
 #+END_SRC
 
 
@@ -1720,7 +2005,6 @@ This is a system that makes `helm-apropos` more useful
 #+BEGIN_SRC emacs-lisp :tangle yes
 
   (add-to-list 'default-frame-alist '(font . "Inconsolata-lig"))
-  ;; (add-to-list 'default-frame-alist '(height . 150))
 
   ;; (set-face-attribute 'font-lock-comment-face nil
   ;;                     :weight 'medium
@@ -1766,9 +2050,9 @@ This is a system that makes `helm-apropos` more useful
     ;; per mode with `ligature-mode'.
     (global-ligature-mode t))
 
-  ;; (use-package unicode-fonts
-  ;;   :config
-  ;;   (unicode-fonts-setup))
+  (use-package unicode-fonts
+    :config
+    (unicode-fonts-setup))
 #+END_SRC
 
 
@@ -1776,16 +2060,16 @@ This is a system that makes `helm-apropos` more useful
 
 ** Tree-sitter
 #+begin_src emacs-lisp :tangle yes
-  (if (treesit-available-p)
-      (message "Tree-sitter available"))
+  ;; (if (treesit-available-p)
+  ;;     (message "Tree-sitter available"))
 
-  (treesit-ready-p 'c)
-  (treesit-ready-p 'css)
-  (treesit-ready-p 'go)
-  (treesit-ready-p 'html)
-  (treesit-ready-p 'javascript)
-  (treesit-ready-p 'json)
-  (treesit-ready-p 'python)
+  ;; (treesit-ready-p 'c)
+  ;; (treesit-ready-p 'css)
+  ;; (treesit-ready-p 'go)
+  ;; (treesit-ready-p 'html)
+  ;; (treesit-ready-p 'javascript)
+  ;; (treesit-ready-p 'json)
+  ;; (treesit-ready-p 'python)
 
   ;; (use-package json-ts-mode
   ;;   :after origami
@@ -1868,13 +2152,11 @@ This is a system that makes `helm-apropos` more useful
   (global-set-key (kbd "s-k") 'djcb-duplicate-line)
   (global-set-key (kbd "s-q") nil)
   (global-set-key [remap beginning-of-visual-line] 'my/smarter-move-beginning-of-line)
-  (global-set-key [remap goto-line] 'goto-line-with-feedback)
   (global-unset-key (kbd "s-p"))
   (global-unset-key (kbd "s-o"))
   (global-unset-key (kbd "s-n"))
   (global-set-key (kbd "<f14>") 'scroll-lock-mode)
 #+END_SRC
-
 
 
 
@@ -1902,6 +2184,7 @@ This is a system that makes `helm-apropos` more useful
        global-emojify-mode
        global-hungry-delete-mode
        guide-key-mode
+       helm-mode
        key-chord-define-global
        key-chord-mode
        keyfreq-autosave-mode
@@ -1911,6 +2194,9 @@ This is a system that makes `helm-apropos` more useful
        term-char-mode
        term-in-line-mode
        term-line-mode
+       tiktoken-count-tokens
+       tiktoken-encode
+       tiktoken-encoding-for-model
        unicode-fonts-setup
        window-number-meta-mode
        yas-global-mode
@@ -1937,7 +2223,6 @@ This is a system that makes `helm-apropos` more useful
 #+END_SRC
 
 
-
 ** Byte Compile
 #+BEGIN_SRC emacs-lisp :tangle yes
   (defun tangle-init ()
@@ -1959,6 +2244,9 @@ This is a system that makes `helm-apropos` more useful
           (org-babel-tangle)
           (byte-compile-file (expand-file-name (concat (file-name-sans-extension org-file-to-compile) ".el"))))))
 
-    (add-hook 'after-save-hook #'tangle-init)
+  (add-hook 'after-save-hook #'tangle-init)
+  (add-hook 'kill-emacs-hook #'(lambda ()
+                                 (when (file-exists-p (expand-file-name "init.elc" user-emacs-directory))
+                                  (delete-file (expand-file-name "init.elc" user-emacs-directory)))))
 #+END_SRC
 

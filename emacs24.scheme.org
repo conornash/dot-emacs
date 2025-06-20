@@ -39,5 +39,8 @@
                   (redshank-mode 1)
                   (context-coloring-mode 1))))
 
-
+  (use-package slime
+    :custom
+    (inferior-lisp-program "sbcl")
+    :defer t)
  #+END_SRC

@@ -52,25 +52,37 @@
                              "--type-case=2")))
 
     (defun conornash/sqlformat-sqlformat ()
-      (interactive)
+      (interactive
+       (if (use-region-p)
+           (list (region-beginning) (region-end))
+         (list (point-min) (point-max))))
       (setq sqlformat-command 'sqlformat
             sqlformat-args '("--comma_first=True"
                              "--use_space_around_operators"
                              ;; "--reindent_aligned"
                              "--identifiers=lower"
-                             "--keywords=upper"))
-        (sqlformat-buffer))
-
-    (defun conornash/sqlformat-sqlfluff ()
+                             "--keywords=upper"))  
+      (sqlformat-region beg end))
       (interactive)
-        (setq sqlformat-command 'sqlfluff
-            sqlformat-args '("--disable_progress_bar"
+
+        
+    (defun conornash/sqlformat-sqlfluff (beg end)
+      (interactive
+       (if (use-region-p)
+           (list (region-beginning) (region-end))
+         (list (point-min) (point-max))))
+    (setq sqlformat-command 'sqlfluff
+            sqlformat-args '("--disable-progress-bar"
                              "--nocolor"
-                             "--dialect=postgres"))
-        (sqlformat-buffer))
+                             "--config=/Users/conornash/dotfiles/.sqlfluff"
+                             "--dialect=postgres"))  
+      (sqlformat-region beg end))
 
     (defun conornash/sqlformat-pgformatter ()
-      (interactive)
+      (interactive
+       (if (use-region-p)
+           (list (region-beginning) (region-end))
+         (list (point-min) (point-max))))
       (setq sqlformat-command 'pgformatter
             sqlformat-args '(
                              "--comma-break"
@@ -83,7 +95,7 @@
                              "--redshift"
                              "--spaces=2"
                              "--type-case=2"))
-        (sqlformat-buffer))
+      (sqlformat-region beg end))
 
     (use-package sql
       :mode
@@ -98,7 +110,7 @@
       :bind
       (:map sql-mode-map
             ("C-\\" . conor-sql-send-paragraph)
-            ("C-M-\\" . sqlformat-region)
+            ("C-M-\\" . conornash/sqlformat-sqlfluff)
             ("<C-M-tab>" . sqlformat-buffer))
       :config
       (setq sql-pop-to-buffer-after-send-region t
@@ -114,10 +126,12 @@
       (add-hook 'sql-mode-hook
                 #'(lambda ()
                     (turn-on-smartparens-strict-mode)
-                    (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
                     (flycheck-mode 1)
                     (smartscan-mode 1)
                     (sqlup-mode 1)
+                    (add-hook 'after-save-hook #'delete-trailing-whitespace t t)
                     )))
-  #+END_SRC
 
+
+    (use-package pg)
+  #+END_SRC

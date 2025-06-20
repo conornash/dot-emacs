@@ -6,19 +6,19 @@
     (interactive)
     (unless helm-source-buffers-list
       (setq helm-source-buffers-list
-        (helm-make-source "Buffers" 'helm-source-buffers)))
+            (helm-make-source "Buffers" 'helm-source-buffers)))
     (let ((helm-ff-transformer-show-only-basename nil)
-      (helm-search-all-files (cl-case (window-system)
-                   (ns helm-source-mac-spotlight)
-                   (nil helm-source-locate)
-                   (t helm-source-locate))))
+          (helm-search-all-files (cl-case (window-system)
+                                   (ns helm-source-locate)
+                                   (nil helm-source-locate)
+                                   (t helm-source-locate))))
       (helm :sources '(helm-source-buffers-list
-               helm-source-recentf
-               helm-source-mac-spotlight
-               helm-source-bookmarks
-               helm-source-files-in-current-dir
-               helm-source-buffer-not-found)
-        :buffer "*Where would you like to go?*")))
+                       helm-source-recentf
+                       helm-source-files-in-current-dir
+                       helm-source-bookmarks
+                       helm-search-all-files
+                       helm-source-buffer-not-found)
+            :buffer "*Where would you like to go?*")))
 
   (defun conor-helm-insert ()
     "Helm function to insert text in a buffer"
@@ -26,22 +26,22 @@
     (helm-register-candidates)
     (helm-kill-ring-candidates)
     (helm :sources '(helm-source-register
-             helm-source-kill-ring)
-      :buffer "*helm insert*"))
+                     helm-source-kill-ring)
+          :buffer "*helm insert*"))
 
-  (defun conor-helm-project ()
-    "Helm function to work with projects"
-    (interactive)
-    (helm :sources '(helm-source-projectile-buffers-list
-             helm-source-projectile-files-list
-             helm-source-projectile-projects)
-      :buffer "*helm project*"))
+  ;; (defun conor-helm-project ()
+  ;;   "Helm function to work with projects"
+  ;;   (interactive)
+  ;;   (helm :sources '(helm-source-projectile-buffers-list
+  ;;            helm-source-projectile-files-list
+  ;;            helm-source-projectile-projects)
+  ;;     :buffer "*helm project*"))
 
   (defun conor-helm-kill-ring-regsters ()
     (interactive)
     (helm :sources '(helm-source-kill-ring
-             helm-source-register)
-      :buffer "*helm kill ring & registers"))
+                     helm-source-register)
+          :buffer "*helm kill ring & registers"))
 
   (defun conor-helm-ag-here ()
     (interactive)
@@ -54,7 +54,6 @@
 * Helm
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package helm
-    :straight t
     :commands (helm-mode helm-apropos conor-helm-files conor-helm-ag-here)
     :bind
     (("<f1>" . helm-M-x)
@@ -72,29 +71,35 @@
     :diminish (helm-mode . " ⎈")
     :config
     (setq
-     helm-boring-buffer-regexp-list nil
+     helm-apropos-show-short-doc t
+     helm-M-x-show-short-doc t
+     ;; helm-commands-using-frame (remove 'helm-apropos helm-commands-using-frame)
+     completions-detailed t
+     helm-completions-detailed t
+    ;;  helm-boring-buffer-regexp-list nil
      helm-buffer-max-length 40
-     helm-exit-idle-delay 0 ;; update fast sources immediately (doesn't).
-     helm-input-idle-delay 0.1  ;; this actually updates things relatively quickly.
-     helm-multi-swoop-ignore-buffers-match "aaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-     ;; open helm buffer inside current window, not occupy whole other window
+     helm-buffer-skip-remote-checking t
+    ;;  helm-exit-idle-delay 0 ;; update fast sources immediately (doesn't).
+     ;; helm-input-idle-delay 0.01  ;; this actually updates things relatively quickly.
+    ;;  helm-multi-swoop-ignore-buffers-match "aaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ;;  ;; open helm buffer inside current window, not occupy whole other window
+     locate-command "mdfind -name '%s' '%s'"  ;; Use Mac OS X's Spotlight
+     helm-locate-command "mdfind -name '%s' '%s'"
      helm-split-window-inside-p 1
-     ;; move to end or beginning of source when reaching top or bottom of source.
+    ;;  ;; move to end or beginning of source when reaching top or bottom of source.
      helm-move-to-line-cycle-in-source nil
-     ;; search for library in `require' and `declare-function' sexp.
-     helm-ff-search-library-in-sexp t
-     ;; scroll 8 lines other window using M-<next>/M-<prior>
-     helm-echo-input-in-header-line t
-     helm-ff-file-name-history-use-recentf t
-     helm-ff-transformer-show-only-basename nil
-     helm-follow-mode t
-     helm-org-show-filename t
-     helm-scroll-amount 8)
+    ;;  ;; search for library in `require' and `declare-function' sexp.
+    ;;  helm-ff-search-library-in-sexp t
+    ;;  ;; scroll 8 lines other window using M-<next>/M-<prior>
+    ;;  helm-echo-input-in-header-line t
+    ;;  helm-ff-file-name-history-use-recentf t
+    ;;  helm-ff-transformer-show-only-basename nil
+    ;;  helm-follow-mode t
+     ;; helm-scroll-amount 8
+     helm-org-show-filename t)
 
-    (helm-autoresize-mode 0)
-
-    )
-
+    (helm-autoresize-mode 0))
+  (helm-mode 1)
 #+END_SRC
 
 * Helm packages
@@ -119,6 +124,8 @@
 
   (global-set-key [remap apropos-command] 'helm-apropos)
 
+
+
   (use-package helm-swoop
     :bind
     (("M-o" . helm-swoop)
@@ -131,10 +138,12 @@
     :config
     (setq helm-dash-browser-func 'eww
       helm-dash-docsets-path "~/dotfiles/.docsets"
-      helm-dash-common-docsets '( "AWS_Redshift_SQL_Reference" "Airflow" "BigQuery_Standard_SQL"
-                      "Flask" "Jinja" "MySQL" "Org_Mode" "Pandas"
-                      "PostgreSQL" "Python 3" "R" "Requests" "SQLAlchemy"
-                      "SQLite" "boto3" "ggplot2" "ms-sql" "postgis"))
+      ;; helm-dash-common-docsets '( "AWS_Redshift_SQL_Reference" "Airflow" "BigQuery_Standard_SQL"
+      ;;                 "Flask" "Jinja" "MySQL" "Org_Mode" "Pandas"
+      ;;                 "PostgreSQL" "Python 3" "R" "Requests" "SQLAlchemy"
+      ;;                 "SQLite" "boto3" "ggplot2" "ms-sql" "postgis")
+      helm-dash-common-docsets '("PostgreSQL" "Python 3")
+      )
     )
 
   (use-package helm-pydoc)
@@ -144,7 +153,7 @@
     :bind
     (("<f10>" . conor-helm-ag-here))
     :config
-    (setq helm-ag-base-command "ag -U -z --hidden --nocolor --nogroup --path-to-ignore=~/.agignore "))
+    (setq helm-ag-base-command "ag -t -z --hidden --nocolor --nogroup "))
 
   (use-package helm-rg
     :ensure-system-package rg
@@ -156,4 +165,9 @@
   (use-package helm-unicode
     :bind (("C-x 8 RET" . helm-unicode)))
 
+  (use-package helm-flx
+    :config
+    (setq helm-flx-for-helm-find-files t ;; t by default
+          helm-flx-for-helm-locate t)) ;; nil by default
+  (helm-flx-mode +1)
 #+END_SRC

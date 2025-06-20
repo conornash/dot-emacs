@@ -76,7 +76,7 @@
      ;;                               ("<=" . 8804)
      ;;                               ("!=" . 8800))
      flycheck-lintr-linters "with_defaults(object_usage_linter = NULL, camel_case_linter = NULL, assignment_linter = NULL, infix_spaces_linter = NULL, line_length_linter = NULL, multiple_dots_linter = NULL, object_length_linter = NULL, absolute_paths_linter = NULL, spaces_left_parentheses_linter = NULL, single_quotes_linter = NULL)"
-     inferior-ess-r-program "/usr/local/bin/R"
+     inferior-ess-r-program "/opt/homebrew/bin/r"
      smartscan-symbol-selector "symbol")
 
     ;; (use-package ess-smart-underscore)

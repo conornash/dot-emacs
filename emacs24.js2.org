@@ -61,29 +61,37 @@
                    (-map 'buffer-name (buffer-list)))) t))
 
 #+END_SRC
+
 * JS2 mode
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package skewer-mode)
+  (use-package skewer-mode
+    :mode "\\.mjs\\'" "\\.js\\'"
+    :bind
+    (("C-c C-r" . my-skewer-eval-region)
+     ("M-\\" . display-skewer-instance)
+     ("C-\\" . my-skewer-eval-line)))
+
   (use-package js2-mode
-    :mode "\\.js\\'"
-    :config
-    (setq js-indent-level 4
-          js2-basic-offset 4        
-          ;; Indentation size for java
-          c-basic-offset 2
-          js2-cleanup-whitespace t))
+    :mode "\\.mjs\\'" "\\.js\\'"
+    :custom
+    (js-indent-level 4)
+    (js2-basic-offset 4)
+    ;; Indentation size for java
+    (c-basic-offset 2)
+    (js2-cleanup-whitespace t)
+    :bind
+    (("M-<up>" . move-text-up)
+     ("M-<down>" . move-text-down)
+     ("C-|" . eval-at-cursor)))
+
 
   (add-hook 'js2-mode-hook
             #'(lambda ()
                 ;; (my-js2-mode-hook 1)
                 (skewer-mode 1)
                 (rainbow-mode 1)
-                (smartparens-mode 1)
-                (define-key js2-mode-map (kbd "M-<up>") 'move-text-up)
-                (define-key js2-mode-map (kbd "M-<down>") 'move-text-down)
-                (define-key js2-mode-map (kbd "M-\\") 'display-skewer-instance)
-                (define-key js2-mode-map (kbd "C-\\") 'my-skewer-eval-line)
-                (define-key js2-mode-map (kbd "C-|") 'eval-at-cursor)
-                (define-key js2-mode-map (kbd "C-c C-r") 'my-skewer-eval-region)))
-
+                (smartparens-strict-mode 1)
+                (smartscan-mode 1)
+                (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
+          ))
  #+END_SRC
