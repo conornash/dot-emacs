@@ -117,6 +117,9 @@
             sql-send-terminator t
             sql-postgres-options '("-P" "pager=off"))
 
+      ;; Add sqls language server configuration here
+      (add-to-list 'eglot-server-programs
+                   '(sql-mode . ("sqls")))
 
       (add-hook 'sql-interactive-mode-hook
                 #'(lambda ()
@@ -126,11 +129,13 @@
       (add-hook 'sql-mode-hook
                 #'(lambda ()
                     (turn-on-smartparens-strict-mode)
+                    (rainbow-delimiters-mode-enable)
                     (flycheck-mode 1)
                     (smartscan-mode 1)
                     (sqlup-mode 1)
-                    (add-hook 'after-save-hook #'delete-trailing-whitespace t t)
-                    )))
+                    (sqlind-minor-mode 1)
+                    (eglot-ensure) ; Enable eglot for SQL files
+                    (add-hook 'after-save-hook #'delete-trailing-whitespace t t))))
 
 
     (use-package pg)

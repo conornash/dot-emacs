@@ -56,6 +56,7 @@
                      :pre-handlers '(sp-python-pre-slurp-handler))
       ;; Slows down python a lot
       (show-smartparens-global-mode -1)
+      (define-key smartparens-mode-map (kbd "M-?") nil)
       (define-key smartparens-mode-map (vector 'remap 'sp-splice-sexp-killing-forward) 'move-text-down)
       (define-key smartparens-mode-map (vector 'remap 'sp-splice-sexp-killing-backward) 'move-text-up))
 

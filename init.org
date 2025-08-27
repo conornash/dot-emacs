@@ -112,9 +112,7 @@
   ;; Pull in environment variables
   ;; (defvar exec-path-from-shell-warn-duration-millis)
   (use-package exec-path-from-shell)
-
-  (when (memq window-system '(mac ns))
-    (exec-path-from-shell-initialize))
+  (exec-path-from-shell-initialize)
 
   ;; To allow Python to be in UTF-8
   ;; (defvar universal-coding-system-env-list '("PYTHONIOENCODING")
@@ -156,6 +154,7 @@
 #+begin_src emacs-lisp :tangle yes
   ;; allow remembering risky variables
   (advice-add 'risky-local-variable-p :override #'ignore)
+  (setq enable-remote-dir-locals t)
   ;; Above can be removed with advice-remove
 
 #+end_src
@@ -165,6 +164,20 @@
 #+begin_src emacs-lisp :tangle yes
 (use-package compat
   :straight (:host github :repo "emacs-compat/compat"))
+
+#+end_src
+
+
+** Remove keybindings
+#+begin_src emacs-lisp :tangle yes
+  (global-unset-key (kbd "s-l"))
+  (global-unset-key (kbd "s-n"))
+  (global-unset-key (kbd "s-o"))
+  (global-unset-key (kbd "s-p"))
+  (global-unset-key (kbd "s-q"))
+  (global-unset-key (kbd "s-u"))
+  (global-unset-key (kbd "M-s-["))
+
 
 #+end_src
 
@@ -501,88 +514,9 @@
 
 
 * LLMs
-
-** Aider
-Requires https://aider.chat/ to be installed.
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (global-unset-key (kbd "s-l"))
-  ;; (use-package aider
-  ;;   :config
-  ;;   (setq aider-args '("--model" "openrouter/deepseek/deepseek-chat-v3-0324:free" "--no-auto-accept-architect"))
-  ;;   ;; Or use your personal config file
-  ;;   ;; (setq aider-args `("--config" ,(expand-file-name "~/.aider.conf.yml")))
-  ;;   ;; Optional: Set a key binding for the transient menu
-  ;;   (global-set-key (kbd "s-l") 'aider-transient-menu) ;; for wider screen
-  ;;   ;; or use aider-transient-menu-2cols / aider-transient-menu-1col, for narrow screen
-  ;;   ;; add aider magit function to magit menu
-  ;;   (aider-magit-setup-transients))
-  (use-package aidermacs
-    :bind (("s-l" . aidermacs-transient-menu))
-    :config
-    (setq aidermacs-default-chat-mode 'architect
-          aidermacs-comint-multiline-newline-key "S-<return>"
-          aidermacs-vterm-multiline-newline-key "S-<return>"
-          aidermacs-default-model "openrouter/deepseek/deepseek-chat-v3-0324:free"))
-#+end_src
-
-** tiktoken
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package tiktoken
-    :straight (:host github :repo "zkry/tiktoken.el"))
-
-  (defun tiktoken-count-tokens-in-region (arg)
-    (interactive "p")
-    (let ((enc (tiktoken-encoding-for-model "gpt-3.5-turbo")))
-      (message
-       (number-to-string (tiktoken-count-tokens enc
-                                                (buffer-substring (region-beginning) (region-end)))))))
-
-  (defun tiktoken-encode-region (arg)
-    (interactive "p")
-    (let* ((enc (tiktoken-encoding-for-model "gpt-3.5-turbo"))
-           (start (region-beginning))
-           (end (region-end))
-           (replacement (s-join " " (-map 'number-to-string (tiktoken-encode enc (buffer-substring-no-properties start end) nil)))))
-      (replace-regexp (buffer-substring start end) replacement nil start end)))
-
-  (defun tiktoken-decode-region (arg)
-    (interactive "p")
-    (let* ((enc (tiktoken-encoding-for-model "gpt-3.5-turbo"))
-           (start (region-beginning))
-           (end (region-end))
-           (replacement (tiktoken-decode enc (-map 'string-to-number (s-split " " (buffer-substring-no-properties start end))))))
-      (replace-regexp (buffer-substring start end) replacement nil start end)))
-
-#+end_src
-
-** gptel
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package gptel
-    :straight (:host github :repo "karthink/gptel")
-    :config
-    (add-hook 'org-mode-hook
-              #'(lambda ()
-                  (setq-local gptel-org-branching-context t)))
-    (setq gptel-default-mode 'org-mode
-          gptel-expert-commands t
-          gptel-log-level 'info)
-    )
-
-  (defvar global-gptel-map (make-sparse-keymap) "A keymap for gptel commands")
-  (define-prefix-command 'global-gptel-map)
-  (define-key global-map (kbd "s-c") 'global-gptel-map)
-  (define-key global-gptel-map (kbd "c") 'gptel-send)
-  (define-key global-gptel-map (kbd "v") 'gptel-menu)
-  (define-key global-gptel-map (kbd "s") 'gptel-org-set-topic)
-  (define-key global-gptel-map (kbd "g") 'gptel-abort)
-  (define-key global-gptel-map (kbd "o") 'tiktoken-count-tokens-in-region)
-  (define-key global-gptel-map (kbd "t") 'gptel-tools)
-#+end_src
-
-#+RESULTS:
-: gptel-set-topic
-
-
+ #+BEGIN_SRC emacs-lisp :tangle yes
+   (org-babel-load-file (expand-file-name "emacs29.llm.org" user-emacs-directory))
+#+END_SRC
 
 * Hacky scripts
  #+BEGIN_SRC emacs-lisp :tangle yes
@@ -608,7 +542,7 @@ Requires https://aider.chat/ to be installed.
     :diminish (auto-revert-mode . " ⎌"))
 
   (global-auto-revert-mode t)
-  (setq auto-revert-interval 2
+  (setq auto-revert-interval 5
         ;; Also auto refresh dired, but be quiet about it
         global-auto-revert-non-file-buffers t
         auto-revert-verbose nil)
@@ -706,19 +640,23 @@ Requires https://aider.chat/ to be installed.
         (ns-do-hide-emacs)
       (delete-frame frame force)))
 
-  (global-set-key (kbd "s-w") #'delete-or-hide-frame)
-  (global-set-key (kbd "s-n") 'make-frame-command)
+  (defun other-frame-backwards ()
+    (interactive)
+    (other-frame -1))
 
-
-  (global-set-key (kbd "<M-f8>") 'kill-buffer-and-window)
   (global-set-key (kbd "C-`") 'other-frame)
+  (global-set-key (kbd "C-~") 'other-frame-backwards)
   (global-set-key (kbd "C-s-]") 'other-frame)
   (global-set-key (kbd "s-0") 'delete-window)
   (global-set-key (kbd "s-1") 'delete-other-windows)
-  (global-set-key (kbd "s-\\") 'other-frame)
+
+  (defun my-kill-buffer-no-confirm ()
+    "Kill current buffer without confirmation."
+    (interactive)
+    (let ((kill-buffer-query-functions nil))
+      (kill-buffer)))
 
 #+END_SRC
-
 
 
 ** Column Number Mode
@@ -1126,7 +1064,7 @@ This function uses `find-name-dired` with the `-type d` option to recursively li
   (use-package guide-key
     :diminish guide-key-mode
     :config
-    (setq guide-key/guide-key-sequence '("C-x r" "C-x 4" "C-x v" "C-x j" "<C-f1>" "C-;" "C-c" "<f2>" "s-p" "C-c p")
+    (setq guide-key/guide-key-sequence '("C-x r" "C-x 4" "C-x v" "C-x j" "<C-f1>" "C-;" "C-c" "<f2>" "s-p" "C-c p" "C-x p")
           guide-key/idle-delay 0.5
           guide-key/recursive-key-sequence-flag t))
   (guide-key-mode 1)
@@ -1355,8 +1293,8 @@ This is a system that makes `helm-apropos` more useful
                                        magit-insert-unpushed-to-pushremote)
           transient-default-level 5))
 
-  ;; (use-package forge
-  ;;   :after magit)
+  (use-package forge
+    :after magit)
  #+END_SRC
 
 
@@ -1532,8 +1470,7 @@ This is a system that makes `helm-apropos` more useful
 #+BEGIN_SRC emacs-lisp :tangle yes
   (add-hook 'sh-mode-hook
             #'(lambda()
-                (define-key sh-mode-map (kbd "C-\\") 'shell-eval-line)
-                (define-key shell-mode-map (kbd "s-q") 'bury-buffer)
+                (define-key sh-mode-map (kbd "C-\\") 'shell-eval-line)              
                 ))
 
   (defun term-toggle-mode ()
@@ -1606,45 +1543,29 @@ This is a system that makes `helm-apropos` more useful
 
 ** Tramp
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package tramp
-    :config
-    ;; (setq remote-file-name-inhibit-cache nil
-    ;;       remote-file-name-inhibit-locks t
+  (use-package tramp)
 
-    ;;       vc-ignore-dir-regexp
-    ;;       (format "%s\\|%s"
-    ;;               vc-ignore-dir-regexp
-    ;;               tramp-file-name-regexp)
-    ;;       tramp-verbose 1)
-
-    ;; Enable full-featured Dirvish over TRAMP on certain connections
-    ;; https://www.gnu.org/software/tramp/#Improving-performance-of-asynchronous-remote-processes-1.
-    ;; (add-to-list 'tramp-connection-properties
-    ;;              (list (regexp-quote "/ssh:YOUR_HOSTNAME:")
-    ;;                    "direct-async-process" t))
-    ;; (require 'tramp-container)
-    (defalias 'tcac 'tramp-cleanup-all-connections)
-    ;; ;; Tips to speed up connections
-    ;; (setq tramp-verbose 0
-    ;;       tramp-chunksize 2000
-    ;;       tramp-use-ssh-controlmaster-options nil)
+  (setq
+   magit-tramp-pipe-stty-settings 'pty
+   remote-file-name-inhibit-auto-save-visited t
+   remote-file-name-inhibit-locks t
+   tramp-copy-size-limit (* 1024 1024) ;; 1MB
+   tramp-use-scp-direct-remote-copying t
+   tramp-verbose 2
     )
 
-  ;; (use-package tramp
-  ;;   ;; :init
-  ;;   ;; (setq tramp-use-ssh-controlmaster-options t)
-  ;;   :config
-  ;;   (setq tramp-default-method "ssh"
-  ;;         ;; tramp-connection-timeout 5
-  ;;         tramp-use-ssh-controlmaster-options t
-  ;;         ;; remote-file-name-inhibit-cache nil
-  ;;         tramp-docker-program "/usr/local/bin/docker"
-  ;;         )
-  ;;   (require 'tramp-container)
-  ;;   (defalias 'tcac 'tramp-cleanup-all-connections)
-  ;;   (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
-  ;; )
+  (connection-local-set-profile-variables
+   'remote-direct-async-process
+   '((tramp-direct-async-process . t)))
 
+  (connection-local-set-profiles
+   '(:application tramp :protocol "scp")
+   'remote-direct-async-process)
+  (defalias 'tcac 'tramp-cleanup-all-connections)
+
+  (with-eval-after-load 'tramp
+    (with-eval-after-load 'compile
+      (remove-hook 'compilation-mode-hook #'tramp-compile-disable-ssh-controlmaster-options)))
  #+END_SRC
 
 
@@ -1919,9 +1840,18 @@ This is a system that makes `helm-apropos` more useful
 
 ** Python
  #+BEGIN_SRC emacs-lisp :tangle yes
-
    (org-babel-load-file (expand-file-name "emacs24.python.org" user-emacs-directory))
 #+END_SRC
+
+** Rust
+#+BEGIN_SRC emacs-lisp :tangle yes
+    (use-package rust-mode)
+    (add-hook 'rust-mode-hook
+                #'(lambda ()
+                    (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
+                    (turn-on-smartparens-strict-mode)))
+
+#+end_src
 
 ** Scheme
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -2150,11 +2080,8 @@ This is a system that makes `helm-apropos` more useful
   (global-set-key (kbd "M-SPC") 'cycle-spacing)
   (global-set-key (kbd "s-SPC") 'set-rectangular-region-anchor)
   (global-set-key (kbd "s-k") 'djcb-duplicate-line)
-  (global-set-key (kbd "s-q") nil)
+  (global-set-key (kbd "s-q") 'my-kill-buffer-no-confirm)
   (global-set-key [remap beginning-of-visual-line] 'my/smarter-move-beginning-of-line)
-  (global-unset-key (kbd "s-p"))
-  (global-unset-key (kbd "s-o"))
-  (global-unset-key (kbd "s-n"))
   (global-set-key (kbd "<f14>") 'scroll-lock-mode)
 #+END_SRC
 

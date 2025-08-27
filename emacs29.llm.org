@@ -1,0 +1,470 @@
+
+
+* Aider
+Requires https://aider.chat/ to be installed.
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (defun aidermacs-set-models (model) 
+    (setq
+     aidermacs-default-model    model
+     aidermacs-editor-model     model
+     aidermacs-weak-model       model
+     aidermacs-architect-model  model
+     ))
+  ;; (use-package aider
+  ;;   :config
+  ;;   (setq aider-args '("--model" "openrouter/deepseek/deepseek-chat-v3-0324:free" "--no-auto-accept-architect"))
+  ;;   ;; Or use your personal config file
+  ;;   ;; (setq aider-args `("--config" ,(expand-file-name "~/.aider.conf.yml")))
+  ;;   ;; Optional: Set a key binding for the transient menu
+  ;;   (global-set-key (kbd "s-l") 'aider-transient-menu) ;; for wider screen
+  ;;   ;; or use aider-transient-menu-2cols / aider-transient-menu-1col, for narrow screen
+  ;;   ;; add aider magit function to magit menu
+  ;;   (aider-magit-setup-transients))
+  (use-package aidermacs
+    :bind (("s-l" . aidermacs-transient-menu))
+    :config
+    (setq aidermacs-default-chat-mode 'architect
+          aidermacs-comint-multiline-newline-key "S-<return>"
+          aidermacs-vterm-multiline-newline-key "S-<return>"
+          aidermacs-auto-accept-architect t
+          ;; aidermacs-default-model "openrouter/deepseek/deepseek-chat-v3-0324:free"
+          ;; aidermacs-default-model "openrouter/deepseek/deepseek-r1-0528:free"        
+          ))
+
+  ;; (aidermacs-set-models nil)
+#+end_src
+
+* efrit
+#+begin_src emacs-lisp :tangle yes
+  (require 'auth-source)
+  (use-package efrit
+    :straight (:host github :repo "steveyegge/efrit"))
+
+  ;; Standard Efrit settings
+  (setq efrit-model "anthropic/claude-sonnet-4")
+  (setq efrit-max-tokens 8192)
+
+  ;; 🆕 Agent communication settings  
+  (setq efrit-remote-queue-directory "~/.emacs.d/efrit-queue")
+  (setq efrit-remote-queue-max-concurrent 10)
+
+  ;; Start agent communication on load (optional)
+  (add-hook 'after-init-hook #'efrit-remote-queue-start)
+#+end_src
+
+* goose
+#+BEGIN_SRC emacs-lisp :tangle yes
+  ;; (use-package transient)
+  ;; (global-unset-key (kbd "s-'"))
+  ;; (use-package goose
+  ;;   :straight (:host github :repo "aq2bq/goose.el")
+  ;;   :hook (goose-mode-hook . (lambda ()
+  ;;                              (display-line-numbers-mode -1)))
+  ;;   :bind (("s-'" . goose-transient)))
+#+end_src
+
+* gptel
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package gptel
+    :straight (:host github :repo "karthink/gptel")
+    :config
+    ;; (add-hook 'org-mode-hook
+    ;;           #'(lambda ()
+    ;;               (setq-local gptel-org-branching-context t)))
+    (setq gptel-default-mode 'org-mode
+          gptel-expert-commands t
+          gptel-log-level 'info)  
+    (require 'gptel-integrations)
+    )
+
+  (gptel-make-preset 'localdev
+    :system "You are an assistant inside an Emacs Lisp function. You should expect all your responses to be valid for Emacs to read."
+    :tools '("mcp-frc" "localmachine"))
+
+  (gptel-make-tool
+   :function 'async-shell-command-wrapper
+   :name "shell-command"
+   :include t
+   :category "localmachine"
+   :description "Execute COMMAND asynchronously and return output as string.
+  Returns a plist with :output, :exit-code, and :error.
+  TIMEOUT is optional timeout in seconds (default 30).
+  Ensures proper buffer cleanup for reentrancy."
+   :args  (list '(:name "command"
+                        :type string
+                        :description "The command to be run.")
+                '(:name "timeout"
+                        :type number
+                        :description "Timeout in seconds"
+                        :optional t)))
+
+  (gptel-make-preset 'introspect
+    :pre (lambda () (require 'ragmacs))
+    :system
+    "You are pair programming with the user in Emacs and on Emacs.
+
+   Your job is to dive into Elisp code and understand the APIs and
+   structure of elisp libraries and Emacs.  Use the provided tools to do
+   so, but do not make duplicate tool calls for information already
+   available in the chat.
+
+   <tone>
+   1. Be terse and to the point.  Speak directly.
+   2. Explain your reasoning.
+   3. Do NOT hedge or qualify.
+   4. If you don't know, say you don't know.
+   5. Do not offer unprompted advice or clarifications.
+   6. Never apologize.
+   7. Do NOT summarize your answers.
+   </tone>
+
+   <code_generation>
+   When generating code:
+   1. Always check that functions or variables you use in your code exist.
+   2. Also check their calling convention and function-arity before you use them.
+   3. Write code that can be tested by evaluation, and offer to evaluate
+   code using the `elisp_eval` tool.
+   </code_generation>
+
+   <formatting>
+   1. When referring to code symbols (variables, functions, tags etc) enclose them in markdown quotes.
+      Examples: `read_file`, `getResponse(url, callback)`
+      Example: `<details>...</details>`
+   2. If you use LaTeX notation, enclose math in \( and \), or \[ and \] delimiters.
+   </formatting>"
+    :tools '("introspection"))
+
+  (defvar global-gptel-map (make-sparse-keymap) "A keymap for gptel commands")
+  (define-prefix-command 'global-gptel-map)
+  (define-key global-map (kbd "s-c") 'global-gptel-map)
+  (define-key global-gptel-map (kbd "c") 'gptel-send)
+  (define-key global-gptel-map (kbd "v") 'gptel-menu)
+  (define-key global-gptel-map (kbd "s") 'gptel-org-set-topic)
+  (define-key global-gptel-map (kbd "g") 'gptel-abort)
+  (define-key global-gptel-map (kbd "o") 'tiktoken-count-tokens-in-region)
+  (define-key global-gptel-map (kbd "t") 'gptel-tools)
+
+#+end_src
+
+* ob-gptel
+For whatever reason it won't install using use-package, so just copied from here: https://github.com/jwiegley/ob-gptel/blob/main/ob-gptel.el
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (defvar org-babel-default-header-args:gptel
+    '((:results . "replace")
+      (:exports . "both")
+      (:model . nil)
+      (:temperature . nil)
+      (:max-tokens . nil)
+      (:system . nil)
+      (:backend . nil)
+      (:dry-run . nil)
+      (:preset . nil)
+      (:context . nil)
+      (:prompt . nil)
+      (:session . nil)
+      (:format . "org"))
+    "Default header arguments for gptel source blocks.")
+
+  (defun ob-gptel-find-prompt (prompt &optional system-message)
+    "Given a PROMPT identifier, find the block/result pair it names.
+  The result is a directive in the format of `gptel-directives', which
+  includes the SYSTEM-MESSAGE, the block as a message in the USER role,
+  and the result in the ASSISTANT role."
+    (let ((directives (list system-message)))
+      (let ((block (org-babel-find-named-block prompt)))
+        (when block
+          (save-excursion
+            (goto-char block)
+            (let ((info (and block
+                             (save-excursion
+                               (goto-char block)
+                               (org-babel-get-src-block-info)))))
+              (when info
+                (nconc directives (list (and info (nth 1 info))))
+                (let ((result (org-babel-where-is-src-block-result nil info)))
+                  (when result
+                    (goto-char result)
+                    (nconc directives (list (org-babel-read-result))))))))))
+      directives))
+
+  (defun ob-gptel--all-source-blocks (session)
+    "Return all Source blocks before point with `:session' set to SESSION."
+    (org-element-map
+        (save-restriction
+          (narrow-to-region (point-min) (point))
+          (org-element-parse-buffer))
+        '(src-block fixed-width)
+      (lambda (element)
+        (cond ((eq (org-element-type element) 'src-block)
+               (let ((start
+                      (org-element-property :begin element))
+                     (language
+                      (when (org-element-property :language element)
+                        (string-trim (org-element-property :language element))))
+                     (parameters
+                      (when (org-element-property :parameters element)
+                        (org-babel-parse-header-arguments
+                         (string-trim (org-element-property :parameters element))))))
+                 (and (<= start (point))
+                      (equal session (cdr (assq :session parameters)))
+                      (list :start start
+                            :language language
+                            :parameters parameters
+                            :body
+                            (when (org-element-property :value element)
+                              (string-trim (org-element-property :value element)))
+                            :result
+                            (save-excursion
+                              (save-restriction
+                                (goto-char (org-element-property :begin element))
+                                (when (org-babel-where-is-src-block-result)
+                                  (goto-char (org-babel-where-is-src-block-result))
+                                  (org-babel-read-result))))))))))))
+
+  (defun ob-gptel-find-session (session &optional system-message)
+    "Given a SESSION identifier, find the blocks/result pairs it names.
+  The result is a directive in the format of `gptel-directives', which
+  includes the SYSTEM-MESSAGE, and the blocks and their results as
+  messages in the USER/ASSISTANT roles, respectively."
+    (let ((directives (list system-message)))
+      (let ((blocks (ob-gptel--all-source-blocks session)))
+        (dolist (block blocks)
+          (save-excursion
+            (nconc directives (list (plist-get block :body)))
+            (let ((result (plist-get block :result)))
+              (if result
+                  (nconc directives (list result))
+                (nconc directives (list "\n")))))))
+      directives))
+
+  ;; Use gptel's built-in markdown to org converter
+  (declare-function gptel--convert-markdown->org "gptel-org")
+  (require 'gptel-org nil t) ;; Optional require for markdown->org conversion
+
+  (defun ob-gptel--add-context (context)
+    "Call `gptel--transform-add-context' with the given CONTEXT."
+    `(lambda (callback fsm)
+       (setq-local gptel-context--alist
+                   (quote ,(if (stringp context)
+                               (list (list context))
+                             (mapcar #'list context))))
+       (gptel--transform-add-context callback fsm)))
+
+  (defmacro ob-gptel--with-preset (name &rest body)
+    "Run BODY with gptel preset NAME applied.
+  This macro can be used to create `gptel-request' command with settings
+  from a gptel preset applied.  NAME is the preset name, typically a
+  symbol."
+    (declare (indent 1))
+    `(let ((name ,name))
+       (cl-progv (and name (gptel--preset-syms (gptel-get-preset name)))
+           nil
+         (if name (gptel--apply-preset name))
+         ,@body)))
+
+  (defun org-babel-execute:gptel (body params)
+    "Execute a gptel source block with BODY and PARAMS.
+  This function sends the BODY text to GPTel and returns the response."
+    (let* ((model (cdr (assoc :model params)))
+           (temperature (cdr (assoc :temperature params)))
+           (max-tokens (cdr (assoc :max-tokens params)))
+           (system-message (cdr (assoc :system params)))
+           (backend-name (cdr (assoc :backend params)))
+           (prompt (cdr (assoc :prompt params)))
+           (session (cdr (assoc :session params)))
+           (preset (cdr (assoc :preset params)))
+           (context (cdr (assoc :context params)))
+           (format (cdr (assoc :format params)))
+           (dry-run (cdr (assoc :dry-run params)))
+           (buffer (current-buffer))
+           (dry-run (and dry-run (not (member dry-run '("no" "nil" "false")))))
+           (ob-gptel--uuid (concat "<gptel_thinking_" (org-id-uuid) ">"))
+           (fsm
+            (ob-gptel--with-preset (and preset (intern-soft preset))
+              (let ((gptel-model
+                     (if model
+                         (if (symbolp model) model (intern model))
+                       gptel-model))
+                    (gptel-temperature
+                     (if (and temperature (stringp temperature))
+                         (string-to-number temperature)
+                       gptel-temperature))
+                    (gptel-max-tokens
+                     (if (and max-tokens (stringp max-tokens))
+                         (string-to-number max-tokens)
+                       gptel-max-tokens))
+                    (gptel--system-message
+                     (or system-message
+                         gptel--system-message))
+                    (gptel-backend
+                     (if backend-name
+                         (let ((backend (gptel-get-backend backend-name)))
+                           (if backend
+                               (setq-local gptel-backend backend)
+                             gptel-backend))
+                       gptel-backend)))
+                (gptel-request
+                    body
+                  :callback
+                  #'(lambda (response _info)
+                      (when (stringp response)
+                        (with-current-buffer buffer
+                          (save-excursion
+                            (save-restriction
+                              (widen)
+                              (goto-char (point-min))
+                              (when (search-forward ob-gptel--uuid nil t)
+                                (let* ((match-start (match-beginning 0))
+                                       (match-end (match-end 0))
+                                       (formatted-response
+                                        (if (equal format "org")
+                                            (gptel--convert-markdown->org (string-trim response))
+                                          (string-trim response))))
+                                  (goto-char match-start)
+                                  (delete-region match-start match-end)
+                                  (insert formatted-response))))))))
+                  :buffer (current-buffer)
+                  :transforms (list #'gptel--transform-apply-preset
+                                    (ob-gptel--add-context context))
+                  :system
+                  (cond (prompt
+                         (with-current-buffer buffer
+                           (ob-gptel-find-prompt prompt system-message)))
+                        (session
+                         (with-current-buffer buffer
+                           (ob-gptel-find-session session system-message))))
+                  :dry-run dry-run
+                  :stream nil)))))
+      (if dry-run
+          (thread-first
+            fsm
+            (gptel-fsm-info)
+            (plist-get :data)
+            (pp-to-string))
+        ob-gptel--uuid)))
+
+  (defun org-babel-prep-session:gptel (session _params)
+    "Prepare SESSION according to PARAMS.
+  GPTel blocks don't use sessions, so this is a no-op."
+    session)
+
+  (defun ob-gptel-var-to-gptel (var)
+    "Convert an elisp VAR into a string for GPTel."
+    (format "%S" var))
+
+  (defun org-babel-variable-assignments:gptel (params)
+    "Return list of GPTel statements assigning variables from PARAMS."
+    (mapcar
+     (lambda (pair)
+       (format "%s = %s"
+               (car pair)
+               (ob-gptel-var-to-gptel (cdr pair))))
+     (org-babel--get-vars params)))
+
+  ;;; This function courtesy Karthik Chikmagalur <karthik.chikmagalur@gmail.com>
+  (defun ob-gptel-capf ()
+    (save-excursion
+      (when (and (equal (org-thing-at-point) '("block-option" . "src"))
+                 (save-excursion
+                   (re-search-backward "src[ \t]+gptel" (line-beginning-position) t)))
+        (let* (start (end (point))
+                     (word (buffer-substring-no-properties ;word being completed
+                            (progn (skip-syntax-backward "_w") (setq start (point))) end))
+                     (header-arg-p (eq (char-before) ?:))) ;completing a :header-arg?
+          (if header-arg-p
+              (let ((args '(("backend" . "The gptel backend to use")
+                            ("model"   . "The model to use")
+                            ("preset"  . "Use gptel preset")
+                            ("dry-run" . "Don't send, instead return payload?")
+                            ("system"  . "System message for request")
+                            ("prompt"  . "Include result of other block")
+                            ("context" . "List of files to include")
+                            ("format"  . "Output format: markdown or org"))))
+                (list start end (all-completions word args)
+                      :annotation-function #'(lambda (c) (cdr-safe (assoc c args)))
+                      :exclusive 'no))
+            ;; Completing the value of a header-arg
+            (when-let* ((key (and (re-search-backward ;capture header-arg being completed
+                                   ":\\([^ \t]+?\\) +" (line-beginning-position) t)
+                                  (match-string 1)))
+                        (comp-and-annotation
+                         (pcase key ;generate completion table and annotation function for key
+                           ("backend" (list gptel--known-backends))
+                           ("model"
+                            (cons (gptel-backend-models
+                                   (save-excursion ;find backend being used, or
+                                     (forward-line 0)
+                                     (if (re-search-forward
+                                          ":backend +\\([^ \t]+\\)" (line-end-position) t)
+                                         (gptel-get-backend (match-string 1))
+                                       gptel-backend))) ;fall back to buffer backend
+                                  (lambda (m) (get (intern m) :description))))
+                           ("preset" (cons gptel--known-presets
+                                           (lambda (p) (thread-first
+                                                    (cdr (assq (intern p) gptel--known-presets))
+                                                    (plist-get :description)))))
+                           ("dry-run" (cons (list "t" "nil") (lambda (_) "" "Boolean")))
+                           ("format" (cons (list "markdown" "org") (lambda (_) "" "Output format"))))))
+              (list start end (all-completions word (car comp-and-annotation))
+                    :exclusive 'no
+                    :annotation-function (cdr comp-and-annotation))))))))
+
+  (with-eval-after-load 'org-src
+    (add-to-list 'org-src-lang-modes '("gptel" . text)))
+
+
+#+end_src
+
+* MCP
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package mcp
+    :straight (:host github :repo "lizqwerscott/mcp.el")
+    :ensure t
+    :after gptel
+    :custom (mcp-hub-servers
+             `(
+               ;; ("filesystem" . (:command "npx" :args ("-y" "@modelcontextprotocol/server-filesystem" "/home/conornash/Dropbox/")))
+               ("fetch" . (:command "uvx" :args ("mcp-server-fetch")))
+               ("frc" . (:url "http://20.57.129.247:9091/mcp"))))
+    :config (require 'mcp-hub)
+    :hook (after-init . mcp-hub-start-all-server))
+#+end_src
+
+* ragmacs
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package ragmacs
+   :straight (:host github :repo "positron-solutions/ragmacs")
+   :after gptel)
+#+end_src
+
+* tiktoken
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package tiktoken
+    :straight (:host github :repo "zkry/tiktoken.el"))
+
+  (defun tiktoken-count-tokens-in-region (arg)
+    (interactive "p")
+    (let ((enc (tiktoken-encoding-for-model "gpt-3.5-turbo")))
+      (message
+       (number-to-string (tiktoken-count-tokens enc
+                                                (buffer-substring (region-beginning) (region-end)))))))
+
+  (defun tiktoken-encode-region (arg)
+    (interactive "p")
+    (let* ((enc (tiktoken-encoding-for-model "gpt-3.5-turbo"))
+           (start (region-beginning))
+           (end (region-end))
+           (replacement (s-join " " (-map 'number-to-string (tiktoken-encode enc (buffer-substring-no-properties start end) nil)))))
+      (replace-regexp (buffer-substring start end) replacement nil start end)))
+
+  (defun tiktoken-decode-region (arg)
+    (interactive "p")
+    (let* ((enc (tiktoken-encoding-for-model "gpt-3.5-turbo"))
+           (start (region-beginning))
+           (end (region-end))
+           (replacement (tiktoken-decode enc (-map 'string-to-number (s-split " " (buffer-substring-no-properties start end))))))
+      (replace-regexp (buffer-substring start end) replacement nil start end)))
+
+#+end_src
+
+

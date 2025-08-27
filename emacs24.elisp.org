@@ -47,6 +47,7 @@
             (rainbow-delimiters-mode 1)
             (rainbow-mode 1)
             (redshank-mode 1)
+            (smartscan-mode-turn-on)
             (turn-on-smartparens-strict-mode)
 
             (setq eval-expression-debug-on-error t)
