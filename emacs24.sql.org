@@ -51,34 +51,42 @@
                              "--spaces=2"
                              "--type-case=2")))
 
-    (defun conornash/sqlformat-sqlformat ()
+    ;; (defun conornash/sqlformat-sqlformat (beg end)
+    ;;   (interactive
+    ;;    (if (use-region-p)
+    ;;        (list (region-beginning) (region-end))
+    ;;      (list (point-min) (point-max))))
+    ;;   (setq sqlformat-command 'sqlformat
+    ;;         sqlformat-args '("--comma_first=True"
+    ;;                          "--use_space_around_operators"
+    ;;                          ;; "--reindent_aligned"
+    ;;                          "--identifiers=lower"
+    ;;                          "--keywords=upper"))
+    ;;   (sqlformat-region beg end (called-interactively-p 'any)))
+
+
+    (defun conornash/sqlformat-sqlfmt (beg end)
       (interactive
        (if (use-region-p)
            (list (region-beginning) (region-end))
          (list (point-min) (point-max))))
-      (setq sqlformat-command 'sqlformat
-            sqlformat-args '("--comma_first=True"
-                             "--use_space_around_operators"
-                             ;; "--reindent_aligned"
-                             "--identifiers=lower"
-                             "--keywords=upper"))  
-      (sqlformat-region beg end))
-      (interactive)
+      (setq sqlformat-command 'sqlfmt
+            sqlformat-args '(
+                             "--use-spaces"
+                             ))
+      (sqlformat-region beg end (called-interactively-p 'any)))
 
-        
     (defun conornash/sqlformat-sqlfluff (beg end)
       (interactive
        (if (use-region-p)
            (list (region-beginning) (region-end))
          (list (point-min) (point-max))))
-    (setq sqlformat-command 'sqlfluff
-            sqlformat-args '("--disable-progress-bar"
-                             "--nocolor"
-                             "--config=/Users/conornash/dotfiles/.sqlfluff"
-                             "--dialect=postgres"))  
-      (sqlformat-region beg end))
+      (setq sqlformat-command 'sqlfluff
+            sqlformat-args '("--ignore-local-config"
+                             "--config=/Users/conornash/dotfiles/.sqlfluff"))
+      (sqlformat-region beg end (called-interactively-p 'any)))
 
-    (defun conornash/sqlformat-pgformatter ()
+    (defun conornash/sqlformat-pgformatter (beg end)
       (interactive
        (if (use-region-p)
            (list (region-beginning) (region-end))
@@ -95,7 +103,7 @@
                              "--redshift"
                              "--spaces=2"
                              "--type-case=2"))
-      (sqlformat-region beg end))
+      (sqlformat-region beg end (called-interactively-p 'any)))
 
     (use-package sql
       :mode
@@ -107,19 +115,14 @@
        ("\\.sql32\\'"  . sql-mode)
        ("\\.sql\\'"    . sql-mode)
        ("\\.ssql\\'"   . sql-mode))
-      :bind
-      (:map sql-mode-map
-            ("C-\\" . conor-sql-send-paragraph)
-            ("C-M-\\" . conornash/sqlformat-sqlfluff)
-            ("<C-M-tab>" . sqlformat-buffer))
       :config
       (setq sql-pop-to-buffer-after-send-region t
             sql-send-terminator t
             sql-postgres-options '("-P" "pager=off"))
 
-      ;; Add sqls language server configuration here
-      (add-to-list 'eglot-server-programs
-                   '(sql-mode . ("sqls")))
+      ;; Add postgrestools language server configuration
+      ;; (add-to-list 'eglot-server-programs
+      ;;              '(sql-mode . ("postgrestools" "lsp-proxy")))
 
       (add-hook 'sql-interactive-mode-hook
                 #'(lambda ()
@@ -133,10 +136,44 @@
                     (flycheck-mode 1)
                     (smartscan-mode 1)
                     (sqlup-mode 1)
+                    (sqlformat-on-save-mode 1)
                     (sqlind-minor-mode 1)
                     (eglot-ensure) ; Enable eglot for SQL files
-                    (add-hook 'after-save-hook #'delete-trailing-whitespace t t))))
-
+                    (add-hook 'after-save-hook #'delete-trailing-whitespace 0 t))))
 
     (use-package pg)
+
+    (defun sqlformat-region (beg end &optional display-errors)
+      "Reformats the region from BEG to END.
+    When called interactively, or with prefix argument
+    DISPLAY-ERRORS, shows a buffer if the formatting fails."
+      (interactive "rp")
+      (let ((input-file (reformatter--make-temp-file 'sqlformat)))
+        (unwind-protect
+            (progn
+              (reformatter--do-region
+               'sqlformat beg end
+               (pcase sqlformat-command
+                 (`sqlformat "sqlformat")
+                 (`sqlfmt "sqlfmt")
+                 (`pgformatter "pg_format")
+                 (`sqlfluff "sqlfluff")
+                 (`sql-formatter "sql-formatter"))
+               (pcase sqlformat-command
+                 (`sqlformat  (append sqlformat-args '("-r" "-")))
+                 (`sqlfmt  (append sqlformat-args '("-")))
+                 (`pgformatter (append sqlformat-args '("-")))
+                 (`sqlfluff (append '("format") sqlformat-args '("-")))
+                 (`sql-formatter sqlformat-args))
+               t t input-file
+               (if (eq sqlformat-command 'sqlfluff) (lambda (code) t) #'zerop)
+               display-errors nil))
+          (when (file-exists-p input-file)
+            (delete-file input-file)))))
+
+    (define-key sql-mode-map (kbd "C-M-\\") 'sqlformat-buffer)
+
+    (setq sqlformat-command 'sqlfluff      
+          sqlformat-args '("--ignore-local-config"
+                           "--config=/Users/conornash/dotfiles/.sqlfluff"))
   #+END_SRC

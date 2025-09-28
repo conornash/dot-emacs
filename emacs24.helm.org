@@ -48,7 +48,7 @@
     (interactive "P")
     (if arg
         (let ((helm-ag-base-command "ag -t -z --hidden --nocolor --nogroup "))
-    (helm-do-ag default-directory))
+          (helm-do-ag default-directory))
       (helm-do-ag default-directory)))
 
 

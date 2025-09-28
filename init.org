@@ -17,6 +17,8 @@
 
   ;; (setq gc-cons-percentage (expt 10 -4)
   ;;       gc-cons-threshold (expt 2 22))
+  (setq gc-cons-percentage 0.1
+        gc-cons-threshold (expt 2 24))
 
 
   (setq enable-recursive-minibuffers t
@@ -107,38 +109,6 @@
 #+end_src
 
 
-** Environment Variables
-#+BEGIN_SRC emacs-lisp :tangle yes
-  ;; Pull in environment variables
-  ;; (defvar exec-path-from-shell-warn-duration-millis)
-  (use-package exec-path-from-shell)
-  (exec-path-from-shell-initialize)
-
-  ;; To allow Python to be in UTF-8
-  ;; (defvar universal-coding-system-env-list '("PYTHONIOENCODING")
-  ;;   "List of environment variables \\[universal-coding-system-argument] should set")
-
-  ;; (defadvice universal-coding-system-argument (around provide-env-handler activate)
-  ;;   "Augments \\[universal-coding-system-argument] so it also sets environment variables
-
-  ;; Naively sets all environment variables specified in
-  ;; `universal-coding-system-env-list' to the literal string
-  ;; representation of the argument `coding-system'.
-
-  ;; No guarantees are made that the environment variables set by this advice support
-  ;; the same coding systems as Emacs."
-  ;;   (let ((process-environment (copy-alist process-environment)))
-  ;;     (dolist (extra-env universal-coding-system-env-list)
-  ;;       (setenv extra-env (symbol-name (ad-get-arg 0))))
-  ;;     ad-do-it))
-
-  ;; (setenv "LC_ALL" "en_US.UTF-8")
-  ;; (setenv "LANG" "en_US.UTF-8")
-
-
-#+END_SRC
-
-
 ** Async compilation
 #+begin_src emacs-lisp :tangle yes
   ;; (use-package emacs-async
@@ -194,42 +164,6 @@
 
 
 * Org Mode
-** Get Org version
-  For straight.el
-#+BEGIN_SRC emacs-lisp :tangle yes
-  ;; (require 'subr-x)
-  ;; (straight-use-package 'git)
-
-  ;; (defun org-git-version ()
-  ;;   "The Git version of org-mode.
-  ;; Inserted by installing org-mode or when a release is made."
-  ;;   (require 'git)
-  ;;   (let ((git-repo (expand-file-name
-  ;;                    "straight/repos/org/" user-emacs-directory)))
-  ;;     (string-trim
-  ;;      (git-run "describe"
-  ;;               "--match=release\*"
-  ;;               "--abbrev=6"
-  ;;               "HEAD"))))
-
-  ;; (defun org-release ()
-  ;;   "The release version of org-mode.
-  ;; Inserted by installing org-mode or when a release is made."
-  ;;   (require 'git)
-  ;;   (let ((git-repo (expand-file-name
-  ;;                    "straight/repos/org/" user-emacs-directory)))
-  ;;     (string-trim
-  ;;      (string-remove-prefix
-  ;;       "release_"
-  ;;       (git-run "describe"
-  ;;                "--match=release\*"
-  ;;                "--abbrev=0"
-  ;;                "HEAD")))))
-
-#+END_SRC
-
-
-
 ** Helper Functions
 #+BEGIN_SRC emacs-lisp :tangle yes
   (defun org-babel-load-if-exists (org-file)
@@ -241,73 +175,24 @@
     (let ((current-prefix-arg '(16)))
       (org-time-stamp-inactive current-prefix-arg)))
 
-  ;; (defun caolan/repeated-string (n str)
-  ;;   (string-join (make-list (+ n 1) "") str))
-
-  ;; (defun path-to-breadcrumbs (file basedir)
-  ;;   (let ((dir (expand-file-name (file-name-directory file))))
-  ;;     (if (and (string-equal dir (expand-file-name basedir))
-  ;;              (string-equal (file-name-base file) "index"))
-  ;;         ;; empty breadcrumbs to show we're at root index page
-  ;;         nil
-  ;;       (let* ((crumb-path (directory-file-name
-  ;;                           (file-relative-name dir basedir)))
-  ;;              (crumb-parts (cl-remove-if
-  ;;                            (lambda (x) (string-equal x "."))
-  ;;                            (reverse (split-string crumb-path "/"))))
-  ;;              (crumbs (and crumb-parts
-  ;;                           (list (cons (car crumb-parts) "index.html")))))
-  ;;         ;; parent directories
-  ;;         (dotimes (i (length (cdr crumb-parts)))
-  ;;           (setq crumbs
-  ;;                 (cons (cons (nth i (cdr crumb-parts))
-  ;;                             (concat (caolan/repeated-string (+ i 1) "../")
-  ;;                                     "index.html"))
-  ;;                       crumbs)))
-  ;;         (setq crumbs
-  ;;               (cons `("NBS" . ,(if (> (length crumb-parts) 0)
-  ;;                                    (concat (caolan/repeated-string
-  ;;                                             (length crumb-parts)
-  ;;                                             "../")
-  ;;                                            "index.html")
-  ;;                                  "index.html"))
-  ;;                     crumbs))
-  ;;         (if (string-equal (file-name-base file) "index")
-  ;;             (butlast crumbs)
-  ;;           crumbs)))))
-
-  ;; (defun my-website-preamble (plist project-name)
-  ;;   (let* ((file (expand-file-name (plist-get plist :input-file)))
-  ;;          (basedir (file-name-as-directory (plist-get plist :base-directory)))
-  ;;          (crumbs (path-to-breadcrumbs file basedir))
-  ;;          (date (org-publish-find-date file project-name)))
-  ;;     (concat
-  ;;      "<ol class=\"breadcrumbs\">"
-  ;;      (if crumbs
-  ;;          (mapconcat (lambda (crumb)
-  ;;                       (concat "<li>"
-  ;;                               "<a href=\"" (cdr crumb) "\">"
-  ;;                               (car crumb)
-  ;;                               "</a>"
-  ;;                               "</li>"))
-  ;;                     crumbs
-  ;;                     "")
-  ;;        "<li class=\"current\"><a href=\"index.html\">NBS</a></li>")
-  ;;      "</ol>"
-  ;;      (if date
-  ;;          (concat "<div class=\"date\">"
-  ;;                  (format-time-string "%d %b %Y" date)
-  ;;                  "</div>")
-  ;;        ""))))
-
-  ;; (defun endless/filter-timestamp (trans back _comm)
-  ;;   "Remove <> around time-stamps."
-  ;;   (pcase back
-  ;;     ((or `jekyll `html)
-  ;;      (progn
-  ;;        (replace-regexp-in-string "&[lg]t;" "" trans)))
-  ;;     (`latex
-  ;;      (replace-regexp-in-string "[<>]" "" trans))))
+  (defun org-kill-block ()
+    "Kill the Org block at point (#+begin_.. to #+end_..), without eating following text."
+    (interactive)
+    (require 'org-element)
+    (let* ((block-types '(src-block example-block special-block center-block
+                                    quote-block verse-block export-block comment-block
+                                    dynamic-block latex-environment))
+           (elem (org-element-context))
+           (blk (or (org-element-lineage elem block-types t)
+                    (and (memq (org-element-type elem) block-types) elem))))
+      (unless blk
+        (user-error "Point is not inside an Org block"))
+      (let* ((beg  (org-element-property :begin blk))
+             (end  (org-element-property :end blk))
+             (post (or (org-element-property :post-blank blk) 0))
+             (endp (max beg (- end post))))
+        (kill-region beg endp)
+        (message "Killed %s" (org-element-type blk)))))
 #+END_SRC
 
 
@@ -345,45 +230,47 @@
   (key-chord-define-global "qq" 'org-capture)
   (key-chord-define-global "JJ" 'org-agenda)
 
-    (org-clock-persistence-insinuate)
-    (setq comment-start-skip "^\\s-*#\\(?: \\|$\\)"
-          org-agenda-dim-blocked-tasks t
-          org-agenda-start-with-follow-mode t
-          org-agenda-todo-ignore-scheduled nil
-          org-clock-out-remove-zero-time-clocks t
-          org-clock-persist 'history
-          org-confirm-babel-evaluate nil
-          org-deadline-warning-days 28
-          ;; We don't want to see days in the clock report
-          org-duration-format '((special . h:mm))
-          org-enforce-todo-dependencies t
-          org-fontify-whole-heading-line t
-          org-goto-interface 'outline-path-completion
-          org-hide-emphasis-markers t
-          org-image-actual-width 700
-          org-list-allow-alphabetical t
-          org-log-done t
-          ;; Timestamp of changes to deadline using C-c C-d/C-s
-          org-log-redeadline 'time
-          org-log-reschedule 'time
-          org-outline-path-complete-in-steps nil
-          org-refile-targets '((org-agenda-files . (:maxlevel . 2))
-                               (org-agenda-files . (:todo . "NEXTACTION"))
-                               (nil . (:maxlevel . 2)))
-          org-refile-use-outline-path 'file
-          ;; In Sparse Trees, show the details below the matching entries
-          org-src-window-setup 'current-window
-          org-src-fontify-natively t
-          org-show-entry-below t
-          org-table-last-column-widths '(95 7 5)
-          org-use-property-inheritance t
-          org-use-speed-commands t
-          org-speed-commands (nconc org-speed-commands
-                                    '(("User commands") ("S" . widen) ("d" . org-deadline)))
-          org-startup-with-inline-images t
-          ;; don't show scheduled tasks in the TODO view of the agenda
-          org-agenda-todo-ignore-scheduled nil)
-    (define-key org-mode-map (kbd "C-c C-r") verb-command-map)
+  (org-clock-persistence-insinuate)
+  (setq comment-start-skip "^\\s-*#\\(?: \\|$\\)"
+        org-agenda-dim-blocked-tasks t
+        org-agenda-start-with-follow-mode t
+        org-agenda-todo-ignore-scheduled nil
+        org-clock-out-remove-zero-time-clocks t
+        org-clock-persist 'history
+        org-confirm-babel-evaluate nil
+        org-deadline-warning-days 28
+        ;; We don't want to see days in the clock report
+        org-duration-format '((special . h:mm))
+        org-enforce-todo-dependencies t
+        org-fontify-whole-heading-line t
+        org-goto-interface 'outline-path-completion
+        org-hide-emphasis-markers t
+        org-image-actual-width 700
+        org-list-allow-alphabetical t
+        org-log-done t
+        ;; Timestamp of changes to deadline using C-c C-d/C-s
+        org-log-redeadline 'time
+        org-log-reschedule 'time
+        org-outline-path-complete-in-steps nil
+        org-refile-targets '((org-agenda-files . (:maxlevel . 2))
+                             (org-agenda-files . (:todo . "NEXTACTION"))
+                             (nil . (:maxlevel . 2)))
+        org-refile-use-outline-path 'file
+        ;; In Sparse Trees, show the details below the matching entries
+        org-src-window-setup 'current-window
+        org-src-fontify-natively t
+        org-show-entry-below t
+        org-table-last-column-widths '(95 7 5)
+        org-use-property-inheritance t
+        org-use-speed-commands t
+        org-speed-commands (nconc org-speed-commands
+                                  '(("User commands") ("S" . widen) ("d" . org-deadline)))
+        org-startup-with-inline-images t
+        ;; don't show scheduled tasks in the TODO view of the agenda
+        org-agenda-todo-ignore-scheduled nil)
+  (define-key org-mode-map (kbd "C-c C-r") verb-command-map)
+  (define-key org-mode-map (kbd "C-M-k") 'org-kill-block)
+
 
 #+END_SRC
 
@@ -512,15 +399,27 @@
    (use-package smartscan)
 #+END_SRC
 
+** Eglot
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package track-changes
+    :straight (:host github :repo "emacs-straight/track-changes"))
+  ;; (use-package eglot
+  ;;   :ensure t
+  ;;   :custom
+  ;;   (eglot-extend-to-xref t))
+
+#+end_src
+
 
 * LLMs
  #+BEGIN_SRC emacs-lisp :tangle yes
    (org-babel-load-file (expand-file-name "emacs29.llm.org" user-emacs-directory))
 #+END_SRC
 
+
 * Hacky scripts
  #+BEGIN_SRC emacs-lisp :tangle yes
-  (org-babel-load-if-exists (expand-file-name "emacs24.hacky.org" user-emacs-directory))
+   (org-babel-load-if-exists (expand-file-name "emacs24.hacky.org" user-emacs-directory))
 #+END_SRC
 
 
@@ -943,22 +842,6 @@ This function uses `find-name-dired` with the `-type d` option to recursively li
 
  #+END_SRC
 
-
-** Eglot
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package track-changes
-    :straight (:host github :repo "emacs-straight/track-changes"))
-  (use-package eglot
-    :ensure t
-    :hook (sql-mode . eglot-ensure)
-    :config
-    (add-to-list 'eglot-server-programs '(sql-mode . ("/Users/conornash/go/bin/sqls")))
-    :custom
-    (eglot-extend-to-xref t))
-
-#+end_src
-
-
 ** Enable case-region
 #+BEGIN_SRC emacs-lisp :tangle yes
 (put 'downcase-region 'disabled nil)
@@ -1037,10 +920,11 @@ This function uses `find-name-dired` with the `-type d` option to recursively li
     :config
     (flycheck-define-checker sqlfluff
       "A SQL syntax checker using the sqlfluff tool."
-      :command ("sqlfluff" "fix"
-                "--disable-progress-bar"
-                "--nocolor"
-                "--dialect=postgres" source)
+      :command ("sqlfluff"
+                "format"
+                "--ignore-local-config"
+                "--config=/Users/conornash/dotfiles/.sqlfluff"
+                source)
       ;; :standard-input t
       :error-patterns
       ((error line-start
@@ -1132,16 +1016,17 @@ This is a system that makes `helm-apropos` more useful
 
 ** isearch
 #+BEGIN_SRC emacs-lisp :tangle yes
-(defun isearch-exit-other-end ()
-  "Exit isearch, at the opposite end of the string."
-  (interactive)
-  (isearch-exit)
-  (goto-char isearch-other-end))
+  (defun isearch-exit-other-end ()
+    "Exit isearch, at the opposite end of the string."
+    (interactive)
+    (isearch-exit)
+    (goto-char isearch-other-end))
 
-(define-key isearch-mode-map (kbd "C-o") 'isearch-occur)
-(define-key isearch-mode-map (kbd "<backspace>") 'conor-mydelete)
-(define-key isearch-mode-map (kbd "M-o") 'helm-swoop-from-isearch)
-(define-key isearch-mode-map (kbd "C-<return>") 'isearch-exit-other-end)
+  (define-key isearch-mode-map (kbd "C-o") 'isearch-occur)
+  (define-key isearch-mode-map (kbd "<backspace>") 'conor-mydelete)
+  (define-key isearch-mode-map (kbd "M-o") 'helm-swoop-from-isearch)
+  (define-key isearch-mode-map (kbd "M-t") 'isearch-toggle-case-fold)
+  (define-key isearch-mode-map (kbd "C-<return>") 'isearch-exit-other-end)
 
  #+END_SRC
 
@@ -1470,7 +1355,7 @@ This is a system that makes `helm-apropos` more useful
 #+BEGIN_SRC emacs-lisp :tangle yes
   (add-hook 'sh-mode-hook
             #'(lambda()
-                (define-key sh-mode-map (kbd "C-\\") 'shell-eval-line)              
+                (define-key sh-mode-map (kbd "C-\\") 'shell-eval-line)
                 ))
 
   (defun term-toggle-mode ()
@@ -1552,7 +1437,7 @@ This is a system that makes `helm-apropos` more useful
    tramp-copy-size-limit (* 1024 1024) ;; 1MB
    tramp-use-scp-direct-remote-copying t
    tramp-verbose 2
-    )
+   )
 
   (connection-local-set-profile-variables
    'remote-direct-async-process
@@ -1748,6 +1633,7 @@ This is a system that makes `helm-apropos` more useful
 
                          (flycheck-mode +1)
                          (turn-on-smartparens-strict-mode)
+                         (smartscan-mode-turn-on)
                          (add-hook 'before-save-hook 'tide-format-before-save nil t)
                          (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
 
@@ -1902,6 +1788,29 @@ This is a system that makes `helm-apropos` more useful
   (add-to-list 'auto-mode-alist '("\\.rsx\\'" . nxml-mode))
 #+end_src
 
+
+* Window/Frames
+
+** popper
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package popper
+    :ensure t ; or :straight t
+    :bind (("C-M-`"   . popper-toggle)
+           ;; ("M-`"   . popper-cycle)
+           ;; ("C-M-`" . popper-toggle-type)
+           )
+    :init
+    (setq popper-reference-buffers
+          '("\\*Messages\\*"
+            "Output\\*$"
+            "\\*Warnings\\*"
+            "\\*Compile-Log\\*"
+            "\\*Async Shell Command\\*"
+            help-mode
+            compilation-mode))
+    (popper-mode +1)
+    (popper-echo-mode +1))                ; For echo area hints
+#+end_src
 
 * Themes
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -2177,3 +2086,33 @@ This is a system that makes `helm-apropos` more useful
                                   (delete-file (expand-file-name "init.elc" user-emacs-directory)))))
 #+END_SRC
 
+** Environment Variables
+#+BEGIN_SRC emacs-lisp :tangle yes
+  ;; Pull in environment variables
+  ;; (defvar exec-path-from-shell-warn-duration-millis)
+  (use-package exec-path-from-shell)
+  (exec-path-from-shell-initialize)
+
+  ;; To allow Python to be in UTF-8
+  ;; (defvar universal-coding-system-env-list '("PYTHONIOENCODING")
+  ;;   "List of environment variables \\[universal-coding-system-argument] should set")
+
+  ;; (defadvice universal-coding-system-argument (around provide-env-handler activate)
+  ;;   "Augments \\[universal-coding-system-argument] so it also sets environment variables
+
+  ;; Naively sets all environment variables specified in
+  ;; `universal-coding-system-env-list' to the literal string
+  ;; representation of the argument `coding-system'.
+
+  ;; No guarantees are made that the environment variables set by this advice support
+  ;; the same coding systems as Emacs."
+  ;;   (let ((process-environment (copy-alist process-environment)))
+  ;;     (dolist (extra-env universal-coding-system-env-list)
+  ;;       (setenv extra-env (symbol-name (ad-get-arg 0))))
+  ;;     ad-do-it))
+
+  ;; (setenv "LC_ALL" "en_US.UTF-8")
+  ;; (setenv "LANG" "en_US.UTF-8")
+
+
+#+END_SRC

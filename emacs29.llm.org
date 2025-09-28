@@ -1,6 +1,6 @@
 
-
-* Aider
+* Libraries
+** Aider
 Requires https://aider.chat/ to be installed.
 #+BEGIN_SRC emacs-lisp :tangle yes
   (defun aidermacs-set-models (model) 
@@ -34,11 +34,11 @@ Requires https://aider.chat/ to be installed.
   ;; (aidermacs-set-models nil)
 #+end_src
 
-* efrit
+** efrit
 #+begin_src emacs-lisp :tangle yes
   (require 'auth-source)
-  (use-package efrit
-    :straight (:host github :repo "steveyegge/efrit"))
+  ;; (use-package efrit
+  ;;   :straight (:host github :repo "conornash/efrit" :branch "openrouter"))
 
   ;; Standard Efrit settings
   (setq efrit-model "anthropic/claude-sonnet-4")
@@ -48,11 +48,11 @@ Requires https://aider.chat/ to be installed.
   (setq efrit-remote-queue-directory "~/.emacs.d/efrit-queue")
   (setq efrit-remote-queue-max-concurrent 10)
 
-  ;; Start agent communication on load (optional)
-  (add-hook 'after-init-hook #'efrit-remote-queue-start)
+  ;; ;; Start agent communication on load (optional)
+  ;; (add-hook 'after-init-hook #'efrit-remote-queue-start)
 #+end_src
 
-* goose
+** goose
 #+BEGIN_SRC emacs-lisp :tangle yes
   ;; (use-package transient)
   ;; (global-unset-key (kbd "s-'"))
@@ -63,7 +63,7 @@ Requires https://aider.chat/ to be installed.
   ;;   :bind (("s-'" . goose-transient)))
 #+end_src
 
-* gptel
+** gptel
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package gptel
     :straight (:host github :repo "karthink/gptel")
@@ -73,13 +73,38 @@ Requires https://aider.chat/ to be installed.
     ;;               (setq-local gptel-org-branching-context t)))
     (setq gptel-default-mode 'org-mode
           gptel-expert-commands t
-          gptel-log-level 'info)  
+          gptel-log-level 'info)
     (require 'gptel-integrations)
     )
 
+  (use-package gptel-prompts
+    :straight (:host github :repo "jwiegley/gptel-prompts")
+    :after (gptel)
+    :demand t
+    :config
+    (gptel-prompts-update)
+    ;; Ensure prompts are updated if prompt files change
+    (gptel-prompts-add-update-watchers))
+
+
+  (gptel-make-preset 'documentation
+    :confirm-tool-calls nil
+    :tools '("get-retool-source-code" "get-sql-source-code")
+    :stream t
+    :temperature 0.1
+    :max-tokens nil
+    :use-context 'system
+    :track-media nil
+    :include-tool-results nil
+    :backend "OpenRouter"
+    :model 'z-ai/glm-4.5
+    :system 'documentation_starting_with_retool_query
+    :include-reasoning nil)
+
   (gptel-make-preset 'localdev
     :system "You are an assistant inside an Emacs Lisp function. You should expect all your responses to be valid for Emacs to read."
-    :tools '("mcp-frc" "localmachine"))
+    :tools '("mcp-frc" "localmachine")
+    :confirm-tool-calls nil)
 
   (gptel-make-tool
    :function 'async-shell-command-wrapper
@@ -97,6 +122,80 @@ Requires https://aider.chat/ to be installed.
                         :type number
                         :description "Timeout in seconds"
                         :optional t)))
+
+  (gptel-make-tool
+   :function (lambda (filename)
+               (let* ((directory "/Users/conornash/Dropbox/Documents/pat-airflow-base/dags/pat_resources/")
+                      (pattern (concat "^" (regexp-quote filename) "\\."))
+                      (matches (directory-files directory t pattern nil 1)))
+                 (if matches
+                     (let ((filepath (car matches)))
+                       (with-temp-buffer
+                         (insert-file-contents filepath)
+                         (buffer-string)))
+                   (format "No file found matching '%s' in %s" filename directory))))
+   :name "get-sql-source-code"
+   :include t
+   :category "localmachine"
+   :description "Retrieve the definition of a SQL table, as it was constructed. This does not return the schema for the table, which may be found by querying the database directly. Instead it returns the code that was used to create the table in the first place."
+   :args (list '(:name "filename"
+                 :type string
+                 :description "The SQL table name")))
+
+  (defun get-retool-source-code (filename)
+    (let* ((directory "/Users/conornash/Dropbox/Documents/pat-airflow-base/retool-apps/")
+           (pattern filename)  ; Use filename as-is to support wildcards
+           (matches (directory-files-recursively directory ".*"))
+           (filtered-matches (seq-filter (lambda (path) (string-match-p pattern path)) matches)))
+      (if filtered-matches
+          (let ((filepath (car filtered-matches)))
+            (with-temp-buffer
+              (insert-file-contents filepath)
+              (buffer-string)))
+        (format "No file found matching '%s' in %s" filename directory))))
+
+  ;; (get-retool-source-code "Annual Report.*Table1PivotQ")
+  ;; (get-retool-source-code "AgencyListQ")
+  ;; (get-retool-source-code "Table1Pivot")
+  ;; (get-retool-source-code "Annual Report/.*Table1PivotQ")
+  ;; (get-retool-source-code "Annual Report.*Table1PivotQ")
+
+  (gptel-make-tool
+   :function 'get-retool-source-code
+   :name "get-retool-source-code"
+   :include t
+   :category "localmachine"
+   :description "Retrieve the definition of a Retool SQL query, as it was constructed. Queries are stored in the format <client_folder>/[<optional_subfolder>/]lib/<query_name>.sql. When searching, the client_folder and query_name are usually sufficient to uniquely identify the query."
+   :args (list '(:name "filename-pattern"
+                 :type string
+                 :description "Regexp pattern to match table name")))
+
+  (defun get-retool-source-code (filename)
+    (let* ((directory "/Users/conornash/Dropbox/Documents/pat-airflow-base/retool-apps/")
+           (pattern filename)  ; Use filename as-is to support wildcards
+           (matches (directory-files-recursively directory ".*"))
+           (filtered-matches (seq-filter (lambda (path) (string-match-p pattern path)) matches)))
+      (cond
+       ((null filtered-matches)
+        (format "No file found matching '%s' in %s" filename directory))
+       ((= (length filtered-matches) 1)
+        (let ((filepath (car filtered-matches)))
+          (with-temp-buffer
+            (insert-file-contents filepath)
+            (buffer-string))))
+       (t
+        filtered-matches))))
+
+  (gptel-make-tool
+   :function 'get-retool-source-code
+   :name "get-retool-source-code"
+   :include t
+   :category "localmachine"
+   :description "Retrieve the definition of a Retool SQL query, as it was constructed. Queries are stored in the format <client_folder>/[<optional_subfolder>/]lib/<query_name>.sql. When searching, the client_folder and query_name are usually sufficient to uniquely identify the query. If multiple matches are found, return a list of those matches."
+   :args (list '(:name "filename-pattern"
+                 :type string
+                 :description "Regexp pattern to match table name")))
+
 
   (gptel-make-preset 'introspect
     :pre (lambda () (require 'ragmacs))
@@ -143,10 +242,9 @@ Requires https://aider.chat/ to be installed.
   (define-key global-gptel-map (kbd "g") 'gptel-abort)
   (define-key global-gptel-map (kbd "o") 'tiktoken-count-tokens-in-region)
   (define-key global-gptel-map (kbd "t") 'gptel-tools)
-
 #+end_src
 
-* ob-gptel
+** ob-gptel
 For whatever reason it won't install using use-package, so just copied from here: https://github.com/jwiegley/ob-gptel/blob/main/ob-gptel.el
 #+BEGIN_SRC emacs-lisp :tangle yes
   (defvar org-babel-default-header-args:gptel
@@ -415,7 +513,7 @@ For whatever reason it won't install using use-package, so just copied from here
 
 #+end_src
 
-* MCP
+** MCP
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package mcp
     :straight (:host github :repo "lizqwerscott/mcp.el")
@@ -430,14 +528,14 @@ For whatever reason it won't install using use-package, so just copied from here
     :hook (after-init . mcp-hub-start-all-server))
 #+end_src
 
-* ragmacs
+** ragmacs
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package ragmacs
    :straight (:host github :repo "positron-solutions/ragmacs")
    :after gptel)
 #+end_src
 
-* tiktoken
+** tiktoken
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package tiktoken
     :straight (:host github :repo "zkry/tiktoken.el"))
@@ -468,3 +566,7 @@ For whatever reason it won't install using use-package, so just copied from here
 #+end_src
 
 
+
+* Prompts
+#+BEGIN_SRC emacs-lisp :tangle yes
+#+end_src
