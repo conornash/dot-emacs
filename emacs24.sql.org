@@ -1,3 +1,4 @@
+
 * Helper functions
   #+BEGIN_SRC emacs-lisp :tangle yes
 
@@ -136,10 +137,10 @@
                     (flycheck-mode 1)
                     (smartscan-mode 1)
                     (sqlup-mode 1)
-                    (sqlformat-on-save-mode 1)
+                    ;; (sqlformat-on-save-mode 1)
                     (sqlind-minor-mode 1)
-                    (eglot-ensure) ; Enable eglot for SQL files
-                    (add-hook 'after-save-hook #'delete-trailing-whitespace 0 t))))
+                    ;; (eglot-ensure) ; Enable eglot for SQL files
+                    (add-hook 'after-save-hook #'delete-trailing-whitespace nil t))))
 
     (use-package pg)
 
@@ -172,6 +173,7 @@
             (delete-file input-file)))))
 
     (define-key sql-mode-map (kbd "C-M-\\") 'sqlformat-buffer)
+    (define-key sql-mode-map (kbd "C-M-|") 'indent-region)
 
     (setq sqlformat-command 'sqlfluff      
           sqlformat-args '("--ignore-local-config"

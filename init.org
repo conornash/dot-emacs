@@ -24,6 +24,7 @@
   (setq enable-recursive-minibuffers t
         inhibit-startup-screen t
         load-prefer-newer t
+        use-dialog-box nil
         max-lisp-eval-depth 30000
         ring-bell-function 'ignore
         save-interprogram-paste-before-kill t)
@@ -74,6 +75,10 @@
 #+begin_src emacs-lisp :tangle yes
   ;; (add-to-list 'load-path "/Users/conornash/.emacs.d/straight/build/org")
   ;; (require 'org "/Users/conornash/.emacs.d/straight/build/org/org.el")
+  (let ((elpa-dir (expand-file-name "elpa" user-emacs-directory)))
+    (when (file-exists-p elpa-dir)
+      (delete-directory elpa-dir t)))
+
   (defvar bootstrap-version)
   (let ((bootstrap-file
          (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
@@ -150,6 +155,8 @@
 
 
 #+end_src
+
+
 
 * Calendar
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -270,6 +277,20 @@
         org-agenda-todo-ignore-scheduled nil)
   (define-key org-mode-map (kbd "C-c C-r") verb-command-map)
   (define-key org-mode-map (kbd "C-M-k") 'org-kill-block)
+  (define-key org-mode-map (kbd "<s-tab>") 'org-cycle-force-archived)
+  (define-key org-mode-map (kbd "<s-down>") 'org-forward-element)
+  (define-key org-mode-map (kbd "<s-up>") 'org-backward-element)
+  (define-key org-mode-map (kbd "<s-left>") 'org-up-element)
+  (define-key org-mode-map (kbd "<s-right>") 'org-down-element)
+  (define-key org-mode-map (kbd "M-<down>") 'org-metadown)
+  (define-key org-mode-map (kbd "M-<up>") 'org-metaup)
+  (define-key org-mode-map (kbd "C-c l") 'org-store-link)
+  (define-key org-mode-map (kbd "C-c C-l") 'org-insert-link)
+  (define-key org-mode-map (kbd "C-c C-x C-j") 'org-clock-goto)
+  (define-key org-mode-map (kbd "C-c C-x C-r") 'org-clock-report)
+  (define-key org-mode-map (kbd "s-!") 'insert-current-timestamp-inactive)
+  (define-key org-mode-map (kbd "s-o") 'org-open-at-point)
+  (define-key org-mode-map (kbd "s-O") 'org-open-at-point-global)
 
 
 #+END_SRC
@@ -692,6 +713,7 @@
 
     (unbind-key "j" dired-mode-map)
     (define-key dired-mode-map (kbd "C-w") 'dired-copy-filename-sans-extension)
+    (define-key dired-mode-map (kbd "C-c r") 'wdired-change-to-wdired-mode)
     (define-key dired-mode-map (vector 'remap 'beginning-of-buffer) 'dired-back-to-top)
     (define-key dired-mode-map (vector 'remap 'end-of-buffer) 'dired-jump-to-bottom)
     (define-key dired-mode-map (kbd "s-o") 'dired-open-file)
@@ -1429,28 +1451,27 @@ This is a system that makes `helm-apropos` more useful
 ** Tramp
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package tramp)
+  ;; (setq
+  ;;  magit-tramp-pipe-stty-settings 'pty
+  ;;  remote-file-name-inhibit-auto-save-visited t
+  ;;  remote-file-name-inhibit-locks t
+  ;;  tramp-copy-size-limit (* 1024 1024) ;; 1MB
+  ;;  tramp-use-scp-direct-remote-copying t
+  ;;  tramp-verbose 2
+  ;;  )
 
-  (setq
-   magit-tramp-pipe-stty-settings 'pty
-   remote-file-name-inhibit-auto-save-visited t
-   remote-file-name-inhibit-locks t
-   tramp-copy-size-limit (* 1024 1024) ;; 1MB
-   tramp-use-scp-direct-remote-copying t
-   tramp-verbose 2
-   )
+  ;; (connection-local-set-profile-variables
+  ;;  'remote-direct-async-process
+  ;;  '((tramp-direct-async-process . t)))
 
-  (connection-local-set-profile-variables
-   'remote-direct-async-process
-   '((tramp-direct-async-process . t)))
+  ;; (connection-local-set-profiles
+  ;;  '(:application tramp :protocol "scp")
+  ;;  'remote-direct-async-process)
+  ;; (defalias 'tcac 'tramp-cleanup-all-connections)
 
-  (connection-local-set-profiles
-   '(:application tramp :protocol "scp")
-   'remote-direct-async-process)
-  (defalias 'tcac 'tramp-cleanup-all-connections)
-
-  (with-eval-after-load 'tramp
-    (with-eval-after-load 'compile
-      (remove-hook 'compilation-mode-hook #'tramp-compile-disable-ssh-controlmaster-options)))
+  ;; (with-eval-after-load 'tramp
+  ;;   (with-eval-after-load 'compile
+  ;;     (remove-hook 'compilation-mode-hook #'tramp-compile-disable-ssh-controlmaster-options)))
  #+END_SRC
 
 
@@ -1791,25 +1812,52 @@ This is a system that makes `helm-apropos` more useful
 
 * Window/Frames
 
+** Manual
+#+begin_src emacs-lisp :tangle yes
+  (add-to-list 'display-buffer-alist
+               '("\\*Warnings\\*" display-buffer-no-window
+                 (allow-no-window . t)))
+
+#+end_src
+
 ** popper
+The following config is not working correctly. I want the buffers in popper-reference-buffers to never appear unless I manually switch to them. What is causing the popups to appear?
+
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package popper
-    :ensure t ; or :straight t
-    :bind (("C-M-`"   . popper-toggle)
-           ;; ("M-`"   . popper-cycle)
-           ;; ("C-M-`" . popper-toggle-type)
-           )
-    :init
-    (setq popper-reference-buffers
-          '("\\*Messages\\*"
-            "Output\\*$"
-            "\\*Warnings\\*"
-            "\\*Compile-Log\\*"
-            "\\*Async Shell Command\\*"
-            help-mode
-            compilation-mode))
-    (popper-mode +1)
-    (popper-echo-mode +1))                ; For echo area hints
+  ;; (use-package popper
+  ;;   :straight t
+  ;;   :bind (("C-M-`"   . popper-toggle)
+  ;;          ;; ("M-`"   . popper-cycle)
+  ;;          ;; ("C-M-`" . popper-toggle-type)
+  ;;          )
+  ;;   :init
+  ;;   (setq popper-reference-buffers        '((emacs-lisp-compilation-mode . hide)
+  ;;                                           ("*Warning*" . hide)
+  ;;                                           ("^\\*Compil.*" . hide)))
+  ;;   ;; (setq popper--suppressed-names '())
+  ;;   ;; (setq popper--suppressed-modes '())
+  ;;   ;; (setq popper-reference-buffers '((#'(lambda (buf) (with-current-buffer buf
+  ;;   ;;                                              (and (derived-mode-p 'fundamental-mode)
+  ;;   ;;                                                   (< (count-lines (point-min) (point-max))
+  ;;   ;;                                                      10)))) . 'hide)))
+  ;;   (popper-mode +1)
+  ;;   (popper-echo-mode +1)                                        ; For echo area hints
+  ;;   )
+
+
+  ;; (add-hook 'emacs-lisp-compilation-mode-hook #'(lambda () (progn
+  ;;                                                       (setq-local popper-popup-status 'suppressed)
+  ;;                                                       (popper--bury-all))))
+#+end_src
+
+** shackle
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package shackle
+    :config
+    (setq shackle-rules '(("\\*Compil" :regexp t :ignore t))
+          shackle-default-rule '(:select t))
+    )
+  (shackle-mode +1)
 #+end_src
 
 * Themes
@@ -1844,6 +1892,7 @@ This is a system that makes `helm-apropos` more useful
 #+BEGIN_SRC emacs-lisp :tangle yes
 
   (add-to-list 'default-frame-alist '(font . "Inconsolata-lig"))
+  ;; (add-to-list 'default-frame-alist '(font . "Cascadia Code PL"))
 
   ;; (set-face-attribute 'font-lock-comment-face nil
   ;;                     :weight 'medium
@@ -1899,9 +1948,10 @@ This is a system that makes `helm-apropos` more useful
 
 ** Tree-sitter
 #+begin_src emacs-lisp :tangle yes
-  ;; (if (treesit-available-p)
-  ;;     (message "Tree-sitter available"))
+  (if (treesit-available-p)
+      (message "Tree-sitter available"))
 
+  ;; (setq treesit-language-source-alist '((python . ("https://github.com/tree-sitter/tree-sitter-python"))))
   ;; (treesit-ready-p 'c)
   ;; (treesit-ready-p 'css)
   ;; (treesit-ready-p 'go)
@@ -1909,6 +1959,7 @@ This is a system that makes `helm-apropos` more useful
   ;; (treesit-ready-p 'javascript)
   ;; (treesit-ready-p 'json)
   ;; (treesit-ready-p 'python)
+
 
   ;; (use-package json-ts-mode
   ;;   :after origami
@@ -2062,28 +2113,31 @@ This is a system that makes `helm-apropos` more useful
 ** Byte Compile
 #+BEGIN_SRC emacs-lisp :tangle yes
   (defun tangle-init ()
-      "If the current buffer is an org file in the user directory the code-blocks are
+    "If the current buffer is an org file in the user directory the code-blocks are
     tangled, and the tangled file is compiled."
-      (when (and
-             (or
-              (equal (file-name-directory (buffer-file-name))
-                     (expand-file-name user-emacs-directory))
-              (and
-               (boundp 'user-private-directory)
-               (equal (file-name-directory (buffer-file-name))
-                      (expand-file-name user-private-directory))))
-             (file-exists-p (buffer-file-name))
-             (string= "org" (file-name-extension (buffer-file-name))))
-        ;; Avoid running hooks when tangling.
-        (let ((prog-mode-hook nil)
-              (org-file-to-compile (expand-file-name (buffer-file-name))))
-          (org-babel-tangle)
-          (byte-compile-file (expand-file-name (concat (file-name-sans-extension org-file-to-compile) ".el"))))))
+    (when (and
+           (or
+            (equal (file-name-directory (buffer-file-name))
+                   (expand-file-name user-emacs-directory))
+            (and
+             (boundp 'user-private-directory)
+             (equal (file-name-directory (buffer-file-name))
+                    (expand-file-name user-private-directory))))
+           (file-exists-p (buffer-file-name))
+           (string= "org" (file-name-extension (buffer-file-name))))
+      ;; Avoid running hooks when tangling.
+      (let* ((prog-mode-hook nil)
+             (org-file-to-compile (expand-file-name (buffer-file-name)))
+             (file-to-compile (expand-file-name (concat (file-name-sans-extension org-file-to-compile) ".el")))
+             (byte-compile-log-buffer (generate-new-buffer-name
+                                       (concat "*Compile-" file-to-compile "*"))))
+        (org-babel-tangle)
+        (async-byte-compile-file file-to-compile))))
 
   (add-hook 'after-save-hook #'tangle-init)
   (add-hook 'kill-emacs-hook #'(lambda ()
                                  (when (file-exists-p (expand-file-name "init.elc" user-emacs-directory))
-                                  (delete-file (expand-file-name "init.elc" user-emacs-directory)))))
+                                   (delete-file (expand-file-name "init.elc" user-emacs-directory)))))
 #+END_SRC
 
 ** Environment Variables

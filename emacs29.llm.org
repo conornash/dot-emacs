@@ -1,68 +1,16 @@
+#+LAST_MOBILE_CHANGE: 2013-02-23 12:26:49
+#+TITLE: Conor's Emacs LLM Config
+#+COLUMNS: %50ITEM(Task) %13CLOCKSUM(Clocked Total) %8Effort(Estimate){:} %13CLOCKSUM_T(Clocked Today) %18DEADLINE
+#+STARTUP: hidestars indent
+#+PROPERTY: Effort_ALL 0 0:05 0:15 0:30 1:00 2:00 5:00 10:00 20:00
+#+PROPERTY: ORDERED t
+#+SEQ_TODO: NEXTACTION(@) | DONE(@) TRANSFERRED(@) CANCELLED(@)
+#+PRIORITIES: A E A
+#+DRAWERS: PROPERTIES ARCHIVE
+#+LATEX_HEADER: \hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
+#+SETUPFILE: theme-readtheorg.setup
 
-* Libraries
-** Aider
-Requires https://aider.chat/ to be installed.
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (defun aidermacs-set-models (model) 
-    (setq
-     aidermacs-default-model    model
-     aidermacs-editor-model     model
-     aidermacs-weak-model       model
-     aidermacs-architect-model  model
-     ))
-  ;; (use-package aider
-  ;;   :config
-  ;;   (setq aider-args '("--model" "openrouter/deepseek/deepseek-chat-v3-0324:free" "--no-auto-accept-architect"))
-  ;;   ;; Or use your personal config file
-  ;;   ;; (setq aider-args `("--config" ,(expand-file-name "~/.aider.conf.yml")))
-  ;;   ;; Optional: Set a key binding for the transient menu
-  ;;   (global-set-key (kbd "s-l") 'aider-transient-menu) ;; for wider screen
-  ;;   ;; or use aider-transient-menu-2cols / aider-transient-menu-1col, for narrow screen
-  ;;   ;; add aider magit function to magit menu
-  ;;   (aider-magit-setup-transients))
-  (use-package aidermacs
-    :bind (("s-l" . aidermacs-transient-menu))
-    :config
-    (setq aidermacs-default-chat-mode 'architect
-          aidermacs-comint-multiline-newline-key "S-<return>"
-          aidermacs-vterm-multiline-newline-key "S-<return>"
-          aidermacs-auto-accept-architect t
-          ;; aidermacs-default-model "openrouter/deepseek/deepseek-chat-v3-0324:free"
-          ;; aidermacs-default-model "openrouter/deepseek/deepseek-r1-0528:free"        
-          ))
-
-  ;; (aidermacs-set-models nil)
-#+end_src
-
-** efrit
-#+begin_src emacs-lisp :tangle yes
-  (require 'auth-source)
-  ;; (use-package efrit
-  ;;   :straight (:host github :repo "conornash/efrit" :branch "openrouter"))
-
-  ;; Standard Efrit settings
-  (setq efrit-model "anthropic/claude-sonnet-4")
-  (setq efrit-max-tokens 8192)
-
-  ;; 🆕 Agent communication settings  
-  (setq efrit-remote-queue-directory "~/.emacs.d/efrit-queue")
-  (setq efrit-remote-queue-max-concurrent 10)
-
-  ;; ;; Start agent communication on load (optional)
-  ;; (add-hook 'after-init-hook #'efrit-remote-queue-start)
-#+end_src
-
-** goose
-#+BEGIN_SRC emacs-lisp :tangle yes
-  ;; (use-package transient)
-  ;; (global-unset-key (kbd "s-'"))
-  ;; (use-package goose
-  ;;   :straight (:host github :repo "aq2bq/goose.el")
-  ;;   :hook (goose-mode-hook . (lambda ()
-  ;;                              (display-line-numbers-mode -1)))
-  ;;   :bind (("s-'" . goose-transient)))
-#+end_src
-
+* LLM interfaces
 ** gptel
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package gptel
@@ -73,8 +21,10 @@ Requires https://aider.chat/ to be installed.
     ;;               (setq-local gptel-org-branching-context t)))
     (setq gptel-default-mode 'org-mode
           gptel-expert-commands t
-          gptel-log-level 'info)
+          gptel-log-level 'info
+          transient-show-during-minibuffer-read t)
     (require 'gptel-integrations)
+    (require 'gptel-transient)
     )
 
   (use-package gptel-prompts
@@ -87,6 +37,20 @@ Requires https://aider.chat/ to be installed.
     (gptel-prompts-add-update-watchers))
 
 
+  (gptel-make-preset 'measure-retriever
+    :confirm-tool-calls nil
+    :tools '("get-retool-source-code" "get-sql-source-code")
+    :stream t
+    :temperature 0.1
+    :max-tokens nil
+    :use-context 'system
+    :track-media nil
+    :include-tool-results nil
+    :backend "OpenRouter"
+    :model 'z-ai/glm-4.6
+    :system 'retrieve_all_measures_in_file
+    :include-reasoning nil)
+
   (gptel-make-preset 'documentation
     :confirm-tool-calls nil
     :tools '("get-retool-source-code" "get-sql-source-code")
@@ -97,8 +61,34 @@ Requires https://aider.chat/ to be installed.
     :track-media nil
     :include-tool-results nil
     :backend "OpenRouter"
-    :model 'z-ai/glm-4.5
+    :model 'z-ai/glm-4.6
     :system 'documentation_starting_with_retool_query
+    :include-reasoning nil)
+
+  (gptel-make-preset 'customer-treatment
+    :tools '()
+    :stream t
+    :temperature 0.1
+    :max-tokens nil
+    :use-context 'system
+    :track-media nil
+    :include-tool-results nil
+    :backend "OpenRouter"
+    :model 'openai/gpt-5
+    :system 'azftf_customer_treatment
+    :include-reasoning nil)
+
+  (gptel-make-preset 'prompt-evaluator
+    :tools '()
+    :stream t
+    :temperature 0.1
+    :max-tokens nil
+    :use-context 'system
+    :track-media nil
+    :include-tool-results nil
+    :backend "OpenRouter"
+    :model 'anthropic/claude-sonnet-4.5
+    :system 'evaluator_comparison
     :include-reasoning nil)
 
   (gptel-make-preset 'localdev
@@ -199,39 +189,16 @@ Requires https://aider.chat/ to be installed.
 
   (gptel-make-preset 'introspect
     :pre (lambda () (require 'ragmacs))
-    :system
-    "You are pair programming with the user in Emacs and on Emacs.
-
-   Your job is to dive into Elisp code and understand the APIs and
-   structure of elisp libraries and Emacs.  Use the provided tools to do
-   so, but do not make duplicate tool calls for information already
-   available in the chat.
-
-   <tone>
-   1. Be terse and to the point.  Speak directly.
-   2. Explain your reasoning.
-   3. Do NOT hedge or qualify.
-   4. If you don't know, say you don't know.
-   5. Do not offer unprompted advice or clarifications.
-   6. Never apologize.
-   7. Do NOT summarize your answers.
-   </tone>
-
-   <code_generation>
-   When generating code:
-   1. Always check that functions or variables you use in your code exist.
-   2. Also check their calling convention and function-arity before you use them.
-   3. Write code that can be tested by evaluation, and offer to evaluate
-   code using the `elisp_eval` tool.
-   </code_generation>
-
-   <formatting>
-   1. When referring to code symbols (variables, functions, tags etc) enclose them in markdown quotes.
-      Examples: `read_file`, `getResponse(url, callback)`
-      Example: `<details>...</details>`
-   2. If you use LaTeX notation, enclose math in \( and \), or \[ and \] delimiters.
-   </formatting>"
-    :tools '("introspection"))
+    :system 'ragmacs_standard_prompt
+    :backend "OpenRouter"
+    :include-reasoning nil
+    :max-tokens nil
+    :model 'openai/gpt-5
+    :stream t
+    :temperature 0.1
+    :tools '("introspection")
+    :track-media nil
+    :use-context 'system)
 
   (defvar global-gptel-map (make-sparse-keymap) "A keymap for gptel commands")
   (define-prefix-command 'global-gptel-map)
@@ -242,6 +209,8 @@ Requires https://aider.chat/ to be installed.
   (define-key global-gptel-map (kbd "g") 'gptel-abort)
   (define-key global-gptel-map (kbd "o") 'tiktoken-count-tokens-in-region)
   (define-key global-gptel-map (kbd "t") 'gptel-tools)
+
+
 #+end_src
 
 ** ob-gptel
@@ -566,6 +535,87 @@ For whatever reason it won't install using use-package, so just copied from here
 #+end_src
 
 
+
+* Agent interfaces
+
+** agent-shell
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package shell-maker
+    :ensure t)
+
+  (use-package acp
+    :straight (:host github :repo "xenodium/acp.el"))
+
+  (use-package agent-shell
+    :straight (:host github :repo "xenodium/agent-shell"))
+
+
+
+#+end_src
+
+
+** Aider
+Requires https://aider.chat/ to be installed.
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (defun aidermacs-set-models (model)
+    (setq
+     aidermacs-default-model    model
+     aidermacs-editor-model     model
+     aidermacs-weak-model       model
+     aidermacs-architect-model  model
+     ))
+  ;; (use-package aider
+  ;;   :config
+  ;;   (setq aider-args '("--model" "openrouter/deepseek/deepseek-chat-v3-0324:free" "--no-auto-accept-architect"))
+  ;;   ;; Or use your personal config file
+  ;;   ;; (setq aider-args `("--config" ,(expand-file-name "~/.aider.conf.yml")))
+  ;;   ;; Optional: Set a key binding for the transient menu
+  ;;   (global-set-key (kbd "s-l") 'aider-transient-menu) ;; for wider screen
+  ;;   ;; or use aider-transient-menu-2cols / aider-transient-menu-1col, for narrow screen
+  ;;   ;; add aider magit function to magit menu
+  ;;   (aider-magit-setup-transients))
+  (use-package aidermacs
+    :bind (("s-l" . aidermacs-transient-menu))
+    :config
+    (setq aidermacs-default-chat-mode 'architect
+          aidermacs-comint-multiline-newline-key "S-<return>"
+          aidermacs-vterm-multiline-newline-key "S-<return>"
+          aidermacs-auto-accept-architect t
+          ;; aidermacs-default-model "openrouter/deepseek/deepseek-chat-v3-0324:free"
+          ;; aidermacs-default-model "openrouter/deepseek/deepseek-r1-0528:free"
+          ))
+
+  ;; (aidermacs-set-models nil)
+#+end_src
+
+** goose
+#+BEGIN_SRC emacs-lisp :tangle yes
+  ;; (use-package transient)
+  ;; (global-unset-key (kbd "s-'"))
+  ;; (use-package goose
+  ;;   :straight (:host github :repo "aq2bq/goose.el")
+  ;;   :hook (goose-mode-hook . (lambda ()
+  ;;                              (display-line-numbers-mode -1)))
+  ;;   :bind (("s-'" . goose-transient)))
+#+end_src
+
+** efrit
+#+begin_src emacs-lisp :tangle yes
+  (require 'auth-source)
+  ;; (use-package efrit
+  ;;   :straight (:host github :repo "conornash/efrit" :branch "openrouter"))
+
+  ;; Standard Efrit settings
+  (setq efrit-model "anthropic/claude-sonnet-4")
+  (setq efrit-max-tokens 8192)
+
+  ;; 🆕 Agent communication settings
+  (setq efrit-remote-queue-directory "~/.emacs.d/efrit-queue")
+  (setq efrit-remote-queue-max-concurrent 10)
+
+  ;; ;; Start agent communication on load (optional)
+  ;; (add-hook 'after-init-hook #'efrit-remote-queue-start)
+#+end_src
 
 * Prompts
 #+BEGIN_SRC emacs-lisp :tangle yes
