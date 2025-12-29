@@ -13,202 +13,233 @@
 * LLM interfaces
 ** gptel
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package gptel
-    :straight (:host github :repo "karthink/gptel")
-    :config
-    ;; (add-hook 'org-mode-hook
-    ;;           #'(lambda ()
-    ;;               (setq-local gptel-org-branching-context t)))
-    (setq gptel-default-mode 'org-mode
-          gptel-expert-commands t
-          gptel-log-level 'info
-          transient-show-during-minibuffer-read t)
-    (require 'gptel-integrations)
-    (require 'gptel-transient)
-    )
+  ;; -*- lexical-binding: t; -*-
+    (use-package templatel)
+    (use-package gptel
+      :straight (:host github :repo "karthink/gptel")
+      :config
+      ;; (add-hook 'org-mode-hook
+      ;;           #'(lambda ()
+      ;;               (setq-local gptel-org-branching-context t)))
+      (setq gptel-default-mode 'org-mode
+            gptel-expert-commands t
+            gptel-log-level 'info
+            gptel-org-branching-context t
+            gptel-org-convert-response t
+            transient-show-during-minibuffer-read t)
+      (require 'gptel-integrations)
+      (require 'gptel-transient)
+      )
 
-  (use-package gptel-prompts
-    :straight (:host github :repo "jwiegley/gptel-prompts")
-    :after (gptel)
-    :demand t
-    :config
-    (gptel-prompts-update)
-    ;; Ensure prompts are updated if prompt files change
-    (gptel-prompts-add-update-watchers))
+    (use-package gptel-prompts
+      :straight (:host github :repo "jwiegley/gptel-prompts")
+      :after (gptel)
+      :demand t
+      :config
+      (gptel-prompts-update)
+      (setq gptel-prompts-template-base-directory "/Users/conornash/.emacs.d/prompts/")
+      ;; Ensure prompts are updated if prompt files change
+      (gptel-prompts-add-update-watchers))
 
+    (gptel-make-preset 'zero
+      :confirm-tool-calls nil
+      :tools '()
+      :stream t
+      :temperature 1.0
+      :max-tokens nil
+      :use-context 'system
+      :track-media nil
+      :include-tool-results nil
+      :backend "OpenRouter"
+      :model 'openai/gpt-5
+      :system 'zero
+      :include-reasoning nil)
 
-  (gptel-make-preset 'measure-retriever
-    :confirm-tool-calls nil
-    :tools '("get-retool-source-code" "get-sql-source-code")
-    :stream t
-    :temperature 0.1
-    :max-tokens nil
-    :use-context 'system
-    :track-media nil
-    :include-tool-results nil
-    :backend "OpenRouter"
-    :model 'z-ai/glm-4.6
-    :system 'retrieve_all_measures_in_file
-    :include-reasoning nil)
+    (gptel-make-preset 'measure-retriever
+      :confirm-tool-calls nil
+      :tools '("get-retool-source-code" "get-sql-source-code")
+      :stream t
+      :temperature 0.1
+      :max-tokens nil
+      :use-context 'system
+      :track-media nil
+      :include-tool-results nil
+      :backend "OpenRouter"
+      :model 'z-ai/glm-4.6:exacto
+      :system 'retrieve_all_measures_in_file
+      :include-reasoning nil)
 
-  (gptel-make-preset 'documentation
-    :confirm-tool-calls nil
-    :tools '("get-retool-source-code" "get-sql-source-code")
-    :stream t
-    :temperature 0.1
-    :max-tokens nil
-    :use-context 'system
-    :track-media nil
-    :include-tool-results nil
-    :backend "OpenRouter"
-    :model 'z-ai/glm-4.6
-    :system 'documentation_starting_with_retool_query
-    :include-reasoning nil)
+    (gptel-make-preset 'documentation
+      :confirm-tool-calls nil
+      :tools '("get-retool-source-code" "get-sql-source-code")
+      :stream t
+      :temperature 0.1
+      :max-tokens nil
+      :use-context 'system
+      :track-media nil
+      :include-tool-results nil
+      :backend "OpenRouter"
+      :model 'z-ai/glm-4.6:exacto
+      :system 'documentation_starting_with_retool_query
+      :include-reasoning nil)
 
-  (gptel-make-preset 'customer-treatment
-    :tools '()
-    :stream t
-    :temperature 0.1
-    :max-tokens nil
-    :use-context 'system
-    :track-media nil
-    :include-tool-results nil
-    :backend "OpenRouter"
-    :model 'openai/gpt-5
-    :system 'azftf_customer_treatment
-    :include-reasoning nil)
+    (gptel-make-preset 'customer-treatment
+      :tools '()
+      :stream t
+      :temperature 0.1
+      :max-tokens nil
+      :use-context 'system
+      :track-media nil
+      :include-tool-results nil
+      :backend "OpenRouter"
+      :model 'openai/gpt-5
+      :system 'azftf_customer_treatment
+      :include-reasoning nil)
 
-  (gptel-make-preset 'prompt-evaluator
-    :tools '()
-    :stream t
-    :temperature 0.1
-    :max-tokens nil
-    :use-context 'system
-    :track-media nil
-    :include-tool-results nil
-    :backend "OpenRouter"
-    :model 'anthropic/claude-sonnet-4.5
-    :system 'evaluator_comparison
-    :include-reasoning nil)
+    (gptel-make-preset 'diff-describer
+      :tools '()
+      :stream t
+      :temperature 0.1
+      :max-tokens nil
+      :use-context 'system
+      :track-media nil
+      :include-tool-results nil
+      :backend "OpenRouter"
+      :model 'openai/gpt-5
+      :system 'describe_diff
+      :include-reasoning nil)
 
-  (gptel-make-preset 'localdev
-    :system "You are an assistant inside an Emacs Lisp function. You should expect all your responses to be valid for Emacs to read."
-    :tools '("mcp-frc" "localmachine")
-    :confirm-tool-calls nil)
+    (gptel-make-preset 'prompt-evaluator
+      :tools '()
+      :stream t
+      :temperature 0.1
+      :max-tokens nil
+      :use-context 'system
+      :track-media nil
+      :include-tool-results nil
+      :backend "OpenRouter"
+      :model 'anthropic/claude-sonnet-4.5
+      :system 'evaluator_comparison
+      :include-reasoning nil)
 
-  (gptel-make-tool
-   :function 'async-shell-command-wrapper
-   :name "shell-command"
-   :include t
-   :category "localmachine"
-   :description "Execute COMMAND asynchronously and return output as string.
-  Returns a plist with :output, :exit-code, and :error.
-  TIMEOUT is optional timeout in seconds (default 30).
-  Ensures proper buffer cleanup for reentrancy."
-   :args  (list '(:name "command"
-                        :type string
-                        :description "The command to be run.")
-                '(:name "timeout"
-                        :type number
-                        :description "Timeout in seconds"
-                        :optional t)))
+    (gptel-make-preset 'localdev
+      :system "You are an assistant inside an Emacs Lisp function. You should expect all your responses to be valid for Emacs to read."
+      :tools '("mcp-frc" "localmachine")
+      :confirm-tool-calls nil)
 
-  (gptel-make-tool
-   :function (lambda (filename)
-               (let* ((directory "/Users/conornash/Dropbox/Documents/pat-airflow-base/dags/pat_resources/")
-                      (pattern (concat "^" (regexp-quote filename) "\\."))
-                      (matches (directory-files directory t pattern nil 1)))
-                 (if matches
-                     (let ((filepath (car matches)))
-                       (with-temp-buffer
-                         (insert-file-contents filepath)
-                         (buffer-string)))
-                   (format "No file found matching '%s' in %s" filename directory))))
-   :name "get-sql-source-code"
-   :include t
-   :category "localmachine"
-   :description "Retrieve the definition of a SQL table, as it was constructed. This does not return the schema for the table, which may be found by querying the database directly. Instead it returns the code that was used to create the table in the first place."
-   :args (list '(:name "filename"
-                 :type string
-                 :description "The SQL table name")))
+    (gptel-make-tool
+     :function 'async-shell-command-wrapper
+     :name "shell-command"
+     :include t
+     :category "localmachine"
+     :description "Execute COMMAND asynchronously and return output as string.
+    Returns a plist with :output, :exit-code, and :error.
+    TIMEOUT is optional timeout in seconds (default 30).
+    Ensures proper buffer cleanup for reentrancy."
+     :args  (list '(:name "command"
+                          :type string
+                          :description "The command to be run.")
+                  '(:name "timeout"
+                          :type number
+                          :description "Timeout in seconds"
+                          :optional t)))
 
-  (defun get-retool-source-code (filename)
-    (let* ((directory "/Users/conornash/Dropbox/Documents/pat-airflow-base/retool-apps/")
-           (pattern filename)  ; Use filename as-is to support wildcards
-           (matches (directory-files-recursively directory ".*"))
-           (filtered-matches (seq-filter (lambda (path) (string-match-p pattern path)) matches)))
-      (if filtered-matches
+    (gptel-make-tool
+     :function (lambda (filename)
+                 (let* ((directory "/Users/conornash/Dropbox/Documents/pat-airflow-base/dags/pat_resources/")
+                        (pattern (concat "^" (regexp-quote filename) "\\."))
+                        (matches (directory-files directory t pattern nil 1)))
+                   (if matches
+                       (let ((filepath (car matches)))
+                         (with-temp-buffer
+                           (insert-file-contents filepath)
+                           (buffer-string)))
+                     (format "No file found matching '%s' in %s" filename directory))))
+     :name "get-sql-source-code"
+     :include t
+     :category "localmachine"
+     :description "Retrieve the definition of a SQL table, as it was constructed. This does not return the schema for the table, which may be found by querying the database directly. Instead it returns the code that was used to create the table in the first place."
+     :args (list '(:name "filename"
+                   :type string
+                   :description "The SQL table name")))
+
+    (defun get-retool-source-code (filename)
+      (let* ((directory "/Users/conornash/Dropbox/Documents/pat-airflow-base/retool-apps/")
+             (pattern filename)  ; Use filename as-is to support wildcards
+             (matches (directory-files-recursively directory ".*"))
+             (filtered-matches (seq-filter (lambda (path) (string-match-p pattern path)) matches)))
+        (if filtered-matches
+            (let ((filepath (car filtered-matches)))
+              (with-temp-buffer
+                (insert-file-contents filepath)
+                (buffer-string)))
+          (format "No file found matching '%s' in %s" filename directory))))
+
+    ;; (get-retool-source-code "Annual Report.*Table1PivotQ")
+    ;; (get-retool-source-code "AgencyListQ")
+    ;; (get-retool-source-code "Table1Pivot")
+    ;; (get-retool-source-code "Annual Report/.*Table1PivotQ")
+    ;; (get-retool-source-code "Annual Report.*Table1PivotQ")
+
+    (gptel-make-tool
+     :function 'get-retool-source-code
+     :name "get-retool-source-code"
+     :include t
+     :category "localmachine"
+     :description "Retrieve the definition of a Retool SQL query, as it was constructed. Queries are stored in the format <client_folder>/[<optional_subfolder>/]lib/<query_name>.sql. When searching, the client_folder and query_name are usually sufficient to uniquely identify the query."
+     :args (list '(:name "filename-pattern"
+                   :type string
+                   :description "Regexp pattern to match table name")))
+
+    (defun get-retool-source-code (filename)
+      (let* ((directory "/Users/conornash/Dropbox/Documents/pat-airflow-base/retool-apps/")
+             (pattern filename)  ; Use filename as-is to support wildcards
+             (matches (directory-files-recursively directory ".*"))
+             (filtered-matches (seq-filter (lambda (path) (string-match-p pattern path)) matches)))
+        (cond
+         ((null filtered-matches)
+          (format "No file found matching '%s' in %s" filename directory))
+         ((= (length filtered-matches) 1)
           (let ((filepath (car filtered-matches)))
             (with-temp-buffer
               (insert-file-contents filepath)
-              (buffer-string)))
-        (format "No file found matching '%s' in %s" filename directory))))
+              (buffer-string))))
+         (t
+          filtered-matches))))
 
-  ;; (get-retool-source-code "Annual Report.*Table1PivotQ")
-  ;; (get-retool-source-code "AgencyListQ")
-  ;; (get-retool-source-code "Table1Pivot")
-  ;; (get-retool-source-code "Annual Report/.*Table1PivotQ")
-  ;; (get-retool-source-code "Annual Report.*Table1PivotQ")
-
-  (gptel-make-tool
-   :function 'get-retool-source-code
-   :name "get-retool-source-code"
-   :include t
-   :category "localmachine"
-   :description "Retrieve the definition of a Retool SQL query, as it was constructed. Queries are stored in the format <client_folder>/[<optional_subfolder>/]lib/<query_name>.sql. When searching, the client_folder and query_name are usually sufficient to uniquely identify the query."
-   :args (list '(:name "filename-pattern"
-                 :type string
-                 :description "Regexp pattern to match table name")))
-
-  (defun get-retool-source-code (filename)
-    (let* ((directory "/Users/conornash/Dropbox/Documents/pat-airflow-base/retool-apps/")
-           (pattern filename)  ; Use filename as-is to support wildcards
-           (matches (directory-files-recursively directory ".*"))
-           (filtered-matches (seq-filter (lambda (path) (string-match-p pattern path)) matches)))
-      (cond
-       ((null filtered-matches)
-        (format "No file found matching '%s' in %s" filename directory))
-       ((= (length filtered-matches) 1)
-        (let ((filepath (car filtered-matches)))
-          (with-temp-buffer
-            (insert-file-contents filepath)
-            (buffer-string))))
-       (t
-        filtered-matches))))
-
-  (gptel-make-tool
-   :function 'get-retool-source-code
-   :name "get-retool-source-code"
-   :include t
-   :category "localmachine"
-   :description "Retrieve the definition of a Retool SQL query, as it was constructed. Queries are stored in the format <client_folder>/[<optional_subfolder>/]lib/<query_name>.sql. When searching, the client_folder and query_name are usually sufficient to uniquely identify the query. If multiple matches are found, return a list of those matches."
-   :args (list '(:name "filename-pattern"
-                 :type string
-                 :description "Regexp pattern to match table name")))
+    (gptel-make-tool
+     :function 'get-retool-source-code
+     :name "get-retool-source-code"
+     :include t
+     :category "localmachine"
+     :description "Retrieve the definition of a Retool SQL query, as it was constructed. Queries are stored in the format <client_folder>/[<optional_subfolder>/]lib/<query_name>.sql. When searching, the client_folder and query_name are usually sufficient to uniquely identify the query. If multiple matches are found, return a list of those matches."
+     :args (list '(:name "filename-pattern"
+                   :type string
+                   :description "Regexp pattern to match table name")))
 
 
-  (gptel-make-preset 'introspect
-    :pre (lambda () (require 'ragmacs))
-    :system 'ragmacs_standard_prompt
-    :backend "OpenRouter"
-    :include-reasoning nil
-    :max-tokens nil
-    :model 'openai/gpt-5
-    :stream t
-    :temperature 0.1
-    :tools '("introspection")
-    :track-media nil
-    :use-context 'system)
+    (gptel-make-preset 'introspect
+      :pre (lambda () (require 'ragmacs))
+      :system 'ragmacs_standard_prompt
+      :backend "OpenRouter"
+      :include-reasoning nil
+      :max-tokens nil
+      :model 'openai/gpt-5
+      :stream t
+      :temperature 0.1
+      :tools '("introspection")
+      :track-media nil
+      :use-context 'system)
 
-  (defvar global-gptel-map (make-sparse-keymap) "A keymap for gptel commands")
-  (define-prefix-command 'global-gptel-map)
-  (define-key global-map (kbd "s-c") 'global-gptel-map)
-  (define-key global-gptel-map (kbd "c") 'gptel-send)
-  (define-key global-gptel-map (kbd "v") 'gptel-menu)
-  (define-key global-gptel-map (kbd "s") 'gptel-org-set-topic)
-  (define-key global-gptel-map (kbd "g") 'gptel-abort)
-  (define-key global-gptel-map (kbd "o") 'tiktoken-count-tokens-in-region)
-  (define-key global-gptel-map (kbd "t") 'gptel-tools)
+    (defvar global-gptel-map (make-sparse-keymap) "A keymap for gptel commands")
+    (define-prefix-command 'global-gptel-map)
+    (define-key global-map (kbd "s-c") 'global-gptel-map)
+    (define-key global-gptel-map (kbd "c") 'gptel-send)
+    (define-key global-gptel-map (kbd "v") 'gptel-menu)
+    (define-key global-gptel-map (kbd "s") 'gptel-org-set-topic)
+    (define-key global-gptel-map (kbd "g") 'gptel-abort)
+    (define-key global-gptel-map (kbd "o") 'tiktoken-count-tokens-in-region)
+    (define-key global-gptel-map (kbd "t") 'gptel-tools)
 
 
 #+end_src
@@ -492,7 +523,8 @@ For whatever reason it won't install using use-package, so just copied from here
              `(
                ;; ("filesystem" . (:command "npx" :args ("-y" "@modelcontextprotocol/server-filesystem" "/home/conornash/Dropbox/")))
                ("fetch" . (:command "uvx" :args ("mcp-server-fetch")))
-               ("frc" . (:url "http://20.57.129.247:9091/mcp"))))
+               ;; ("frc" . (:url "http://20.57.129.247:9091/mcp"))
+               ("frc" . (:url "https://mcp.familyreporting.co/"))))
     :config (require 'mcp-hub)
     :hook (after-init . mcp-hub-start-all-server))
 #+end_src
@@ -546,13 +578,45 @@ For whatever reason it won't install using use-package, so just copied from here
   (use-package acp
     :straight (:host github :repo "xenodium/acp.el"))
 
+  (use-package web-server
+    :straight (:host github :repo "eschulte/emacs-web-server"))
   (use-package agent-shell
-    :straight (:host github :repo "xenodium/agent-shell"))
+    :straight (:host github :repo "xenodium/agent-shell")
+    :bind (("s-l" . agent-shell))
+    :config
+    (require 'agent-shell-mcp-server)
+    (setq agent-shell-mcp-server--port 2501)
+    (setq agent-shell-anthropic-claude-command '("claude-code-acp" "--dangerously-skip-permissions")
+          agent-shell-anthropic-claude-environment (agent-shell-make-environment-variables :inherit-env t)
+          agent-shell-anthropic-authentication (agent-shell-anthropic-make-authentication :login t)
+          agent-shell-prefer-viewport-interaction t
+          ;; agent-shell-anthropic-default-model-id
+          agent-shell-anthropic-default-session-mode-id "plan"
+          agent-shell-mcp-servers `(((name . "clickup")
+                                     (type . "http")
+                                     (headers . [])
+                                     (url . "https://mcp.clickup.com/mcp"))
+                                    ,(agent-shell-mcp-server-get-config)
+                                    ))
+    (define-key agent-shell-mode-map (kbd "s-<tab>") 'agent-shell-cycle-session-mode)
+    (define-key agent-shell-viewport-edit-mode-map (kbd "s-<tab>") 'agent-shell-viewport-cycle-session-mode)
+    (define-key agent-shell-viewport-view-mode-map (kbd "s-<tab>") 'agent-shell-viewport-cycle-session-mode))
 
+  (use-package agent-shell-manager
+    :straight (:host github :repo "jethrokuan/agent-shell-manager"))
 
 
 #+end_src
 
+
+** claude-code-ide
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package claude-code-ide
+    :straight (:type git :host github :repo "manzaltu/claude-code-ide.el")
+    :bind ("C-c C-;" . claude-code-ide-menu) ; Set your favorite keybinding
+    :config
+    (claude-code-ide-emacs-tools-setup)) ; Optionally enable Emacs MCP tools
+#+end_src
 
 ** Aider
 Requires https://aider.chat/ to be installed.
@@ -574,16 +638,16 @@ Requires https://aider.chat/ to be installed.
   ;;   ;; or use aider-transient-menu-2cols / aider-transient-menu-1col, for narrow screen
   ;;   ;; add aider magit function to magit menu
   ;;   (aider-magit-setup-transients))
-  (use-package aidermacs
-    :bind (("s-l" . aidermacs-transient-menu))
-    :config
-    (setq aidermacs-default-chat-mode 'architect
-          aidermacs-comint-multiline-newline-key "S-<return>"
-          aidermacs-vterm-multiline-newline-key "S-<return>"
-          aidermacs-auto-accept-architect t
-          ;; aidermacs-default-model "openrouter/deepseek/deepseek-chat-v3-0324:free"
-          ;; aidermacs-default-model "openrouter/deepseek/deepseek-r1-0528:free"
-          ))
+  ;; (use-package aidermacs
+  ;;   :bind (("s-l" . aidermacs-transient-menu))
+  ;;   :config
+  ;;   (setq aidermacs-default-chat-mode 'architect
+  ;;         aidermacs-comint-multiline-newline-key "S-<return>"
+  ;;         aidermacs-vterm-multiline-newline-key "S-<return>"
+  ;;         aidermacs-auto-accept-architect t
+  ;;         ;; aidermacs-default-model "openrouter/deepseek/deepseek-chat-v3-0324:free"
+  ;;         ;; aidermacs-default-model "openrouter/deepseek/deepseek-r1-0528:free"
+  ;;         ))
 
   ;; (aidermacs-set-models nil)
 #+end_src

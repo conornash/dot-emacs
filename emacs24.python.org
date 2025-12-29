@@ -1,5 +1,6 @@
 * Helper functions
   #+BEGIN_SRC emacs-lisp :tangle yes
+;; -*- lexical-binding: t; -*-
     (defun display-python-instance ()
       "Display the currently running Python instance in another window"
       (interactive)

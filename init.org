@@ -11,10 +11,11 @@
 #+SETUPFILE: theme-readtheorg.setup
 
 
+
 * Setup system
 ** Initial requirements
 #+BEGIN_SRC emacs-lisp :tangle yes
-
+  ;; -*- lexical-binding: t; -*-
   ;; (setq gc-cons-percentage (expt 10 -4)
   ;;       gc-cons-threshold (expt 2 22))
   (setq gc-cons-percentage 0.1
@@ -56,13 +57,13 @@
   ;; Don't say yes or no, just y or n
   (fset 'yes-or-no-p 'y-or-n-p)
 
-  ;; ;; Coding system
-  ;; (prefer-coding-system 'utf-8)
-  ;; (set-default-coding-systems 'utf-8)
-  ;; (set-terminal-coding-system 'utf-8)
-  ;; (set-keyboard-coding-system 'utf-8)
-  ;; ;; Unicode coding
-  ;; (set-language-environment "UTF-8")
+  ;; Coding system
+  (prefer-coding-system 'utf-8)
+  (set-default-coding-systems 'utf-8)
+  (set-terminal-coding-system 'utf-8)
+  (set-keyboard-coding-system 'utf-8)
+  ;; Unicode coding
+  (set-language-environment "UTF-8")
 
   ;; (set-face-attribute 'default nil
   ;;                     :height 150)
@@ -277,6 +278,8 @@
         org-agenda-todo-ignore-scheduled nil)
   (define-key org-mode-map (kbd "C-c C-r") verb-command-map)
   (define-key org-mode-map (kbd "C-M-k") 'org-kill-block)
+  (define-key org-mode-map (kbd "C-M-f") 'sp-forward-sexp)
+  (define-key org-mode-map (kbd "C-M-b") 'sp-backward-sexp)
   (define-key org-mode-map (kbd "<s-tab>") 'org-cycle-force-archived)
   (define-key org-mode-map (kbd "<s-down>") 'org-forward-element)
   (define-key org-mode-map (kbd "<s-up>") 'org-backward-element)
@@ -388,6 +391,7 @@
      :functions
      origami-yaml-parser
      yaml-subparser
+     :mode "\\.yaml\\'" "\\.yml\\'"
      :bind
      (("C-M-n" . origami-next-fold)
       ("C-M-p" . origami-previous-fold)
@@ -424,11 +428,12 @@
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package track-changes
     :straight (:host github :repo "emacs-straight/track-changes"))
-  ;; (use-package eglot
-  ;;   :ensure t
-  ;;   :custom
-  ;;   (eglot-extend-to-xref t))
-
+  (use-package eglot  
+    :custom
+    (eglot-extend-to-xref t)
+    :config
+    (add-to-list 'eglot-server-programs
+                 '((python-mode python-ts-mode) . ("pyright-langserver" "--stdio"))))
 #+end_src
 
 
@@ -1022,8 +1027,17 @@ This is a system that makes `helm-apropos` more useful
   (use-package ibuffer
     :ensure nil
     :bind (("<f8>" . ibuffer)
-           ("C-x C-b" . ibuffer)))
-
+           ("C-x C-b" . ibuffer))
+    :config
+    (setq ibuffer-formats
+          '((mark modified read-only locked " "
+                  (name 45 -1 :left :elide)
+                  " "
+                  (size 9 -1 :right)
+                  " "
+                  (mode 16 16 :left :elide)
+                  " " filename-and-process)
+            (mark " " (name 16 -1) " " filename))))
  #+END_SRC
 
 
@@ -1220,6 +1234,8 @@ This is a system that makes `helm-apropos` more useful
 ** Markdown
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package markdown-mode
+    :bind (("<M-left>" . markdown-promote)
+             ("<M-right>" . markdown-demote))
     :mode "\\.md\\'")
 
  #+END_SRC
@@ -1450,28 +1466,117 @@ This is a system that makes `helm-apropos` more useful
 
 ** Tramp
 #+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package tramp)
-  ;; (setq
-  ;;  magit-tramp-pipe-stty-settings 'pty
-  ;;  remote-file-name-inhibit-auto-save-visited t
-  ;;  remote-file-name-inhibit-locks t
-  ;;  tramp-copy-size-limit (* 1024 1024) ;; 1MB
-  ;;  tramp-use-scp-direct-remote-copying t
-  ;;  tramp-verbose 2
-  ;;  )
+  (setq auto-revert-remote-files nil
+        enable-remote-dir-locals nil
+        flycheck-locate-config-file-functions nil
+        flycheck-may-enable-mode-hook '(my-flycheck-may-enable-mode)
+        jit-lock-defer-time 0.05
+        magit-branch-direct-configure nil
+        magit-commit-show-diff nil
+        magit-refresh-status-buffer nil
+        magit-tramp-pipe-stty-settings 'pty
+        remote-file-name-inhibit-auto-save-visited t
+        remote-file-name-inhibit-cache nil
+        remote-file-name-inhibit-delete-by-moving-to-trash t
+        remote-file-name-inhibit-locks t
+        tramp-completion-reread-directory-timeout nil
+        tramp-copy-size-limit (* 1024 1024)
+        tramp-persistency-file-name (expand-file-name "tramp" user-emacs-directory)
+        tramp-use-connection-share t
+        tramp-use-scp-direct-remote-copying t
+        tramp-use-ssh-controlmaster-options nil
+        tramp-verbose 2
+        vc-handled-backends '(Git)
+        )
 
-  ;; (connection-local-set-profile-variables
-  ;;  'remote-direct-async-process
-  ;;  '((tramp-direct-async-process . t)))
+  (setq vc-ignore-dir-regexp
+        (format "\\(%s\\)\\|\\(%s\\)"
+                vc-ignore-dir-regexp
+                tramp-file-name-regexp))
+
+  (connection-local-set-profile-variables
+   'remote-direct-async-process
+   '((tramp-direct-async-process . t)))
+
+  (connection-local-set-profiles
+   '(:application tramp :protocol "scp")
+   'remote-direct-async-process)
 
   ;; (connection-local-set-profiles
-  ;;  '(:application tramp :protocol "scp")
+  ;;  '(:application tramp :protocol "ssh")
   ;;  'remote-direct-async-process)
-  ;; (defalias 'tcac 'tramp-cleanup-all-connections)
 
-  ;; (with-eval-after-load 'tramp
-  ;;   (with-eval-after-load 'compile
-  ;;     (remove-hook 'compilation-mode-hook #'tramp-compile-disable-ssh-controlmaster-options)))
+  (defun my-flycheck-may-enable-mode ()
+    (not (file-remote-p default-directory)))
+
+  (defun my-disable-flycheck-for-remote-files ()
+    (when (and (fboundp 'flycheck-mode)
+               (file-remote-p default-directory))
+      (flycheck-mode -1)))
+
+  (add-hook 'find-file-hook #'my-disable-flycheck-for-remote-files)
+
+  (defun my-no-lock-files-for-remote ()
+    (when (file-remote-p default-directory)
+      (setq-local create-lockfiles nil)))
+
+  (add-hook 'find-file-hook #'my-no-lock-files-for-remote)
+
+  (defun my-disable-auto-revert-for-remote-files ()
+    (when (file-remote-p default-directory)
+      (auto-revert-mode -1)))
+
+  (add-hook 'find-file-hook #'my-disable-auto-revert-for-remote-files)
+
+  (defun my-disable-yasnippet-for-remote-files ()
+    (when (and (fboundp 'yas-minor-mode)
+               (file-remote-p default-directory))
+      (yas-minor-mode -1)))
+
+  (add-hook 'find-file-hook #'my-disable-yasnippet-for-remote-files)
+
+  (defun memoize-remote (key cache orig-fn &rest args)
+    (if (and key (file-remote-p key))
+        (if-let ((current (assoc key (symbol-value cache))))
+            (cdr current)
+          (let ((current (apply orig-fn args)))
+            (set cache (cons (cons key current) (symbol-value cache)))
+            current))
+      (apply orig-fn args)))
+
+  (defvar project-current-cache nil)
+
+  (defun memoize-project-current (orig &optional prompt directory)
+    (memoize-remote (or directory
+                        project-current-directory-override
+                        default-directory)
+                    'project-current-cache orig prompt directory))
+
+  (advice-add 'project-current :around #'memoize-project-current)
+
+  (defvar vc-git-root-cache nil)
+
+  (defun memoize-vc-git-root (orig file)
+    (let ((value (memoize-remote (file-name-directory file) 'vc-git-root-cache orig file)))
+      (when (null (cdr (car vc-git-root-cache)))
+        (setq vc-git-root-cache (cdr vc-git-root-cache)))
+      value))
+
+  (advice-add 'vc-git-root :around #'memoize-vc-git-root)
+
+  (defvar magit-toplevel-cache nil)
+
+  (defun memoize-magit-toplevel (orig &optional directory)
+    (memoize-remote (or directory default-directory)
+                    'magit-toplevel-cache orig directory))
+
+  (advice-add 'magit-toplevel :around #'memoize-magit-toplevel)
+
+  (with-eval-after-load 'tramp
+    (with-eval-after-load 'compile
+      (remove-hook 'compilation-mode-hook #'tramp-compile-disable-ssh-controlmaster-options)))
+
+  (defalias 'tcac 'tramp-cleanup-all-connections)
  #+END_SRC
 
 
@@ -1854,7 +1959,9 @@ The following config is not working correctly. I want the buffers in popper-refe
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package shackle
     :config
-    (setq shackle-rules '(("\\*Compil" :regexp t :ignore t))
+    (setq shackle-rules '(("\\*Compil" :regexp t :ignore t)
+                          ("\\*Warnings\\*" :regexp t :ignore t)
+                          ("\\*Flycheck error mess" :regexp t :ignore t))
           shackle-default-rule '(:select t))
     )
   (shackle-mode +1)
@@ -1984,7 +2091,7 @@ The following config is not working correctly. I want the buffers in popper-refe
 #+BEGIN_SRC emacs-lisp :tangle yes
   (setq gnus-directory (expand-file-name "gnus" user-emacs-directory)
         gnus-startup-file (expand-file-name "newsrc.el" gnus-directory)
-        gnus-select-method '(nntp "nntp.aioe.org")
+        ;; gnus-select-method '(nntp "nntp.aioe.org")
         gnus-server-alist '(("archive" nnfolder "archive"
                              (nnfolder-directory (expand-file-name "nnfolder/archive" gnus-directory))
                              (nnfolder-active-file (expand-file-name "nnfolder/archive/active" gnus-directory))
@@ -2005,6 +2112,15 @@ The following config is not working correctly. I want the buffers in popper-refe
 
  #+END_SRC
 
+
+* Novelty / Fun
+
+** pretend-type
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package pretend-type
+      :straight (:host github :repo "haji-ali/pretend-type"))
+
+#+end_src
 
 * Keybindings
 #+BEGIN_SRC emacs-lisp :tangle yes

@@ -1,27 +1,28 @@
 * Helper functions
 #+BEGIN_SRC emacs-lisp :tangle yes
+  ;; -*- lexical-binding: t; -*-
   (use-package s)
 
-  (defun elisp-time-to-epoch (elisp-time)
-    (+ (* (nth 0 elisp-time) (expt 2 16)) (nth 1 elisp-time)))
+    (defun elisp-time-to-epoch (elisp-time)
+      (+ (* (nth 0 elisp-time) (expt 2 16)) (nth 1 elisp-time)))
 
-  (defun list-flatten (listed nested-car nested-extract)
-    (let (res)
-      (dolist (elem listed res)
-        (let ((json-extract (s-concat "JSON_EXTRACT_PATH_TEXT(" nested-extract ", '" (symbol-name (car elem)) "')" ))
-              (json-name (s-concat nested-car "_" (symbol-name (car elem)))))
+    (defun list-flatten (listed nested-car nested-extract)
+      (let (res)
+        (dolist (elem listed res)
+          (let ((json-extract (s-concat "JSON_EXTRACT_PATH_TEXT(" nested-extract ", '" (symbol-name (car elem)) "')" ))
+                (json-name (s-concat nested-car "_" (symbol-name (car elem)))))
 
-          (cond
-           ((not (listp (cdr elem)))
-            (list-flatten (cdr elem) json-extract json-name))
-           (t
-            (setq res (cons (s-concat json-extract " AS " json-name) res))))))))
+            (cond
+             ((not (listp (cdr elem)))
+              (list-flatten (cdr elem) json-extract json-name))
+             (t
+              (setq res (cons (s-concat json-extract " AS " json-name) res))))))))
 
-  (defun read-json-get-keys (jsoned)
-    ;; use json-read-from-string to make jsoned
-    (let (foo '())
-      (dolist (elem jsoned foo)
-        (setq foo (append foo `(,(symbol-name (car elem))))))))
+    (defun read-json-get-keys (jsoned)
+      ;; use json-read-from-string to make jsoned
+      (let (foo '())
+        (dolist (elem jsoned foo)
+          (setq foo (append foo `(,(symbol-name (car elem))))))))
 
 #+END_SRC
 

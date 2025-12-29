@@ -1,7 +1,7 @@
 
 * Helper functions
 #+BEGIN_SRC emacs-lisp :tangle yes
-
+;; -*- lexical-binding: t; -*-
 (defun my-js2-indent-function ()
   (interactive)
   (save-restriction

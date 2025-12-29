@@ -1,6 +1,6 @@
 * Helper functions
 #+BEGIN_SRC emacs-lisp :tangle yes
-
+;; -*- lexical-binding: t; -*-
   (defun fish-path (path max-len)
     "Return a potentially trimmed-down version of the directory PATH, replacing
   parent directories with their initial characters to try to get the character

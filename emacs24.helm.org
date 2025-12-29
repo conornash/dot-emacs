@@ -1,6 +1,6 @@
+
 * Helper functions
 #+BEGIN_SRC emacs-lisp :tangle yes
-
   (defun conor-helm-files ()
     "Helm function to open files or buffers"
     (interactive)

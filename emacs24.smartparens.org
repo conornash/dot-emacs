@@ -1,6 +1,6 @@
 * Helper functions
   #+BEGIN_SRC emacs-lisp :tangle yes
-
+;; -*- lexical-binding: t; -*-
     (defun sp-python-pre-slurp-handler (id action context)
       (when (eq action 'slurp-forward)
         ;; if there was no space before, there shouldn't be after either

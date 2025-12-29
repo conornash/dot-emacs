@@ -1,5 +1,6 @@
 * Scheme
 #+BEGIN_SRC emacs-lisp :tangle yes
+;; -*- lexical-binding: t; -*-
   (defun conor-xscheme-select-process-buffer ()
     "Select the Scheme process buffer and move to its output point."
     (interactive)

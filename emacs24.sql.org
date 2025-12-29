@@ -1,7 +1,7 @@
 
 * Helper functions
   #+BEGIN_SRC emacs-lisp :tangle yes
-
+;; -*- lexical-binding: t; -*-
     (defun sql-connect-preset (name)
       "Connect to a predefined SQL connection listed in `sql-connection-alist'"
       (eval `(let ,(cdr (assoc name sql-connection-alist))
