@@ -9,7 +9,9 @@ The `mcp__emacs__emacs_eval` tool evaluates Emacs Lisp in the running Emacs inst
 
 ## When to Use Emacs vs CLI Tools
 
-**Use Emacs (`emacs_eval`) for semantic operations:**
+**Use Emacs (`emacs_eval`) for:**
+
+1. **Semantic operations** (LSP-aware):
 ```elisp
 (eglot-rename "new_name")          ; LSP knows scope, not just text
 (xref-find-references "func")      ; Understands imports, aliases
@@ -17,14 +19,32 @@ The `mcp__emacs__emacs_eval` tool evaluates Emacs Lisp in the running Emacs inst
 (project-find-file)                ; Project-aware file finding
 ```
 
-**Use CLI tools (Bash/Grep) for bulk text operations:**
-```bash
-grep -r "TODO" --include="*.py" .  # Faster for text search
-sed -i 's/old/new/g' *.py          # Simpler for global replace
-find . -name "*.test.js"           # File finding by pattern
+2. **Elisp codebase exploration** (STRONGLY PREFERRED over grep/glob):
+```elisp
+;; Discover symbols matching a pattern
+(apropos-internal "agent-shell.*hook" 'boundp)  ; Find variables
+(apropos-internal "^gptel-make" 'fboundp)       ; Find functions
+
+;; Get function/variable documentation instantly
+(describe-function 'agent-shell-mcp-server-start)
+(describe-variable 'agent-shell-mode-hook)
+
+;; Check current runtime state
+(agent-shell-mcp-server-running-p)              ; Live state check
+(symbol-value 'some-variable)                   ; Current value
+
+;; Find files
+(directory-files-recursively "~/.emacs.d" "\\.el$")
 ```
 
-**Rule of thumb**: If you need language understanding (types, scopes, references), use Emacs. If you're doing text pattern matching, use CLI tools.
+**Use CLI tools (Bash/Grep) only for:**
+```bash
+grep -r "TODO" --include="*.py" .  # Bulk text search in non-Elisp
+sed -i 's/old/new/g' *.py          # Global text replace
+find . -name "*.test.js"           ; File finding by pattern
+```
+
+**Rule of thumb**: For Emacs/Elisp codebases, ALWAYS use `emacs_eval` first. It's more token-efficient (returns only what you need), provides live runtime state, and understands Elisp semantics. Only fall back to grep/glob for non-Elisp code or bulk text operations.
 
 ## Why Elisp is Powerful for Agents
 

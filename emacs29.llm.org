@@ -600,7 +600,14 @@ For whatever reason it won't install using use-package, so just copied from here
                                     ))
     (define-key agent-shell-mode-map (kbd "s-<tab>") 'agent-shell-cycle-session-mode)
     (define-key agent-shell-viewport-edit-mode-map (kbd "s-<tab>") 'agent-shell-viewport-cycle-session-mode)
-    (define-key agent-shell-viewport-view-mode-map (kbd "s-<tab>") 'agent-shell-viewport-cycle-session-mode))
+    (define-key agent-shell-viewport-view-mode-map (kbd "s-<tab>") 'agent-shell-viewport-cycle-session-mode)
+
+    (defun agent-shell-ensure-mcp-server ()
+      "Start the MCP server if not already running."
+      (unless (agent-shell-mcp-server-running-p)
+        (agent-shell-mcp-server-start agent-shell-mcp-server--port)))
+
+    (add-hook 'agent-shell-mode-hook #'agent-shell-ensure-mcp-server))
 
   (use-package agent-shell-manager
     :straight (:host github :repo "jethrokuan/agent-shell-manager"))
