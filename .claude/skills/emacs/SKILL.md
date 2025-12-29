@@ -229,17 +229,41 @@ This is the core advantage over TypeScript/VS Code extensions - no compilation, 
 
 ## Repository Structure
 
-This is a literate Emacs configuration using Org-Babel.
+This is a **literate Emacs configuration** using Org-Babel. Assumes Emacs 30+ as baseline.
 
-### Configuration Files (version controlled)
+### Configuration Hierarchy
 
-- `init.org` - **Main config file**. All other configuration is loaded from here via `org-babel-load-file`.
-- `emacs*.org` - Feature modules (helm, python, eshell, ess, elisp, js2, smartparens, sql, scheme, hacky, llm, etc.)
-- `private.org` - API keys and sensitive settings. **Stored separately**, not in this repository.
+All modules are loaded at startup via `org-babel-load-file`:
 
-### Runtime Data (not version controlled)
+```
+init.org (2,288 lines) - MAIN ENTRY POINT
+├── emacs24.helm.org - Helm completion
+├── emacs24.smartparens.org - Structural editing
+├── emacs24.hacky.org - Misc utilities
+├── emacs24.python.org - Python dev
+├── emacs24.eshell.org - Shell with Git prompt
+├── emacs24.ess.org - R/statistics
+├── emacs24.elisp.org - Elisp dev
+├── emacs24.js2.org - JavaScript
+├── emacs24.sql.org - SQL (5 formatters, sqlfluff preferred)
+├── emacs24.scheme.org - Scheme
+├── emacs29.llm.org - LLM/AI integration
+└── private.org - API keys (external, not in repo)
+```
 
-These files are generated during normal use. Do not commit:
+Note: "emacs24" naming is historical, not version-specific.
+
+### Key Sections in init.org
+
+| Lines | Purpose |
+|-------|---------|
+| 1-150 | Core setup: GC, keybindings, platform detection, straight.el |
+| 150-450 | Org mode configuration |
+| 374-450 | External module loading |
+| 450-2100 | Language modes, UI, navigation |
+| 2100+ | Themes, finalization, auto-tangle |
+
+### Runtime Data (do not commit)
 
 - `bookmarks` - Emacs bookmark locations
 - `keyfreq` - Key frequency statistics
@@ -250,4 +274,11 @@ These files are generated during normal use. Do not commit:
 
 ### Package Management
 
-Uses `straight.el` with `use-package` for declarative configuration.
+Uses `straight.el` with `use-package` for declarative configuration. ~116 packages configured.
+
+### Known Issues (documented for cleanup)
+
+- **emacs24.eshell.org**: Git status runs shell commands on every keystroke (performance)
+- **emacs24.hacky.org**: `date2unix` defined twice; legacy keyboard macros
+- **emacs24.scheme.org**: xscheme is ancient/unmaintained
+- **emacs24.js2.org**: js2-mode superseded by js-ts-mode

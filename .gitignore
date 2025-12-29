@@ -146,3 +146,7 @@ snippets/yaml-mode/
 .aider*
 
 prompts/
+
+# Test files
+test-emacs-*.sh
+test-emacs-*.el

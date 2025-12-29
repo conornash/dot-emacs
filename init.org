@@ -761,26 +761,6 @@
               (message "Staged: %s" file))
           (message "File does not exist")))))
 
-  ;; (use-package dirvish
-  ;;   :init
-  ;;   (dirvish-override-dired-mode)
-  ;;   :config
-  ;;   (defun dired-open-file ()
-  ;;     "In dired, open the file named on this line."
-  ;;     (interactive)
-  ;;     (let* ((file (dired-get-filename nil t)))
-  ;;       (message "Opening %s..." file)
-  ;;       (async-shell-command (format "open \"%s\"" file))
-  ;;       (message "Opening %s done" file)))
-  ;;   (setq insert-directory-program "gls"
-  ;;         dired-rsync-command "/opt/homebrew/bin/rsync"
-  ;;         dired-dwim-target t)
-  ;;   :bind
-  ;;   (:map dired-mode-map
-  ;;         ("s-o" . dired-open-file)
-  ;;         ("a" . dired-stage-file)
-  ;;         ("C-w" . dirvish-copy-file-name)))
-
   (use-package reveal-in-osx-finder)
   (use-package dired-rsync-transient
     :bind (:map dired-mode-map

@@ -73,8 +73,7 @@
               (add-hook hook func))
             hooks))
 
-    ;; Allow shims to work
-    ;; (add-to-list 'exec-path "/Users/conornash/.pyenv/shims/" t)
+
   #+END_SRC
 
 
@@ -89,10 +88,7 @@
     (use-package uv
       :straight (uv :type git :host github :repo "johannes-mueller/uv.el")
       :bind (:map python-mode-map
-                  ("C-c s" . uv))
-      ;; (define-key pyenv-mode-map (kbd "C-c C-s") nil)
-      ;; (define-key pyenv-mode-map (kbd "C-c s") 'pyenv-mode-set)
-      )
+                  ("C-c s" . uv)))
 
     (defun uv-activate ()
       "Activate Python environment managed by uv based on current project directory.
@@ -142,15 +138,11 @@
 
 * Python Mode
   #+BEGIN_SRC emacs-lisp :tangle yes
-    ;; (use-package pyenv-mode)
-    ;; (use-package pyenv-mode-auto)
     (use-package py-isort)
     (use-package sphinx-doc
       :config
       (setq sphinx-doc-include-types t))
 
-    ;; (define-key pyenv-mode-map (kbd "C-c C-s") nil)
-    ;; (define-key pyenv-mode-map (kbd "C-c s") 'pyenv-mode-set)
     (setq-default tab-width 4              
                   flycheck-python-pylint-executable "/Users/conornash/.local/bin/pylint"
                   flycheck-python-flake8-executable "/Users/conornash/.local/bin/flake8"
@@ -174,7 +166,6 @@
 
     (add-hook 'python-mode-hook
               #'(lambda ()
-                  ;; (pyenv-mode 1)
                   (rainbow-delimiters-mode 1)
                   (rainbow-mode 1)
                   (smartscan-mode 1)
@@ -204,10 +195,5 @@
 
                   (local-unset-key (kbd "C-c C-d"))
 
-                  (define-key python-mode-map (kbd "C-c C-r") 'conor-python-shell-send-region)
-
-                  ;; (setq flycheck-python-pylint-executable "~/.pyenv/shims/pylint"
-                  ;;       flycheck-python-flake8-executable "~/.pyenv/shims/flake8")
-
-                  ))
+                  (define-key python-mode-map (kbd "C-c C-r") 'conor-python-shell-send-region)))
   #+END_SRC

@@ -1,6 +1,63 @@
 * Helper functions
 #+BEGIN_SRC emacs-lisp :tangle yes
 ;; -*- lexical-binding: t; -*-
+
+  ;; Cache for git status to avoid running shell commands on every keystroke
+  (defvar eshell-git-status-cache nil
+    "Cache for git status info. Alist of (directory . (branch unstaged uncommitted timestamp)).")
+
+  (defvar eshell-git-status-cache-ttl 5
+    "Time-to-live in seconds for git status cache entries.")
+
+  (defun eshell-git-status-cache-valid-p (pwd)
+    "Check if cache entry for PWD is still valid."
+    (when-let ((entry (assoc pwd eshell-git-status-cache)))
+      (let ((timestamp (nth 4 (cdr entry))))
+        (< (- (float-time) timestamp) eshell-git-status-cache-ttl))))
+
+  (defun eshell-git-status-cache-get (pwd)
+    "Get cached git status for PWD, or nil if not cached/expired."
+    (when (eshell-git-status-cache-valid-p pwd)
+      (cdr (assoc pwd eshell-git-status-cache))))
+
+  (defun eshell-git-status-cache-set (pwd branch unstaged uncommitted)
+    "Cache git status for PWD."
+    (setq eshell-git-status-cache
+          (cons (cons pwd (list branch unstaged uncommitted (float-time)))
+                (assq-delete-all pwd eshell-git-status-cache))))
+
+  (defun eshell-git-status-update (pwd)
+    "Update git status cache for PWD. Returns (branch unstaged uncommitted)."
+    (if (and (eshell-search-path "git")
+             (locate-dominating-file pwd ".git"))
+        (let* ((branch (let ((git-output (shell-command-to-string
+                                          "git branch --show-current 2>/dev/null")))
+                         (if (> (length git-output) 0)
+                             (concat "[" (string-trim git-output) "]")
+                           "[detached]")))
+               (unstaged (let ((git-output (string-trim
+                                            (shell-command-to-string
+                                             "git diff --numstat 2>/dev/null | wc -l"))))
+                           (let ((n (string-to-number git-output)))
+                             (cond ((= n 1) "1 unstaged change")
+                                   ((> n 1) (format "%d unstaged changes" n))
+                                   (t "")))))
+               (uncommitted (let ((git-output (string-trim
+                                               (shell-command-to-string
+                                                "git diff --cached --numstat 2>/dev/null | wc -l"))))
+                              (let ((n (string-to-number git-output)))
+                                (cond ((= n 1) "1 uncommitted change")
+                                      ((> n 1) (format "%d uncommitted changes" n))
+                                      (t ""))))))
+          (eshell-git-status-cache-set pwd branch unstaged uncommitted)
+          (list branch unstaged uncommitted))
+      (list nil "" "")))
+
+  (defun eshell-get-git-status (pwd)
+    "Get git status for PWD, using cache if available."
+    (or (eshell-git-status-cache-get pwd)
+        (eshell-git-status-update pwd)))
+
   (defun fish-path (path max-len)
     "Return a potentially trimmed-down version of the directory PATH, replacing
   parent directories with their initial characters to try to get the character
@@ -32,53 +89,14 @@
   (defmacro with-face (str &rest properties)
     `(propertize ,str 'face (list ,@properties)))
 
-  (defun curr-dir-git-branch-string (pwd)
-    "Returns current git branch as a string, or the empty string if
-  PWD is not in a git repo (or the git command is not found)."
-    (interactive)
-    (when (and (eshell-search-path "git")
-               (locate-dominating-file pwd ".git"))
-      (let ((git-output (shell-command-to-string (concat "git branch | grep '\\*' | sed -e 's/^\\* //'"))))
-        (concat "["
-                (if (> (length git-output) 0)
-                    (substring git-output 0 -1)
-                  "(no branch)")
-                "]"))))
-
-  (defun curr-dir-git-unstaged-changes-string (pwd)
-    "Returns current unstaged changes to the git repo as a string, or the empty string if
-  PWD is not in a git repo (or the git command is not found)."
-    (interactive)
-    (when (and (eshell-search-path "git")
-               (locate-dominating-file pwd ".git"))
-      (let ((git-output (string-trim (shell-command-to-string
-                                      (concat "git --no-pager diff --numstat | grep ^[0-9] | wc -l")))))
-        (cond ((eq (string-to-number git-output) 1)
-               "1 unstaged change")
-              ((> (string-to-number git-output) 1)
-               (format "%s unstaged changes" git-output))
-              (t "")))))
-
-
-  (defun curr-dir-git-uncommitted-changes-string (pwd)
-    "Returns current uncommitted changes in the index of the git repo as a string, or the empty string if
-  PWD is not in a git repo (or the git command is not found)."
-    (interactive)
-    (when (and (eshell-search-path "git")
-               (locate-dominating-file pwd ".git"))
-      (let ((git-output (string-trim (shell-command-to-string
-                                      (concat "git --no-pager diff --cached --numstat | grep ^[0-9] | wc -l")))))
-        (cond ((eq (string-to-number git-output) 1)
-               "1 uncommitted change")
-              ((> (string-to-number git-output) 1)
-               (format "%s uncommitted changes" git-output))
-              (t "")))))
+  ;; Legacy functions removed - now using cached eshell-get-git-status instead
 
   (defun shk-eshell-prompt ()
-    (let ((header-bg "#222")
-          (shk-git-branch (curr-dir-git-branch-string (eshell/pwd)))
-          (shk-git-unstaged-changes (curr-dir-git-unstaged-changes-string (eshell/pwd)))
-          (shk-git-uncommitted-changes (curr-dir-git-uncommitted-changes-string (eshell/pwd))))
+    (let* ((pwd (eshell/pwd))
+           (git-status (eshell-get-git-status pwd))
+           (shk-git-branch (nth 0 git-status))
+           (shk-git-unstaged-changes (nth 1 git-status))
+           (shk-git-uncommitted-changes (nth 2 git-status)))
       (concat
        (if (boundp 'venv-current-name)
            (with-face (if (> (length venv-current-name) 0)
@@ -194,16 +212,12 @@
           eshell-where-to-jump 'begin
           pcomplete-cycle-completions nil))
 
-  (defvar ac-source-pcomplete
-    '((candidates . ac-pcomplete)))
-
   (add-hook 'eshell-mode-hook
             #'(lambda ()
                 (smartparens-strict-mode 1)
                 (rainbow-delimiters-mode 1)
                 (setenv "PAGER" "cat")
                 (smartscan-mode -1)
-                (setq ac-sources '(ac-source-pcomplete))
                 (define-key eshell-mode-map [remap eshell-pcomplete] 'helm-esh-pcomplete)))
 
   (add-hook 'eshell-after-prompt-hook

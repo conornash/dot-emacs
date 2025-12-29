@@ -129,39 +129,5 @@
 #+END_SRC
 
 
-* Stan
-#+begin_src emacs-lisp :tangle yes
-  ;; (use-package stan-mode
-  ;;   :mode ("\\.stan\\'" . stan-mode)
-  ;;   :hook (stan-mode . stan-mode-setup)
-  ;;   :config
-  ;;   ;; The officially recommended offset is 2.
-  ;;   (setq stan-indentation-offset 2))
 
-  ;; (use-package company-stan
-  ;;   :hook (stan-mode . company-stan-setup)
-  ;;   :config
-  ;;   (setq company-stan-fuzzy nil))
-
-  ;; (use-package eldoc-stan
-  ;;   :hook (stan-mode . eldoc-stan-setup)
-  ;;   )
-
-  ;; (use-package flycheck-stan
-  ;;   ;; Add a hook to setup `flycheck-stan' upon `stan-mode' entry
-  ;;   :hook ((stan-mode . flycheck-stan-stanc2-setup)
-  ;;          (stan-mode . flycheck-stan-stanc3-setup))
-  ;;   :config
-  ;;   ;; A string containing the name or the path of the stanc2 executable
-  ;;   ;; If nil, defaults to `stanc2'
-  ;;   (setq flycheck-stanc-executable nil)
-  ;;   ;; A string containing the name or the path of the stanc2 executable
-  ;;   ;; If nil, defaults to `stanc3'
-  ;;   (setq flycheck-stanc3-executable nil))
-
-  ;; (use-package stan-snippets
-  ;;   :hook (stan-mode . stan-snippets-initialize)
-  ;;   )
-
-#+end_src
 
