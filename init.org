@@ -457,6 +457,12 @@
     (add-hook 'project-find-functions #'my-project-find-python-project))
 #+end_src
 
+* LLMs
+ #+BEGIN_SRC emacs-lisp :tangle yes
+   (org-babel-load-file (expand-file-name "emacs29.llm.org" user-emacs-directory))
+#+END_SRC
+
+
 ** Flycheck + Eglot Integration
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package flycheck-eglot
