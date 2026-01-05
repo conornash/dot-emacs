@@ -8,6 +8,8 @@
 /.emacs.desktop
 /.emacs.desktop.lock
 *.elc
+*.eln
+eln-cache/
 auto-save-list
 tramp
 .\#*
