@@ -607,14 +607,87 @@ For whatever reason it won't install using use-package, so just copied from here
       (unless (agent-shell-mcp-server-running-p)
         (agent-shell-mcp-server-start agent-shell-mcp-server--port)))
 
-    (add-hook 'agent-shell-mode-hook #'agent-shell-ensure-mcp-server))
+    (add-hook 'agent-shell-mode-hook #'agent-shell-ensure-mcp-server)
+    (add-hook 'agent-shell-viewport-edit-mode-hook #'orgalist-mode)
+
+    ;; Org-link support for agent-shell
+    ;; When called from an org-mode buffer with point on a link, include the link
+    (defun agent-shell--get-org-link-at-point ()
+      "Get org-link at point formatted for agent-shell insertion.
+Returns nil if not in org-mode or no link at point."
+      (when (derived-mode-p 'org-mode)
+        (let ((context (org-element-context)))
+          (when (eq (org-element-type context) 'link)
+            (let* ((type (org-element-property :type context))
+                   (path (org-element-property :path context))
+                   (raw-link (org-element-property :raw-link context))
+                   (desc (when (org-element-contents-begin context)
+                           (buffer-substring-no-properties
+                            (org-element-contents-begin context)
+                            (org-element-contents-end context)))))
+              (cond
+               ;; File links - expand and format nicely
+               ((string= type "file")
+                (let ((expanded-path (expand-file-name path)))
+                  (if desc
+                      (format "[[file:%s][%s]]" expanded-path desc)
+                    (format "[[file:%s]]" expanded-path))))
+               ;; HTTP/HTTPS links
+               ((member type '("http" "https"))
+                (if desc
+                    (format "[[%s][%s]]" raw-link desc)
+                  (format "[[%s]]" raw-link)))
+               ;; Other link types - return raw link format
+               (t
+                (if desc
+                    (format "[[%s][%s]]" raw-link desc)
+                  (format "[[%s]]" raw-link)))))))))
+
+    ;; Redefine agent-shell--relevant-text to include org-link support
+    ;; This replaces the upstream function to add org-mode link detection
+    (defun agent-shell--relevant-text ()
+      "Return relevant text (if available). Nil otherwise.
+Relevant text could be files, region, org-link, or error at point."
+      (or (agent-shell--processed-files
+           :files (agent-shell--buffer-files :obvious t))
+          (agent-shell--get-processed-region
+           :deactivate t :no-error t)
+          (agent-shell--get-org-link-at-point)
+          (agent-shell--get-processed-flymake-error-at-point)))
+
+    ;; Test function for org-link capture
+    (defun agent-shell-test-org-link-capture ()
+      "Test that org-link capture works correctly.
+Creates temp org buffers, inserts links, and verifies capture."
+      (interactive)
+      (let ((test-cases
+             `(("[[file:~/test.org][Test File]]" . ,(format "[[file:%s/test.org][Test File]]" (expand-file-name "~")))
+               ("[[https://example.com][Example]]" . "[[https://example.com][Example]]")
+               (,(format "[[file:%s/.emacs.d/init.el]]" (expand-file-name "~")) . ,(format "[[file:%s/.emacs.d/init.el]]" (expand-file-name "~")))
+               ("Plain text without link" . nil)))
+            (all-passed t))
+        (dolist (test test-cases)
+          (let* ((input (car test))
+                 (expected (cdr test))
+                 (result (with-temp-buffer
+                           (org-mode)
+                           (insert input)
+                           (goto-char (/ (point-max) 2))  ;; Middle of buffer
+                           (agent-shell--get-org-link-at-point))))
+            (unless (equal result expected)
+              (setq all-passed nil)
+              (message "FAIL: Input: %s\\n  Expected: %s\\n  Got: %s" input expected result))))
+        (if all-passed
+            (message "✓ All org-link capture tests PASSED")
+          (message "✗ Some tests FAILED - see *Messages*"))))
+
+    )
 
   (use-package agent-shell-manager
     :straight (:host github :repo "jethrokuan/agent-shell-manager"))
 
 
 #+end_src
-
 
 ** claude-code-ide
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -657,17 +730,6 @@ Requires https://aider.chat/ to be installed.
   ;;         ))
 
   ;; (aidermacs-set-models nil)
-#+end_src
-
-** goose
-#+BEGIN_SRC emacs-lisp :tangle yes
-  ;; (use-package transient)
-  ;; (global-unset-key (kbd "s-'"))
-  ;; (use-package goose
-  ;;   :straight (:host github :repo "aq2bq/goose.el")
-  ;;   :hook (goose-mode-hook . (lambda ()
-  ;;                              (display-line-numbers-mode -1)))
-  ;;   :bind (("s-'" . goose-transient)))
 #+end_src
 
 ** efrit

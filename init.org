@@ -287,8 +287,8 @@
   (define-key org-mode-map (kbd "<s-right>") 'org-down-element)
   (define-key org-mode-map (kbd "M-<down>") 'org-metadown)
   (define-key org-mode-map (kbd "M-<up>") 'org-metaup)
-  (define-key org-mode-map (kbd "C-c l") 'org-store-link)
-  (define-key org-mode-map (kbd "C-c C-l") 'org-insert-link)
+  (define-key global-map (kbd "C-c l") 'org-store-link)
+  (define-key global-map (kbd "C-c C-l") 'org-insert-link)
   (define-key org-mode-map (kbd "C-c C-x C-j") 'org-clock-goto)
   (define-key org-mode-map (kbd "C-c C-x C-r") 'org-clock-report)
   (define-key org-mode-map (kbd "s-!") 'insert-current-timestamp-inactive)
@@ -431,25 +431,39 @@
   (use-package eglot  
     :custom
     (eglot-extend-to-xref t)
+    (eglot-events-buffer-config '(:size 0 :format full))  ; Disable logging for performance
+    (eglot-sync-connect nil)  ; Don't block on LSP connection
+    (eglot-autoshutdown t)    ; Shutdown unused servers
     :config
+    ;; Python: ty (type checking) + ruff (linting/formatting) via rass multiplexer
+    ;; Install with: uv tool install rassumfrassum ty ruff
     (add-to-list 'eglot-server-programs
-                 '((python-mode python-ts-mode) . ("pyright-langserver" "--stdio"))))
+                 '((python-mode python-ts-mode)
+                   . ("rass" "--" "ty" "server" "--" "ruff" "server")))
+
+  ;; Enable python-ts-mode for Python files (tree-sitter based)
+  (when (and (treesit-available-p) (treesit-language-available-p 'python))
+    (add-to-list 'major-mode-remap-alist '(python-mode . python-ts-mode)))
+
+  ;; Project detection for Python (ensures ty finds pyproject.toml)
+  (defun my-project-find-python-project (dir)
+    "Find Python project root by locating pyproject.toml."
+    (when-let* ((root (locate-dominating-file dir "pyproject.toml")))
+      (cons 'python-project root)))
+
+  (with-eval-after-load "project"
+    (cl-defmethod project-root ((project (head python-project)))
+      (cdr project))
+    (add-hook 'project-find-functions #'my-project-find-python-project))
 #+end_src
 
-
-* LLMs
- #+BEGIN_SRC emacs-lisp :tangle yes
-   (org-babel-load-file (expand-file-name "emacs29.llm.org" user-emacs-directory))
+** Flycheck + Eglot Integration
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package flycheck-eglot
+    :after (flycheck eglot)
+    :config
+    (global-flycheck-eglot-mode 1))
 #+END_SRC
-
-
-* Hacky scripts
- #+BEGIN_SRC emacs-lisp :tangle yes
-   (org-babel-load-if-exists (expand-file-name "emacs24.hacky.org" user-emacs-directory))
-#+END_SRC
-
-
-* Other Packages
 
 ** Auto-compile
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -921,9 +935,13 @@ This function uses `find-name-dired` with the `-type d` option to recursively li
 
 ** Flycheck
 #+BEGIN_SRC emacs-lisp :tangle yes
+  ;; Flycheck handles all diagnostics: LSP (via flycheck-eglot) and non-LSP modes
+  ;; Universal error navigation
+  (global-set-key (kbd "s-[") #'flycheck-previous-error)
+  (global-set-key (kbd "s-]") #'flycheck-next-error)
+
   (use-package flycheck
-    :bind (("s-[" . flycheck-previous-error)
-           ("s-]" . flycheck-next-error))
+    ;; Note: s-[ and s-] now use universal error navigation above
     :config
     (flycheck-define-checker sqlfluff
       "A SQL syntax checker using the sqlfluff tool."

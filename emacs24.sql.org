@@ -1,5 +1,7 @@
 
-* Helper functions
+* SQL Mode Configuration
+
+** Helper functions
   #+BEGIN_SRC emacs-lisp :tangle yes
 ;; -*- lexical-binding: t; -*-
     (defun sql-connect-preset (name)
@@ -31,7 +33,7 @@
 
   #+END_SRC
 
-* SQL
+** SQL Packages and Configuration
   #+BEGIN_SRC emacs-lisp :tangle yes
     (use-package sql-indent)
     (use-package sqlup-mode
@@ -52,29 +54,13 @@
                              "--spaces=2"
                              "--type-case=2")))
 
-    ;; (defun conornash/sqlformat-sqlformat (beg end)
-    ;;   (interactive
-    ;;    (if (use-region-p)
-    ;;        (list (region-beginning) (region-end))
-    ;;      (list (point-min) (point-max))))
-    ;;   (setq sqlformat-command 'sqlformat
-    ;;         sqlformat-args '("--comma_first=True"
-    ;;                          "--use_space_around_operators"
-    ;;                          ;; "--reindent_aligned"
-    ;;                          "--identifiers=lower"
-    ;;                          "--keywords=upper"))
-    ;;   (sqlformat-region beg end (called-interactively-p 'any)))
-
-
     (defun conornash/sqlformat-sqlfmt (beg end)
       (interactive
        (if (use-region-p)
            (list (region-beginning) (region-end))
          (list (point-min) (point-max))))
       (setq sqlformat-command 'sqlfmt
-            sqlformat-args '(
-                             "--use-spaces"
-                             ))
+            sqlformat-args '("--use-spaces"))
       (sqlformat-region beg end (called-interactively-p 'any)))
 
     (defun conornash/sqlformat-sqlfluff (beg end)
@@ -93,8 +79,7 @@
            (list (region-beginning) (region-end))
          (list (point-min) (point-max))))
       (setq sqlformat-command 'pgformatter
-            sqlformat-args '(
-                             "--comma-break"
+            sqlformat-args '("--comma-break"
                              "--comma-start"
                              "--function-case=2"
                              "--keep-newline"
@@ -121,9 +106,9 @@
             sql-send-terminator t
             sql-postgres-options '("-P" "pager=off"))
 
-      ;; Add postgrestools language server configuration
-      ;; (add-to-list 'eglot-server-programs
-      ;;              '(sql-mode . ("postgrestools" "lsp-proxy")))
+      ;; Postgrestools LSP configuration with symlink and config path
+      (add-to-list 'eglot-server-programs
+                   '(sql-mode . ("postgrestools" "lsp-proxy" "--config-path=/Users/conornash/Dropbox/Documents/pat-airflow-base")))
 
       (add-hook 'sql-interactive-mode-hook
                 #'(lambda ()
@@ -134,12 +119,11 @@
                 #'(lambda ()
                     (turn-on-smartparens-strict-mode)
                     (rainbow-delimiters-mode-enable)
-                    (flycheck-mode 1)
                     (smartscan-mode 1)
                     (sqlup-mode 1)
-                    ;; (sqlformat-on-save-mode 1)
                     (sqlind-minor-mode 1)
-                    ;; (eglot-ensure) ; Enable eglot for SQL files
+                    (company-mode 1)
+                    (eglot-ensure)
                     (add-hook 'after-save-hook #'delete-trailing-whitespace nil t))))
 
     (use-package pg)
