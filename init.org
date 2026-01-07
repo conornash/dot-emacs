@@ -439,7 +439,7 @@
     ;; Install with: uv tool install rassumfrassum ty ruff
     (add-to-list 'eglot-server-programs
                  '((python-mode python-ts-mode)
-                   . ("rass" "--" "ty" "server" "--" "ruff" "server")))
+                   . ("rass" "--" "ty" "server" "--" "ruff" "server"))))
 
   ;; Enable python-ts-mode for Python files (tree-sitter based)
   (when (and (treesit-available-p) (treesit-language-available-p 'python))
@@ -455,6 +455,12 @@
     (cl-defmethod project-root ((project (head python-project)))
       (cdr project))
     (add-hook 'project-find-functions #'my-project-find-python-project))
+#+end_src
+
+* Hacky scripts
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (org-babel-load-if-exists (expand-file-name "emacs24.hacky.org" user-emacs-directory))
+
 #+end_src
 
 * LLMs
