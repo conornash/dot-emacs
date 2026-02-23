@@ -68,6 +68,7 @@ offlineimap-sync.py
 network-security.data
 gnus/
 .mc-lists.el
+.envrc
 
 # Snippets (override for specific snippets)
 snippets/antlr-mode/

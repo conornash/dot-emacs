@@ -124,7 +124,7 @@
 
     (gptel-make-preset 'localdev
       :system "You are an assistant inside an Emacs Lisp function. You should expect all your responses to be valid for Emacs to read."
-      :tools '("mcp-frc" "localmachine")
+      ;; :tools '("mcp-frc" "localmachine")
       :confirm-tool-calls nil)
 
     (gptel-make-tool
@@ -513,22 +513,6 @@ For whatever reason it won't install using use-package, so just copied from here
 
 #+end_src
 
-** MCP
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package mcp
-    :straight (:host github :repo "lizqwerscott/mcp.el")
-    :ensure t
-    :after gptel
-    :custom (mcp-hub-servers
-             `(
-               ;; ("filesystem" . (:command "npx" :args ("-y" "@modelcontextprotocol/server-filesystem" "/home/conornash/Dropbox/")))
-               ("fetch" . (:command "uvx" :args ("mcp-server-fetch")))
-               ;; ("frc" . (:url "http://20.57.129.247:9091/mcp"))
-               ("frc" . (:url "https://mcp.familyreporting.co/"))))
-    :config (require 'mcp-hub)
-    :hook (after-init . mcp-hub-start-all-server))
-#+end_src
-
 ** ragmacs
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package ragmacs
@@ -582,22 +566,21 @@ For whatever reason it won't install using use-package, so just copied from here
     :straight (:host github :repo "eschulte/emacs-web-server"))
   (use-package agent-shell
     :straight (:host github :repo "xenodium/agent-shell")
-    :bind (("s-l" . agent-shell))
+    :bind (("C-s-l" . agent-shell))
+    ;; :ensure-system-package  
+    ;; ((claude . "brew install claude-code")
+    ;;  (claude-code-acp . "npm install -g @zed-industries/claude-code-acp"))
     :config
     (require 'agent-shell-mcp-server)
     (setq agent-shell-mcp-server--port 2501)
-    (setq agent-shell-anthropic-claude-command '("claude-code-acp" "--dangerously-skip-permissions")
-          agent-shell-anthropic-claude-environment (agent-shell-make-environment-variables :inherit-env t)
-          agent-shell-anthropic-authentication (agent-shell-anthropic-make-authentication :login t)
-          agent-shell-prefer-viewport-interaction t
-          ;; agent-shell-anthropic-default-model-id
-          agent-shell-anthropic-default-session-mode-id "plan"
-          agent-shell-mcp-servers `(((name . "clickup")
-                                     (type . "http")
-                                     (headers . [])
-                                     (url . "https://mcp.clickup.com/mcp"))
-                                    ,(agent-shell-mcp-server-get-config)
-                                    ))
+    (setq
+     ;; agent-shell-anthropic-claude-command '("claude-code-acp" "--dangerously-skip-permissions")
+     agent-shell-anthropic-claude-environment (agent-shell-make-environment-variables :inherit-env t)
+     agent-shell-anthropic-authentication (agent-shell-anthropic-make-authentication :login t)
+     agent-shell-prefer-viewport-interaction t
+     agent-shell-anthropic-default-session-mode-id "plan"
+     agent-shell-mcp-servers `(
+                               ,(agent-shell-mcp-server-get-config)))
     (define-key agent-shell-mode-map (kbd "s-<tab>") 'agent-shell-cycle-session-mode)
     (define-key agent-shell-viewport-edit-mode-map (kbd "s-<tab>") 'agent-shell-viewport-cycle-session-mode)
     (define-key agent-shell-viewport-view-mode-map (kbd "s-<tab>") 'agent-shell-viewport-cycle-session-mode)
@@ -613,8 +596,7 @@ For whatever reason it won't install using use-package, so just copied from here
     ;; Org-link support for agent-shell
     ;; When called from an org-mode buffer with point on a link, include the link
     (defun agent-shell--get-org-link-at-point ()
-      "Get org-link at point formatted for agent-shell insertion.
-Returns nil if not in org-mode or no link at point."
+      "Get org-link at point formatted for agent-shell insertion. Returns nil if not in org-mode or no link at point."
       (when (derived-mode-p 'org-mode)
         (let ((context (org-element-context)))
           (when (eq (org-element-type context) 'link)
@@ -646,8 +628,7 @@ Returns nil if not in org-mode or no link at point."
     ;; Redefine agent-shell--relevant-text to include org-link support
     ;; This replaces the upstream function to add org-mode link detection
     (defun agent-shell--relevant-text ()
-      "Return relevant text (if available). Nil otherwise.
-Relevant text could be files, region, org-link, or error at point."
+      "Return relevant text (if available). Nil otherwise. Relevant text could be files, region, org-link, or error at point."
       (or (agent-shell--processed-files
            :files (agent-shell--buffer-files :obvious t))
           (agent-shell--get-processed-region
@@ -657,8 +638,7 @@ Relevant text could be files, region, org-link, or error at point."
 
     ;; Test function for org-link capture
     (defun agent-shell-test-org-link-capture ()
-      "Test that org-link capture works correctly.
-Creates temp org buffers, inserts links, and verifies capture."
+      "Test that org-link capture works correctly. Creates temp org buffers, inserts links, and verifies capture."
       (interactive)
       (let ((test-cases
              `(("[[file:~/test.org][Test File]]" . ,(format "[[file:%s/test.org][Test File]]" (expand-file-name "~")))
@@ -679,9 +659,7 @@ Creates temp org buffers, inserts links, and verifies capture."
               (message "FAIL: Input: %s\\n  Expected: %s\\n  Got: %s" input expected result))))
         (if all-passed
             (message "✓ All org-link capture tests PASSED")
-          (message "✗ Some tests FAILED - see *Messages*"))))
-
-    )
+          (message "✗ Some tests FAILED - see *Messages*")))))
 
   (use-package agent-shell-manager
     :straight (:host github :repo "jethrokuan/agent-shell-manager"))
@@ -689,67 +667,27 @@ Creates temp org buffers, inserts links, and verifies capture."
 
 #+end_src
 
-** claude-code-ide
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (use-package claude-code-ide
-    :straight (:type git :host github :repo "manzaltu/claude-code-ide.el")
-    :bind ("C-c C-;" . claude-code-ide-menu) ; Set your favorite keybinding
-    :config
-    (claude-code-ide-emacs-tools-setup)) ; Optionally enable Emacs MCP tools
-#+end_src
-
-** Aider
-Requires https://aider.chat/ to be installed.
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (defun aidermacs-set-models (model)
-    (setq
-     aidermacs-default-model    model
-     aidermacs-editor-model     model
-     aidermacs-weak-model       model
-     aidermacs-architect-model  model
-     ))
-  ;; (use-package aider
-  ;;   :config
-  ;;   (setq aider-args '("--model" "openrouter/deepseek/deepseek-chat-v3-0324:free" "--no-auto-accept-architect"))
-  ;;   ;; Or use your personal config file
-  ;;   ;; (setq aider-args `("--config" ,(expand-file-name "~/.aider.conf.yml")))
-  ;;   ;; Optional: Set a key binding for the transient menu
-  ;;   (global-set-key (kbd "s-l") 'aider-transient-menu) ;; for wider screen
-  ;;   ;; or use aider-transient-menu-2cols / aider-transient-menu-1col, for narrow screen
-  ;;   ;; add aider magit function to magit menu
-  ;;   (aider-magit-setup-transients))
-  ;; (use-package aidermacs
-  ;;   :bind (("s-l" . aidermacs-transient-menu))
-  ;;   :config
-  ;;   (setq aidermacs-default-chat-mode 'architect
-  ;;         aidermacs-comint-multiline-newline-key "S-<return>"
-  ;;         aidermacs-vterm-multiline-newline-key "S-<return>"
-  ;;         aidermacs-auto-accept-architect t
-  ;;         ;; aidermacs-default-model "openrouter/deepseek/deepseek-chat-v3-0324:free"
-  ;;         ;; aidermacs-default-model "openrouter/deepseek/deepseek-r1-0528:free"
-  ;;         ))
-
-  ;; (aidermacs-set-models nil)
-#+end_src
-
-** efrit
+** pi-coding-agent
 #+begin_src emacs-lisp :tangle yes
-  (require 'auth-source)
-  ;; (use-package efrit
-  ;;   :straight (:host github :repo "conornash/efrit" :branch "openrouter"))
+  (use-package phscroll
+    :straight (:host github :repo "misohena/phscroll"))
+  (use-package pi-coding-agent
+    :straight (:host github :repo "dnouri/pi-coding-agent")
+    :bind (("s-l" . pi-coding-agent))
+    :init (defalias 'pi 'pi-coding-agent)
+    :config
+    (setq pi-coding-agent-extra-args '("--plan")
+          pi-coding-agent-input-markdown-highlighting t
+          pi-coding-agent-copy-raw-markdown t))
 
-  ;; Standard Efrit settings
-  (setq efrit-model "anthropic/claude-sonnet-4")
-  (setq efrit-max-tokens 8192)
 
-  ;; 🆕 Agent communication settings
-  (setq efrit-remote-queue-directory "~/.emacs.d/efrit-queue")
-  (setq efrit-remote-queue-max-concurrent 10)
 
-  ;; ;; Start agent communication on load (optional)
-  ;; (add-hook 'after-init-hook #'efrit-remote-queue-start)
+
+
+
 #+end_src
 
 * Prompts
+Stored in snippets
 #+BEGIN_SRC emacs-lisp :tangle yes
 #+end_src

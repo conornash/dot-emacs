@@ -385,40 +385,6 @@
  #+END_SRC
 
 
-** Origami
- #+BEGIN_SRC emacs-lisp :tangle yes
-   (use-package origami
-     :functions
-     origami-yaml-parser
-     yaml-subparser
-     :mode "\\.yaml\\'" "\\.yml\\'"
-     :bind
-     (("C-M-n" . origami-next-fold)
-      ("C-M-p" . origami-previous-fold)
-      ("C-M-b" . origami-backward-fold-same-level)
-      ("C-M-f" . origami-forward-fold-same-level)))
-
-   (defun origami-yaml-parser (create)
-       (lambda (content)
-         (with-temp-buffer
-           (defun yaml-subparser (beg end)
-             "find all fold block between beg and end."
-             (goto-char beg)
-             (let (acc)
-               ;; iterate all same level children.
-               (while (and (beginning-of-defun -1) (<= (point) end)) ;; have children between beg and end?
-                 (let* ((new-beg (point))
-                        (new-offset (progn (search-forward-regexp ":" nil t) (- (point) new-beg)))
-                        (new-end (progn (end-of-defun) (point))))
-                   (setq acc (cons (funcall create new-beg new-end new-offset
-                                            (yaml-subparser new-beg new-end))
-                                   acc))
-                   (goto-char new-end)))
-               acc))
-           (insert content)
-           (yaml-subparser (point-min) (point-max)))))
- #+END_SRC
-
 ** Smartscan
  #+BEGIN_SRC emacs-lisp :tangle yes
    (use-package smartscan)
@@ -749,6 +715,16 @@
     (define-key dired-mode-map (vector 'remap 'end-of-buffer) 'dired-jump-to-bottom)
     (define-key dired-mode-map (kbd "s-o") 'dired-open-file)
 
+    (defun iterm-here (&optional arg)
+      "Open current directory at point with shell command 'open -a iTerm'."
+      (interactive "P")
+      (if arg
+          (let ((file (dired-get-file-for-visit)))
+            (if (file-exists-p file)
+                (dired-smart-shell-command (s-concat "open -a iTerm " file)))))
+      (dired-shell-command "open -a iTerm ."))
+    (global-set-key (kbd "s-O") 'iterm-here) 
+
     (defun dired-mark-files-older-than (days)
       "Mark files older than DAYS days in dired."
       (interactive "nMark files older than (days): ")
@@ -765,17 +741,17 @@
          "older")))
 
     (defun dired-copy-filename-sans-extension (&optional arg)
-    "Copy the current file name without extension to the kill ring.
+      "Copy the current file name without extension to the kill ring.
   With prefix ARG, copy the full path including extension."
-    (interactive "P")
-    (let* ((file (dired-get-filename nil t))
-           (text-to-copy
-            (if arg
-                file  ; With prefix: full path with extension
-              (file-name-sans-extension (file-name-nondirectory file)))))
-      (when file
-        (kill-new text-to-copy)
-        (message "Copied: %s" text-to-copy))))
+      (interactive "P")
+      (let* ((file (dired-get-filename nil t))
+             (text-to-copy
+              (if arg
+                  file  ; With prefix: full path with extension
+                (file-name-sans-extension (file-name-nondirectory file)))))
+        (when file
+          (kill-new text-to-copy)
+          (message "Copied: %s" text-to-copy))))
 
     (defun dired-stage-file ()
       "Stage the file at point in Dired using Git."
@@ -1106,25 +1082,17 @@ This is a system that makes `helm-apropos` more useful
 
 ** JSON
 #+BEGIN_SRC emacs-lisp :tangle yes
-
   (use-package json-mode
-    :after origami
-    :mode "\\.json\\'" "\\.jsonl\\'"
+    :mode "\\.json\\'" "\\.jsonl\\'" "\\.jsonc\\'"
     :config
     (setq json-reformat:indent-width 2))
 
   (add-hook 'json-mode-hook
             #'(lambda ()
-                (origami-mode 1)
                 (rainbow-mode 1)
                 (smartparens-strict-mode 1)
-                (define-key json-mode-map (kbd "C-M-\\") 'json-pretty-print)
-                (define-key origami-mode-map (kbd "<M-tab>") 'origami-recursively-toggle-node)
-                (define-key origami-mode-map (kbd "<S-tab>") 'origami-toggle-all-nodes)
-                ))
-
-
- #+END_SRC
+                (define-key json-mode-map (kbd "C-M-\\") 'json-pretty-print)))
+#+END_SRC
 
 
 ** Keychain
@@ -1246,7 +1214,9 @@ This is a system that makes `helm-apropos` more useful
   (use-package markdown-mode
     :bind (("<M-left>" . markdown-promote)
              ("<M-right>" . markdown-demote))
-    :mode "\\.md\\'")
+    :mode "\\.md\\'"
+    :config
+    (setq markdown-command '("pandoc" "--from=gfm+subscript+superscript+smart+hard_line_breaks" "--wrap=preserve" "--standalone")))
 
  #+END_SRC
 
@@ -1265,6 +1235,12 @@ This is a system that makes `helm-apropos` more useful
 
  #+END_SRC
 
+
+** nameframe
+#+begin_src emacs-lisp :tangle yes :eval never
+  (use-package nameframe)
+  (use-package nameframe-projectile)
+#+end_src
 
 ** Nov.el
 #+begin_src emacs-lisp :tangle yes :eval never
@@ -1307,9 +1283,16 @@ This is a system that makes `helm-apropos` more useful
     (projectile-mode +1)
     :bind (:map projectile-mode-map
                 ("s-p" . projectile-command-map)
+                ("s-f" . nameframe-switch-frame)
                 ("C-c p" . projectile-command-map))
     :config
-    (setq projectile-per-project-compilation-buffer t))
+    (setq projectile-per-project-compilation-buffer t
+          projectile-file-exists-remote-cache-expire nil
+          projectile-switch-project-action 'projectile-dired)
+    (nameframe-projectile-mode t))
+    
+
+
 #+end_src
 
 ** pulse
@@ -1480,6 +1463,7 @@ This is a system that makes `helm-apropos` more useful
         enable-remote-dir-locals nil
         flycheck-locate-config-file-functions nil
         flycheck-may-enable-mode-hook '(my-flycheck-may-enable-mode)
+        forge-bug-reference-remote-files nil
         jit-lock-defer-time 0.05
         magit-branch-direct-configure nil
         magit-commit-show-diff nil
@@ -1698,34 +1682,28 @@ This is a system that makes `helm-apropos` more useful
   (use-package yafolding
     :config
     (define-key yafolding-mode-map (kbd "<M-tab>") 'yafolding-toggle-element)
-    (define-key yafolding-mode-map (kbd "<S-tab>") 'origami-toggle-all-nodes)
-    )
+    (define-key yafolding-mode-map (kbd "<S-tab>") 'yafolding-toggle-all))
+
   (use-package yaml-mode
-    :mode "\\.lookml\\'" "\\.yaml.template\\'" "\\.yaml\\'" "\\.yml\\'")
+    :mode "\\.lookml\\'" "\\.yaml.template\\'" "\\.yaml\\'" "\\.yml\\'" "\\.lobster\\'")
 
   (add-hook 'yaml-mode-hook
             #'(lambda ()
                 (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)
-                (origami-mode 1)
-                (yafolding-mode 1)
-                ))
-
+                (yafolding-mode 1)))
 
   (use-package yaml-pro)
- #+END_SRC
+#+END_SRC
 
 
 ** yasnippet
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package yasnippet
-    :diminish
-    ((yas-minor-mode . " ✀")
-     (yas-global-mode . " ✀✀"))
-    :bind (("C-z" . yas-expand))
-    ;; :config
-    ;; (add-to-list 'yas-snippet-dirs (expand-file-name "snippets" user-emacs-directory))
-    )
-  (yas-global-mode 1)
+    :demand t
+    :diminish ((yas-minor-mode . " ✀"))
+    :config
+    (yas-global-mode 1)
+    (global-set-key (kbd "C-z") 'yas-expand))
 
  #+END_SRC
 
@@ -1859,6 +1837,19 @@ This is a system that makes `helm-apropos` more useful
 #+end_src
 
 
+** Mermaid
+#+begin_src emacs-lisp :tangle yes
+  (use-package mermaid-mode
+    :mode "\\.mermaid\\'"
+    :straight (:host github :repo "abrochard/mermaid-mode")
+    :config
+    (setq mermaid-mmdc-location "/opt/homebrew/bin/mmdc")
+    (setq mermaid-output-format ".svg")
+    (setenv "PUPPETEER_EXECUTABLE_PATH"
+            "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+  )
+
+#+end_src
 
 ** Python
  #+BEGIN_SRC emacs-lisp :tangle yes
@@ -1922,6 +1913,12 @@ This is a system that makes `helm-apropos` more useful
 ** Toolscript
 #+BEGIN_SRC emacs-lisp :tangle yes
   (add-to-list 'auto-mode-alist '("\\.rsx\\'" . nxml-mode))
+#+end_src
+
+** ysh-mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (use-package ysh-mode
+    :straight (:host github :repo "conornash/ysh-mode"))
 #+end_src
 
 
@@ -2296,3 +2293,8 @@ The following config is not working correctly. I want the buffers in popper-refe
 
 
 #+END_SRC
+
+** Emacs Server Start
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (server-start)
+#+end_src

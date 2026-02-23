@@ -4,8 +4,8 @@
       "Bash(curl:*)",
       "Bash(ls:*)",
       "Bash(git -C /Users/conornash/.emacs.d log --oneline -20)",
-      "Bash(git -C /Users/conornash/.emacs.d log --all --format=\"%s\")",
-      "mcp__emacs__emacs_eval"
+      "Bash(git -C /Users/conornash/.emacs.d log --all --format=\"%s\")",            
+      "Bash(ln:*)"
     ]
   }
 }
