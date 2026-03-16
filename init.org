@@ -1154,7 +1154,8 @@ This is a system that makes `helm-apropos` more useful
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package llama
     :straight (:host github :repo "tarsius/llama"))
-  ;; (use-package git-commit)
+  (use-package git-modes
+    :straight (:host github :repo "magit/git-modes"))
   (use-package dash)
   (use-package magit
     :commands magit-status
@@ -1216,7 +1217,7 @@ This is a system that makes `helm-apropos` more useful
              ("<M-right>" . markdown-demote))
     :mode "\\.md\\'"
     :config
-    (setq markdown-command '("pandoc" "--from=gfm+subscript+superscript+smart+hard_line_breaks" "--wrap=preserve" "--standalone")))
+    (setq markdown-command '("pandoc" "--from=gfm+subscript+superscript+smart+hard_line_breaks" "--wrap=preserve" "--standalone" "--variable=margin-left:5%" "--variable=margin-right:5%" "--variable=maxwidth:none")))
 
  #+END_SRC
 
@@ -1529,6 +1530,36 @@ This is a system that makes `helm-apropos` more useful
 
   (add-hook 'find-file-hook #'my-disable-yasnippet-for-remote-files)
 
+  ;; Two-phase guard for mode changes on remote buffers.
+  ;; Phase 1 (early, depth -90): populate caches BEFORE eglot's
+  ;; `eglot--maybe-activate-editing-mode' calls `project-current',
+  ;; which otherwise triggers projectile to walk the remote directory
+  ;; tree — dozens of network-requiring TRAMP operations that hang
+  ;; with a slow or broken SSH connection.
+  ;; Phase 2 (late, depth 90): disable minor modes AFTER global modes
+  ;; in `after-change-major-mode-hook' re-enable them.  Mode changes
+  ;; run `kill-all-local-variables' which clears buffer-local minor
+  ;; mode states; the `find-file-hook' guards don't re-run so
+  ;; features like flycheck, yasnippet, and auto-revert get
+  ;; re-enabled on the remote buffer.
+
+  (defun my-populate-remote-caches ()
+    "Pre-populate project caches for remote buffers before eglot runs."
+    (when (file-remote-p default-directory)
+      (unless (assoc default-directory project-current-cache)
+        (push (cons default-directory nil) project-current-cache))))
+
+  (defun my-guard-remote-mode-change ()
+    "Re-apply remote file guards after mode changes."
+    (when (file-remote-p default-directory)
+      (when (bound-and-true-p flycheck-mode) (flycheck-mode -1))
+      (when (bound-and-true-p yas-minor-mode) (yas-minor-mode -1))
+      (when (bound-and-true-p auto-revert-mode) (auto-revert-mode -1))
+      (setq-local create-lockfiles nil)))
+
+  (add-hook 'after-change-major-mode-hook #'my-populate-remote-caches -90)
+  (add-hook 'after-change-major-mode-hook #'my-guard-remote-mode-change 90)
+
   (defun memoize-remote (key cache orig-fn &rest args)
     (if (and key (file-remote-p key))
         (if-let ((current (assoc key (symbol-value cache))))
@@ -1552,7 +1583,11 @@ This is a system that makes `helm-apropos` more useful
 
   (defun memoize-vc-git-root (orig file)
     (let ((value (memoize-remote (file-name-directory file) 'vc-git-root-cache orig file)))
-      (when (null (cdr (car vc-git-root-cache)))
+      ;; Remove nil entries for LOCAL paths only (allows re-check after
+      ;; git init).  Keep nil entries for remote paths to avoid repeated
+      ;; TRAMP operations on every call.
+      (when (and (null (cdr (car vc-git-root-cache)))
+                 (not (file-remote-p (file-name-directory file))))
         (setq vc-git-root-cache (cdr vc-git-root-cache)))
       value))
 
@@ -1974,6 +2009,107 @@ The following config is not working correctly. I want the buffers in popper-refe
   (shackle-mode +1)
 #+end_src
 
+** Project Layout
+Reset the current frame to a standard 4-pane project layout.  All
+buffer lookups are strictly scoped by the projectile project root
+directory, so buffers from other projects (e.g. pi-coding-agent
+sessions for project A) are never shown in project B's frame.
+
+Layout:
+#+begin_example
+┌──────────────┬──────────────┐
+│                        │                        │
+│   pi chat              │   Working buffer       │
+│                        │                        │
+│                        ├──────────────┤
+├──────────────┤                        │
+│   pi input (~10 lines) │   magit-status         │
+└──────────────┴──────────────┘
+#+end_example
+
+Degrades gracefully: if no pi session exists, the left column is
+omitted.  If not a git repo, the magit pane is omitted.
+
+#+begin_src emacs-lisp :tangle yes
+  (defun conor/project-layout ()
+    "Reset the current frame to a standard project layout.
+  Left column: pi-coding-agent chat (top) + input (bottom).
+  Right column: working buffer (top) + magit-status (bottom).
+  All buffer lookups are scoped to the projectile project root,
+  so buffers from other projects are never shown.
+  If no pi session exists, shows working buffer full-left.
+  If not a git repo, skips the magit pane."
+    (interactive)
+    (let* ((proj-dir (or (projectile-project-root) default-directory))
+           (default-directory proj-dir)
+           ;; 1. pi-coding-agent buffers (strict directory match)
+           (chat-buf (pi-coding-agent--find-session proj-dir))
+           (input-buf (when chat-buf
+                        (buffer-local-value 'pi-coding-agent--input-buffer
+                                            chat-buf)))
+           ;; 2. magit-status buffer (scoped by magit-toplevel from default-directory)
+           (magit-buf (when (magit-toplevel)
+                        (or (magit-get-mode-buffer 'magit-status-mode)
+                            (progn (magit-status-setup-buffer proj-dir)
+                                   (magit-get-mode-buffer 'magit-status-mode)))))
+           ;; 3. Working buffer: most recent file-visiting project buffer
+           ;;    excluding agent, magit, helm, and hidden buffers
+           (work-buf (or (car (seq-filter
+                           (lambda (b)
+                             (let ((name (buffer-name b)))
+                               (and (not (string-match-p "pi-coding-agent" name))
+                                    (not (string-match-p "magit" name))
+                                    (not (string-prefix-p " " name))
+                                    (not (string-match-p "helm" name))
+                                    (buffer-file-name b))))
+                           (projectile-project-buffers)))
+                         (dired-noselect proj-dir)))
+           (has-pi (and chat-buf input-buf))
+           (has-magit (not (null magit-buf))))
+      (delete-other-windows)
+      (cond
+       ;; Full 4-pane: pi left, work+magit right
+       ((and has-pi has-magit)
+        (let* ((left-win (selected-window))
+               (right-win (split-window left-win nil 'right))
+               (input-win (split-window left-win -10 'below))
+               (magit-win (split-window right-win
+                            (floor (* 0.6 (window-total-height right-win)))
+                            'below)))
+          (set-window-buffer left-win chat-buf)
+          (set-window-buffer input-win input-buf)
+          (set-window-buffer right-win work-buf)
+          (set-window-buffer magit-win magit-buf)
+          (set-window-dedicated-p left-win 'soft)
+          (set-window-dedicated-p input-win 'soft)
+          (set-window-dedicated-p magit-win 'soft)
+          (select-window input-win)))
+       ;; Pi but no magit: pi left, work right
+       (has-pi
+        (let* ((left-win (selected-window))
+               (right-win (split-window left-win nil 'right))
+               (input-win (split-window left-win -10 'below)))
+          (set-window-buffer left-win chat-buf)
+          (set-window-buffer input-win input-buf)
+          (set-window-buffer right-win work-buf)
+          (set-window-dedicated-p left-win 'soft)
+          (set-window-dedicated-p input-win 'soft)
+          (select-window input-win)))
+       ;; No pi, has magit: work left, magit right
+       (has-magit
+        (let* ((left-win (selected-window))
+               (right-win (split-window left-win nil 'right)))
+          (set-window-buffer left-win work-buf)
+          (set-window-buffer right-win magit-buf)
+          (set-window-dedicated-p right-win 'soft)
+          (select-window left-win)))
+       ;; Nothing: just the working buffer
+       (t
+        (set-window-buffer (selected-window) work-buf)))))
+
+#+end_src
+
+
 * Themes
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package zenburn-theme
@@ -2166,6 +2302,7 @@ The following config is not working correctly. I want the buffers in popper-refe
   (global-set-key (kbd "s-q") 'my-kill-buffer-no-confirm)
   (global-set-key [remap beginning-of-visual-line] 'my/smarter-move-beginning-of-line)
   (global-set-key (kbd "<f14>") 'scroll-lock-mode)
+  (global-set-key (kbd "<s-f9>") 'conor/project-layout)
 #+END_SRC
 
 
