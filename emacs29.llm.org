@@ -671,12 +671,14 @@ For whatever reason it won't install using use-package, so just copied from here
 #+begin_src emacs-lisp :tangle yes
   (use-package phscroll
     :straight (:host github :repo "misohena/phscroll"))
+  (use-package markdown-table-wrap
+    :straight (:host github :repo "dnouri/markdown-table-wrap"))
   (use-package pi-coding-agent
     :straight (:host github :repo "dnouri/pi-coding-agent")
     :bind (("s-l" . pi-coding-agent))
     :init (defalias 'pi 'pi-coding-agent)
     :config
-    (setq pi-coding-agent-extra-args '("--plan")
+    (setq pi-coding-agent-extra-args '("--persona" "lugh")
           pi-coding-agent-input-markdown-highlighting t
           pi-coding-agent-copy-raw-markdown t))
 
