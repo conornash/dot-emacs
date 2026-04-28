@@ -1,0 +1,15 @@
+# -*- mode: snippet -*-
+# name: refactor
+# key: refactor
+# --
+Refactor the code you just wrote. Follow these guidelines:
+1. First, read the surrounding code to understand project conventions
+2. Check for existing patterns in the codebase that should be followed
+3. Apply SOLID principles where appropriate
+4. Eliminate code duplication - extract shared logic into functions
+5. Use descriptive variable and function names that match project style
+6. Ensure proper error handling consistent with the rest of the codebase
+7. Remove any dead code, unused imports, or commented-out code
+8. Keep functions small and focused on a single responsibility
+9. Add type hints if the project uses them
+10. Do NOT change functionality - only improve structure and readability

@@ -69,6 +69,8 @@ network-security.data
 gnus/
 .mc-lists.el
 .envrc
+emacs2*.el
+emacs3*.el
 
 # Snippets (override for specific snippets)
 snippets/antlr-mode/

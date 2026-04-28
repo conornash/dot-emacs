@@ -1,0 +1,13 @@
+# -*- mode: snippet -*-
+# name: todo
+# key: todo
+# --
+Update the @/Users/conornash/Dropbox/Orgmode/current/todo.org file with the current task status. Follow these steps:
+1. Read the todo.org file to find the relevant task heading
+2. Update the TODO keyword to reflect current state (NEXTACTION, etc. Read the SEQ_TODO for context)
+3. Add a logbook entry with timestamp documenting what was accomplished
+4. If subtasks were completed, check them off in any checklists
+5. Add any new subtasks discovered during the work
+6. Add relevant notes under the heading about implementation decisions
+7. Use org-mode formatting: timestamps with <2024-01-07 Sun>, checkbox items with [ ]
+8. Preserve existing content - only add or update, do not remove information

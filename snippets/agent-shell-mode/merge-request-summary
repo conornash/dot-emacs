@@ -1,0 +1,48 @@
+# -*- mode: snippet -*-
+# name: merge-request-summary
+# key: merge-request-summary
+# --
+Generate a Merge Request description for the current branch. Follow these steps:
+
+1. Run \`git branch --show-current\` to get the current branch name
+2. Auto-detect the base branch by running:
+   - \`git symbolic-ref refs/remotes/origin/HEAD\` to find the default branch
+   - Or check for main/master/develop if the above fails
+3. Run \`git log --oneline <base>..HEAD\` to see all commits in this branch
+4. Run \`git diff <base>...HEAD --stat\` to see files changed
+5. Run \`git diff <base>...HEAD\` to understand the actual code changes
+
+Based on the analysis, generate an MR description using this EXACT template structure:
+
+---
+
+## 1. Clickup Ticket(s), Relevant Documentation & Slack Conversation Links:
+${1:}
+
+## 2. The Author of the Code has performed the following:
+
+- [ ] All code in the latest commit has been run in development via local airflow environment or equivalent.
+- [ ] All modified sql code has been queried to ensure results match what is expected.
+
+## 3. Checklist for MR Reviewer(s):
+
+- [ ] MR Reviewer understands the intent and purpose of the code
+
+## 4. Additional Comments or Related MRs:
+
+### Summary
+<!-- Write 2-3 sentences explaining WHAT this MR does and WHY -->
+
+### Changes
+<!-- Bullet list of key changes, grouped logically -->
+
+### Testing Notes
+<!-- How was this tested? What should reviewers look for? -->
+
+---
+$0
+
+Fill in the template sections based on your analysis:
+- Section 1: Include the ClickUp URL if provided above, plus any relevant doc links found in commits
+- Section 4: Write a clear Summary, list the Changes, and add Testing Notes based on what the code does
+- Keep the 4-section structure intact - add content within sections, not new top-level sections

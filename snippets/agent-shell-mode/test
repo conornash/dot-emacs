@@ -1,0 +1,16 @@
+# -*- mode: snippet -*-
+# name: test
+# key: test
+# --
+Write tests for the code you just wrote. Follow these steps:
+1. First, examine existing tests in the project to understand testing conventions
+2. Identify the testing framework used (pytest, unittest, jest, etc.)
+3. Create tests in the appropriate location following project structure
+4. Write tests for the happy path - normal expected behavior
+5. Write tests for edge cases: empty inputs, null values, boundary conditions
+6. Write tests for error conditions - ensure errors are raised appropriately
+7. Use descriptive test names that explain what is being tested
+8. Each test should test ONE thing - keep tests focused and independent
+9. Use appropriate fixtures or setup/teardown if needed
+10. Run the tests to verify they pass
+11. Ensure tests actually test the new code, not just trivial assertions

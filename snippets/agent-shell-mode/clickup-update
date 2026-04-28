@@ -1,0 +1,49 @@
+# -*- mode: snippet -*-
+# name: clickup-update
+# key: clickup-update
+# --
+Update the ClickUp task tracking in the org file.
+
+## Target Location
+
+The file is: ~/Dropbox/Documents/nbs-internal-guide/org-src/clients/FamilyReportingCorporation/familyreportingcorporation.org
+
+The heading is: * Clickup Tasks
+
+## Finding or Creating the Subheading
+
+First, use the clickup skill to identify the current task you are working on. Then:
+
+1. Search for an existing subheading under \`* Clickup Tasks\` where:
+   - The heading name exactly matches the ClickUp task name
+   - The properties drawer contains the ClickUp task ID (format: CU-xxxxxxx)
+
+2. If no matching subheading exists, create one:
+   - The heading name MUST be identical to the ClickUp task name
+   - Add a properties drawer with :CLICKUP_ID: containing the task ID (CU-xxxxxxx)
+   - Set the TODO state to NEXTACTION
+
+Example structure:
+\`\`\`org
+** NEXTACTION Implement user authentication flow
+:PROPERTIES:
+:CLICKUP_ID: CU-86abc123
+:END:
+\`\`\`
+
+## Updating the Subheading
+
+The subheading contains ONE comment that represents the current running status of the task. This is NOT a log or history of updates. Each update REPLACES the previous comment entirely.
+
+The comment summarizes progress since the last comment was added. Review the conversation history to determine what was accomplished in this session.
+
+Use links liberally throughout the comment - link to files, commits, merge requests, documentation, or any other relevant resources.
+
+## Rules
+
+- Use ONLY the clickup skill. Do not use MCP tools directly.
+- NEVER change the task status. It is always NEXTACTION. No exceptions.
+- NEVER use any other format than described above.
+- NEVER add a history or log. One comment, replaced each time.
+- ALWAYS include relevant links.
+$0

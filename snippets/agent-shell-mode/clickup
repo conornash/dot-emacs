@@ -1,0 +1,14 @@
+# -*- mode: snippet -*-
+# name: clickup
+# key: clickup
+# --
+Update the ClickUp task for this work using the MCP integration. Follow these steps:
+1. First, search ClickUp to find the relevant task (use task name or ID if known)
+2. Update the task status to reflect current progress (e.g., "in progress", "in review", "complete")
+3. Add a comment summarizing what was accomplished in this session
+4. Include specific details: files changed, features implemented, bugs fixed
+5. If the task is blocked, update status and add a comment explaining the blocker
+6. Update time tracking if applicable
+7. If new subtasks were discovered, create them under the main task
+8. Link any relevant commits or PRs in the comment
+9. Assign to the next person if handoff is needed

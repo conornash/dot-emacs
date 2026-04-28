@@ -1,0 +1,15 @@
+# -*- mode: snippet -*-
+# name: explain
+# key: explain
+# --
+Explain the code or error in the current context. Provide:
+1. A high-level summary of what the code does (1-2 sentences)
+2. Step-by-step breakdown of the logic flow
+3. Explanation of any non-obvious design decisions or patterns used
+4. Description of inputs, outputs, and side effects
+5. If there's an error: explain the root cause, not just the symptom
+6. For errors: show the exact line causing the issue and why
+7. Suggest potential improvements or alternative approaches if relevant
+8. Reference any relevant documentation or standards being followed
+9. Keep explanations concise but complete - avoid unnecessary jargon
+10. Use code snippets to illustrate key points

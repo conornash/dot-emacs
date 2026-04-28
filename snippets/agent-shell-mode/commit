@@ -1,0 +1,13 @@
+# -*- mode: snippet -*-
+# name: commit
+# key: commit
+# --
+Commit only the currently staged changes. Follow these steps:
+1. Run \`git diff --cached\` to see exactly what is staged
+2. Analyze the changes to understand their purpose and scope
+3. Write a commit message following conventional commit format (type: description)
+4. Use types like: feat, fix, refactor, docs, test, chore
+5. Keep the subject line under 72 characters
+6. Add a body if the change needs explanation of why, not what
+7. Do NOT stage additional files - only commit what is already staged
+8. Run the commit command and confirm success
