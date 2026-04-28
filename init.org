@@ -329,9 +329,10 @@
 
   (use-package htmlize)
   (require 'ox-md)
-  ;; (use-package ox-reveal
-  ;;   :custom
-  ;;   (org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
+  ;; (require 'ox-reveal)
+  (use-package ox-reveal
+    :custom
+    (org-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"))
 
   (setq
    org-agenda-exporter-settings '((ps-number-of-columns 2)
@@ -392,6 +393,7 @@
 
 ** Eglot
 #+BEGIN_SRC emacs-lisp :tangle yes
+  (setq read-process-output-max (* 4 1024 1024)) ; 4 MB
   (use-package track-changes
     :straight (:host github :repo "emacs-straight/track-changes"))
   (use-package eglot  
@@ -768,6 +770,22 @@
     :bind (:map dired-mode-map
                 ("C-c C-x" . dired-rsync-transient)))
 
+  (defun dired-quicklook ()
+    "Preview file at point using QuickLook (qlmanage) on macOS or sushi on Linux."
+    (interactive)
+    (let ((file (dired-get-file-for-visit)))
+      (cond
+       ((eq system-type 'darwin)
+        (start-process "qlmanage" nil "qlmanage" "-p" file))
+       ((eq system-type 'gnu/linux)
+        (start-process "sushi" nil "sushi" file)))))
+
+  (define-key dired-mode-map (kbd "SPC")
+              (lambda ()
+                (interactive)
+                (if (dired-get-filename nil t)
+                    (dired-quicklook)
+                  (dired-next-line 1))))
  #+END_SRC
 
 
@@ -1213,8 +1231,9 @@ This is a system that makes `helm-apropos` more useful
 ** Markdown
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package markdown-mode
-    :bind (("<M-left>" . markdown-promote)
-             ("<M-right>" . markdown-demote))
+    :bind (:map markdown-mode-map
+                ("<M-left>" . markdown-promote)
+                ("<M-right>" . markdown-demote))
     :mode "\\.md\\'"
     :config
     (setq markdown-command '("pandoc" "--from=gfm+subscript+superscript+smart+hard_line_breaks" "--wrap=preserve" "--standalone" "--variable=margin-left:5%" "--variable=margin-right:5%" "--variable=maxwidth:none")))
@@ -1402,7 +1421,10 @@ This is a system that makes `helm-apropos` more useful
     )
 
   (setq shell-file-name "/opt/homebrew/bin/bash"
-      explicit-shell-file-name "/opt/homebrew/bin/bash")
+        explicit-shell-file-name "/opt/homebrew/bin/bash")
+
+  (add-hook 'after-save-hook
+            #'executable-make-buffer-file-executable-if-script-p)
  #+END_SRC
 
 
@@ -1765,6 +1787,21 @@ This is a system that makes `helm-apropos` more useful
 
 
 
+** GraphViz
+
+#+begin_src emacs-lisp :tangle yes
+  (use-package graphviz-dot-mode
+    :mode "\\.dot\\'"
+    :straight (:host github :repo "ppareit/graphviz-dot-mode")
+    :config
+    (setq graphviz-dot-view-command "neato %s"
+          graphviz-dot-dot-program "neato"
+          graphviz-dot-preview-extension "png")
+  )
+
+#+end_src
+
+
 ** Javascript / Typescript
 #+BEGIN_SRC emacs-lisp :tangle yes
   (org-babel-load-if-exists (expand-file-name "emacs24.js2.org" user-emacs-directory))
@@ -1927,6 +1964,11 @@ This is a system that makes `helm-apropos` more useful
 (org-babel-load-if-exists (expand-file-name "emacs24.sql.org" user-emacs-directory))
 
  #+END_SRC
+
+** Calc Script (ecalc)
+#+BEGIN_SRC emacs-lisp :tangle yes
+(org-babel-load-if-exists (expand-file-name "emacs29.calc-script.org" user-emacs-directory))
+#+END_SRC
 
 
 ** STScript (SillyTavern)
@@ -2309,6 +2351,58 @@ omitted.  If not a git repo, the magit pane is omitted.
 
 * End of Config
 
+** Stolen Configs
+https://emacsredux.com/blog/2026/04/07/stealing-from-the-best-emacs-configs/
+
+*** Disable Bidirectional Text Scanning (Doom Emacs)
+If you don’t edit right-to-left languages (Arabic, Hebrew, etc.), Emacs is doing a bunch of work on every redisplay cycle for nothing. These settings tell Emacs to assume left-to-right text everywhere and skip the bidirectional parenthesis algorithm:
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(setq-default bidi-display-reordering 'left-to-right
+              bidi-paragraph-direction 'left-to-right)
+(setq bidi-inhibit-bpa t)
+#+end_src
+
+The difference is hard to measure in small buffers, but in large files (think multi-thousand-line JSON or log files) it adds up. Doom enables this unconditionally and I’ve never seen anyone complain about it.
+
+*** Skip Fontification During Input (Doom Emacs)
+Emacs normally fontifies (syntax-highlights) text even while you’re actively typing. This can cause micro-stutters, especially in tree-sitter modes or large buffers. One setting fixes it:
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(setq redisplay-skip-fontification-on-input t)
+#+end_src
+
+Emacs will defer fontification until you stop typing. In practice you never notice the delay – the highlighting catches up instantly – but scrolling and typing may feel smoother.
+
+*** Increase Process Output Buffer for LSP (Doom, Purcell, Centaur)
+The default read-process-output-max is 64KB, which is still quite conservative. Modern LSP servers like rust-analyzer or clangd routinely send multi-megabyte responses. Bumping this reduces the number of read calls Emacs has to make: [[*Eglot][Eglot]]
+
+If you use eglot (or lsp-mode), this is basically free performance. Three of the most popular configs out there all set it – that should tell you something.
+
+Note: I’m really surprised I didn’t discover this one sooner. Probably that’s because I rarely work on big projects these days.
+
+*** Don’t Render Cursors in Non-Focused Windows (Doom Emacs)
+If you have several windows visible, Emacs draws a cursor in each of them – even the ones you’re not working in. It also highlights selections in non-focused windows. Two settings to stop that:
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+(setq-default cursor-in-non-selected-windows nil)
+(setq highlight-nonselected-windows nil)
+#+end_src
+
+This is mostly a visual preference (I don’t mind the phantom cursors but I know some people find them distracting), but it also reduces rendering work.
+
+All four of these performance settings are safe to add unconditionally – they have no downsides for the vast majority of users.
+
+*** No Duplicates in the Kill Ring (Doom, Prot)
+Kill the same line three times and you get three identical entries in the kill ring, wasting slots. This deduplicates them:
+#+BEGIN_SRC emacs-lisp :tangle yes
+(setq kill-do-not-save-duplicates t)
+#+end_src
+
+
+
+
+
 ** Back to usual parameters
 #+BEGIN_SRC emacs-lisp :tangle yes
   (setq
@@ -2435,3 +2529,4 @@ omitted.  If not a git repo, the magit pane is omitted.
 #+BEGIN_SRC emacs-lisp :tangle yes
   (server-start)
 #+end_src
+

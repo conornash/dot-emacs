@@ -1,0 +1,205 @@
+#+TITLE: Calc Script — algebraic scripting for Emacs Calc
+#+STARTUP: hidestars indent
+
+Emacs Calc is a powerful computer algebra system, but its stack-based RPN
+interface and keybinding-heavy workflow make it hard to use casually. This
+module wraps Calc's internal math engine in a thin scripting layer: write
+algebraic expressions line-by-line — variable assignments, function calls,
+comments — like an R or Python script. No stack, no keybindings to memorise.
+
+The elisp here is the backend for =ecalc=, a shell REPL that talks to
+the Emacs server via =emacsclient=. Three modes: interactive REPL, script
+file execution, and pipe/stdin.
+
+* Configuration
+#+BEGIN_SRC emacs-lisp :tangle yes
+;; -*- lexical-binding: t; -*-
+(require 'calc)
+
+;; Radians by default — sin(pi/6) = 0.5, not some degrees nonsense.
+(setq calc-angle-mode 'rad)
+#+END_SRC
+
+* Snake-case mangling
+
+Calc uses =_= as the subscript operator, so =monthly_rate= parses as
+"monthly subscript rate" rather than a single variable name. We
+transparently convert snake_case identifiers to camelCase before handing
+expressions to the Calc parser. The user writes =monthly_rate=, Calc
+sees =monthlyRate=.
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(defun calc-script--mangle-varnames (expr-str)
+  "Replace snake_case identifiers with camelCase for Calc compatibility."
+  (let ((result expr-str))
+    (while (string-match "\\b\\([a-zA-Z][a-zA-Z0-9]*\\)_\\([a-zA-Z]\\)" result)
+      (setq result (replace-match
+                    (concat (match-string 1 result)
+                            (upcase (match-string 2 result)))
+                    t nil result)))
+    result))
+#+END_SRC
+
+* Line evaluator
+
+Each line is one of three things: a comment (=#= or =;;= prefix), an
+assignment (=name := expr=), or a bare expression. Assignments store the
+result in a Calc variable (=var-NAME= symbol) and return a display string.
+Bare expressions evaluate and return their result.
+
+The critical subtlety: =string-match= in the mangle function clobbers
+Emacs's global match data. We extract both regex groups from the
+assignment pattern /before/ calling mangle.
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(defun calc-script-eval-line (line)
+  "Evaluate a single calc script line.
+Handles assignment (x := expr), comments (#, ;;), and bare expressions.
+Returns a display string, or nil for blank/comment lines."
+  (let ((trimmed (string-trim line)))
+    (cond
+     ;; Blank lines and comments
+     ((or (string= trimmed "")
+          (string-prefix-p "#" trimmed)
+          (string-prefix-p ";;" trimmed))
+      nil)
+     ;; Assignment: varname := expression
+     ((string-match "^\\([a-zA-Z_][a-zA-Z0-9_]*\\)\\s-*:=\\s-*\\(.*\\)" trimmed)
+      ;; Extract BOTH groups before mangle clobbers match data
+      (let* ((raw-varname (match-string 1 trimmed))
+             (raw-expr (match-string 2 trimmed))
+             (varname (calc-script--mangle-varnames raw-varname))
+             (expr-str (calc-script--mangle-varnames raw-expr))
+             (expr (math-read-expr expr-str))
+             (val (math-evaluate-expr expr))
+             (sym (intern (concat "var-" varname))))
+        (set sym val)
+        (format "%s = %s" raw-varname (math-format-value val 1000))))
+     ;; Bare expression
+     (t
+      (let* ((expr-str (calc-script--mangle-varnames trimmed))
+             (expr (math-read-expr expr-str))
+             (val (math-evaluate-expr expr)))
+        (math-format-value val 1000))))))
+#+END_SRC
+
+* Multi-line and single-line entry points
+
+=calc-script-eval= takes a whole script (newline-separated), evaluates
+each line, collects results. =calc-script-eval-single= wraps a single
+line with error handling — the primary interface for the REPL.
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(defun calc-script-eval (script)
+  "Evaluate a multi-line calc script. Return results for each non-empty line."
+  (let ((lines (split-string script "\n"))
+        (results nil))
+    (dolist (line lines)
+      (let ((result (condition-case err
+                        (calc-script-eval-line line)
+                      (error (format "ERROR: %s" (error-message-string err))))))
+        (when result
+          (push result results))))
+    (mapconcat #'identity (nreverse results) "\n")))
+
+(defun calc-script-eval-single (line)
+  "Evaluate a single line, returning the result or error string."
+  (condition-case err
+      (or (calc-script-eval-line line) "")
+    (error (format "ERROR: %s" (error-message-string err)))))
+#+END_SRC
+
+* Session management
+
+=:reset= clears all user-defined variables without touching built-in
+constants. =:vars= lists everything currently defined.
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(defvar calc-script--internal-vars
+  '("var-pi" "var-e" "var-phi" "var-gamma"
+    "var-inf" "var-nan" "var-uinf"
+    "var-q0" "var-q1" "var-q2"
+    "var-EvalRules" "var-GenCount"
+    "var-Decls" "var-AlgSimpRules")
+  "Calc-internal variable names that should never be cleared or listed.")
+
+(defun calc-script-reset ()
+  "Clear all user-defined calc variables and reset to defaults."
+  (setq calc-angle-mode 'rad)
+  (mapatoms (lambda (sym)
+              (when (and (string-prefix-p "var-" (symbol-name sym))
+                         (not (member (symbol-name sym)
+                                      calc-script--internal-vars)))
+                (makunbound sym))))
+  "Variables cleared.")
+
+(defun calc-script-list-vars ()
+  "List all user-defined calc variables and their values."
+  (let ((vars nil))
+    (mapatoms (lambda (sym)
+                (when (and (string-prefix-p "var-" (symbol-name sym))
+                           (boundp sym)
+                           (not (member (symbol-name sym)
+                                        calc-script--internal-vars)))
+                  (push (format "%s = %s"
+                                (substring (symbol-name sym) 4)
+                                (math-format-value (symbol-value sym) 1000))
+                        vars))))
+    (if vars
+        (mapconcat #'identity (sort vars #'string<) "\n")
+      "(no variables defined)")))
+#+END_SRC
+
+* ecalc major mode
+
+Associate =.ecalc= files with a simple major mode so they get syntax
+highlighting and can be evaluated with a keybinding.
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(defun calc-script-eval-buffer ()
+  "Evaluate the current buffer as a calc script and display results."
+  (interactive)
+  (let* ((script (buffer-substring-no-properties (point-min) (point-max)))
+         (result (calc-script-eval script))
+         (buf (get-buffer-create "*ecalc*")))
+    (with-current-buffer buf
+      (erase-buffer)
+      (insert result)
+      (goto-char (point-min)))
+    (display-buffer buf)))
+
+(defun calc-script-eval-region (beg end)
+  "Evaluate the region as a calc script and display results."
+  (interactive "r")
+  (let* ((script (buffer-substring-no-properties beg end))
+         (result (calc-script-eval script))
+         (buf (get-buffer-create "*ecalc*")))
+    (with-current-buffer buf
+      (erase-buffer)
+      (insert result)
+      (goto-char (point-min)))
+    (display-buffer buf)))
+
+(define-derived-mode ecalc-mode prog-mode "ecalc"
+  "Major mode for editing ecalc scripts."
+  (setq-local comment-start "# ")
+  (setq-local comment-end "")
+  (setq-local font-lock-defaults
+              '(((;; Comments
+                  "\\(#.*\\)" . font-lock-comment-face)
+                 ;; Assignment operator
+                 (":=" . font-lock-keyword-face)
+                 ;; Variable names in assignments
+                 ("^\\([a-zA-Z_][a-zA-Z0-9_]*\\)\\s-*:=" 1 font-lock-variable-name-face)
+                 ;; Built-in functions
+                 ("\\b\\(sqrt\\|abs\\|ln\\|log\\|log10\\|exp\\|sin\\|cos\\|tan\\|asin\\|acos\\|atan\\|floor\\|ceil\\|round\\|mod\\|gcd\\|lcm\\|min\\|max\\|choose\\|perm\\)(" 1 font-lock-builtin-face)
+                 ;; Constants
+                 ("\\b\\(pi\\|e\\|phi\\|gamma\\|inf\\)\\b" . font-lock-constant-face)
+                 ;; Numbers
+                 ("\\b[0-9]+\\.?[0-9]*\\(?:e[+-]?[0-9]+\\)?\\b" . font-lock-constant-face)))))
+
+(define-key ecalc-mode-map (kbd "C-c C-c") #'calc-script-eval-buffer)
+(define-key ecalc-mode-map (kbd "C-c C-r") #'calc-script-eval-region)
+
+(add-to-list 'auto-mode-alist '("\\.ecalc\\'" . ecalc-mode))
+#+END_SRC
