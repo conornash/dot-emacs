@@ -20,33 +20,30 @@ total_paid := payment * months
 total_interest := total_paid - principal
 interest_ratio := (total_interest / principal) * 100
 
-# --- Results ---
-# Monthly payment:
-payment
-
-# Total paid over the life of the mortgage:
-total_paid
-
-# Of which is interest:
-total_interest
-
-# Interest as % of principal:
-interest_ratio
+print "=== Mortgage Summary ==="
+print "Principal:          £$principal"
+print "Annual rate:        ${annual_rate}"
+print "Term:               $term_years years ($months months)"
+print
+print "Monthly payment:    £$payment"
+print "Total paid:         £$total_paid"
+print "Total interest:     £$total_interest"
+print "Interest (% of principal): ${interest_ratio}%"
 
 # --- What if you overpay? ---
-# Overpay £200/month — how much do you save?
 overpayment := 200
 effective_payment := payment + overpayment
 
-# New term (months) to pay off at the higher rate
-# Rearranged annuity formula: n = -ln(1 - P*r/M) / ln(1 + r)
+# New term: n = -ln(1 - P*r/M) / ln(1 + r)
 new_months := -ln(1 - principal * monthly_rate / effective_payment) / ln(1 + monthly_rate)
 
-# Savings
 new_total := effective_payment * new_months
 saved := total_paid - new_total
 years_saved := (months - new_months) / 12
 
-new_months
-saved
-years_saved
+print
+print "=== Overpayment Scenario ==="
+print "Overpaying £$overpayment/month (£$effective_payment total)"
+print "New term:           $new_months months"
+print "Total saved:        £$saved"
+print "Years knocked off:  $years_saved"
