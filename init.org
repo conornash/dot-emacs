@@ -1477,6 +1477,10 @@ This is a system that makes `helm-apropos` more useful
 ** Toml
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package toml)
+
+  (add-hook 'conf-toml-mode-hook #'turn-on-smartparens-strict-mode)
+  (add-hook 'conf-toml-mode-hook
+            (lambda () (add-hook 'after-save-hook #'delete-trailing-whitespace nil t)))
  #+END_SRC
 
 
