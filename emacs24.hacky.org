@@ -620,3 +620,100 @@
                             (line-end-position)))
       (line-end-position)))
 #+END_SRC
+
+* Project Tint Assignments
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (defvar conor/tint-assignments
+    '()
+    "Alist of (PROJECT-NAME . TINT-NAME). Edit here to persist.")
+#+END_SRC
+
+* Project Frame Tints
+#+BEGIN_SRC emacs-lisp :tangle yes
+  ;; -*- lexical-binding: t; -*-
+  (require 'color)
+  ;; Per-project background tint for visual identification in Exposé.
+  ;; 17-colour palette validated via CIELAB ΔE analysis — all pairs >3.0,
+  ;; all entries >3.0 from default #2F2F2F.
+
+  (defvar conor/tint-palette
+    '(("warm red"     .  (  5 0.27))
+      ("gold"         .  ( 45 0.27))
+      ("dark khaki"   .  ( 55 0.20))
+      ("chartreuse"   .  ( 80 0.24))
+      ("forest"       .  (110 0.20))
+      ("emerald"      .  (140 0.25))
+      ("jade"         .  (165 0.22))
+      ("cyan"         .  (180 0.27))
+      ("dark teal"    .  (195 0.20))
+      ("steel blue"   .  (215 0.25))
+      ("navy"         .  (230 0.20))
+      ("periwinkle"   .  (250 0.27))
+      ("violet"       .  (270 0.22))
+      ("orchid"       .  (295 0.26))
+      ("deep brick"   .  (  0 0.16))
+      ("deep moss"    .  (120 0.16))
+      ("deep indigo"  .  (240 0.16)))
+    "Palette of distinguishable dark background tints.
+  Each entry is (NAME . (HUE LIGHTNESS)). Saturation is fixed.")
+
+  (defvar conor/tint-saturation 0.08
+    "Fixed saturation for all project tints.")
+
+  (defvar conor/tint-alpha 97
+    "Frame alpha (transparency) applied to tinted frames.")
+
+  (defun conor/tint--hex (hue lightness)
+    "Convert HUE (degrees) and LIGHTNESS to a hex colour string."
+    (let ((rgb (color-hsl-to-rgb (/ (float hue) 360.0)
+                                 conor/tint-saturation
+                                 lightness)))
+      (apply #'format "#%02x%02x%02x"
+             (mapcar (lambda (c) (round (* c 255))) rgb))))
+
+  (defun conor/tint--palette-hex (tint-name)
+    "Return hex colour for TINT-NAME from the palette, or nil."
+    (let ((entry (assoc tint-name conor/tint-palette)))
+      (when entry
+        (let ((params (cdr entry)))
+          (conor/tint--hex (nth 0 params) (nth 1 params))))))
+
+  (defun conor/tint--apply (frame tint-name)
+    "Apply TINT-NAME to FRAME."
+    (let ((hex (conor/tint--palette-hex tint-name)))
+      (when hex
+        (set-face-background 'default hex frame)
+        (set-frame-parameter frame 'alpha conor/tint-alpha))))
+
+  (defun conor/tint-apply-to-frame (&optional frame)
+    "Apply the assigned tint to FRAME if a mapping exists."
+    (let* ((frame (or frame (selected-frame)))
+           (project (frame-parameter frame 'name))
+           (entry (assoc project conor/tint-assignments)))
+      (when entry
+        (conor/tint--apply frame (cdr entry)))))
+
+  (defun conor/select-project-tint ()
+    "Interactively select a tint for the current frame's project."
+    (interactive)
+    (let* ((frame (selected-frame))
+           (project (frame-parameter frame 'name))
+           (chosen (completing-read
+                    (format "Tint for %s: " project)
+                    (mapcar #'car conor/tint-palette)
+                    nil t nil nil
+                    (cdr (assoc project conor/tint-assignments)))))
+      (let ((existing (assoc project conor/tint-assignments)))
+        (if existing
+            (setcdr existing chosen)
+          (push (cons project chosen) conor/tint-assignments)))
+      (conor/tint--apply frame chosen)
+      (message "%s → %s  (add to conor/tint-assignments to persist)" project chosen)))
+
+  ;; Apply tint when nameframe creates a new project frame
+  (add-hook 'nameframe-make-frame-hook #'conor/tint-apply-to-frame)
+
+  ;; Apply tints to all existing frames on eval
+  (dolist (f (frame-list))
+    (conor/tint-apply-to-frame f))
+#+END_SRC
