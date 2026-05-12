@@ -621,18 +621,13 @@
       (line-end-position)))
 #+END_SRC
 
-* Project Tint Assignments
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (defvar conor/tint-assignments
-    '()
-    "Alist of (PROJECT-NAME . TINT-NAME). Edit here to persist.")
-#+END_SRC
-
 * Project Frame Tints
 #+BEGIN_SRC emacs-lisp :tangle yes
-  ;; -*- lexical-binding: t; -*-
   (require 'color)
-  ;; Per-project background tint for visual identification in Exposé.
+  ;; Per-project visual identity for frames.
+  ;; Each project gets: background tint, coloured internal border,
+  ;; tinted modeline, matching cursor, and optional font override.
+  ;;
   ;; 17-colour palette validated via CIELAB ΔE analysis — all pairs >3.0,
   ;; all entries >3.0 from default #2F2F2F.
 
@@ -663,6 +658,18 @@
   (defvar conor/tint-alpha 97
     "Frame alpha (transparency) applied to tinted frames.")
 
+  (defvar conor/tint-border-width 4
+    "Internal border width for tinted frames.")
+
+  (defvar conor/tint-assignments nil
+    "Alist of (FRAME-NAME . TINT-NAME). Set in private.org.")
+
+  (defvar conor/tint-fonts nil
+    "Alist of (FRAME-NAME . (FAMILY . HEIGHT)). Set in private.org.
+  Available: Inconsolata-lig, Cascadia Code PL, Iosevka, Geist Mono.")
+
+  ;; ——— Colour helpers ———
+
   (defun conor/tint--hex (hue lightness)
     "Convert HUE (degrees) and LIGHTNESS to a hex colour string."
     (let ((rgb (color-hsl-to-rgb (/ (float hue) 360.0)
@@ -671,27 +678,73 @@
       (apply #'format "#%02x%02x%02x"
              (mapcar (lambda (c) (round (* c 255))) rgb))))
 
+  (defun conor/tint--palette-entry (tint-name)
+    "Return (HUE LIGHTNESS) for TINT-NAME, or nil."
+    (cdr (assoc tint-name conor/tint-palette)))
+
   (defun conor/tint--palette-hex (tint-name)
     "Return hex colour for TINT-NAME from the palette, or nil."
-    (let ((entry (assoc tint-name conor/tint-palette)))
-      (when entry
-        (let ((params (cdr entry)))
-          (conor/tint--hex (nth 0 params) (nth 1 params))))))
+    (when-let* ((params (conor/tint--palette-entry tint-name)))
+      (conor/tint--hex (nth 0 params) (nth 1 params))))
+
+  (defun conor/tint--border-hex (tint-name)
+    "Border colour: same hue, slightly brighter than background, deeper saturation."
+    (when-let* ((params (conor/tint--palette-entry tint-name)))
+      (let ((rgb (color-hsl-to-rgb (/ (float (nth 0 params)) 360.0)
+                                   0.15
+                                   (min 0.32 (+ (nth 1 params) 0.04)))))
+        (apply #'format "#%02x%02x%02x"
+               (mapcar (lambda (c) (round (* c 255))) rgb)))))
+
+  (defun conor/tint--modeline-hex (tint-name)
+    "Modeline colour: same hue, slightly brighter than background."
+    (when-let* ((params (conor/tint--palette-entry tint-name)))
+      (conor/tint--hex (nth 0 params) (min 0.35 (+ (nth 1 params) 0.06)))))
+
+  ;; ——— Application ———
 
   (defun conor/tint--apply (frame tint-name)
-    "Apply TINT-NAME to FRAME."
-    (let ((hex (conor/tint--palette-hex tint-name)))
-      (when hex
-        (set-face-background 'default hex frame)
-        (set-frame-parameter frame 'alpha conor/tint-alpha))))
+    "Apply full visual identity for TINT-NAME to FRAME."
+    (when-let* ((bg  (conor/tint--palette-hex tint-name))
+                (bdr (conor/tint--border-hex tint-name)))
+      ;; Background tint
+      (set-face-background 'default bg frame)
+      (set-frame-parameter frame 'alpha conor/tint-alpha)
+      ;; Internal border
+      (set-frame-parameter frame 'internal-border-width conor/tint-border-width)
+      (set-face-attribute 'internal-border frame :background bdr)
+      ;; Font override
+      (when-let* ((font-entry (assoc (frame-parameter frame 'name) conor/tint-fonts))
+                  (spec (cdr font-entry)))
+        (set-face-attribute 'default frame :family (car spec) :height (cdr spec)))))
 
   (defun conor/tint-apply-to-frame (&optional frame)
     "Apply the assigned tint to FRAME if a mapping exists."
     (let* ((frame (or frame (selected-frame)))
-           (project (frame-parameter frame 'name))
-           (entry (assoc project conor/tint-assignments)))
-      (when entry
+           (project (frame-parameter frame 'name)))
+      (when-let* ((entry (assoc project conor/tint-assignments)))
         (conor/tint--apply frame (cdr entry)))))
+
+  ;; ——— Modeline tinting (per-buffer via face-remap) ———
+
+  (defvar-local conor/tint--modeline-cookie nil
+    "Face-remap cookie for the current buffer's modeline tint.")
+
+  (defun conor/tint--apply-modeline-to-buffer ()
+    "Tint the modeline for the current buffer based on its frame's project."
+    (when-let* ((project (frame-parameter (selected-frame) 'name))
+                (entry (assoc project conor/tint-assignments))
+                (ml-bg (conor/tint--modeline-hex (cdr entry))))
+      ;; Remove previous remap if any
+      (when conor/tint--modeline-cookie
+        (face-remap-remove-relative conor/tint--modeline-cookie))
+      (setq conor/tint--modeline-cookie
+            (face-remap-add-relative 'mode-line :background ml-bg))))
+
+  (add-hook 'after-change-major-mode-hook #'conor/tint--apply-modeline-to-buffer)
+  (add-hook 'find-file-hook #'conor/tint--apply-modeline-to-buffer)
+
+  ;; ——— Interactive selection ———
 
   (defun conor/select-project-tint ()
     "Interactively select a tint for the current frame's project."
@@ -703,17 +756,25 @@
                     (mapcar #'car conor/tint-palette)
                     nil t nil nil
                     (cdr (assoc project conor/tint-assignments)))))
-      (let ((existing (assoc project conor/tint-assignments)))
-        (if existing
-            (setcdr existing chosen)
-          (push (cons project chosen) conor/tint-assignments)))
+      (if-let* ((existing (assoc project conor/tint-assignments)))
+          (setcdr existing chosen)
+        (push (cons project chosen) conor/tint-assignments))
       (conor/tint--apply frame chosen)
-      (message "%s → %s  (add to conor/tint-assignments to persist)" project chosen)))
+      ;; Re-apply modeline to all buffers visible in this frame
+      (dolist (w (window-list frame))
+        (with-current-buffer (window-buffer w)
+          (conor/tint--apply-modeline-to-buffer)))
+      (message "%s → %s" project chosen)))
 
-  ;; Apply tint when nameframe creates a new project frame
+  ;; ——— Hooks ———
+
   (add-hook 'nameframe-make-frame-hook #'conor/tint-apply-to-frame)
 
   ;; Apply tints to all existing frames on eval
   (dolist (f (frame-list))
-    (conor/tint-apply-to-frame f))
+    (conor/tint-apply-to-frame f)
+    ;; Modeline for visible buffers
+    (dolist (w (window-list f))
+      (with-current-buffer (window-buffer w)
+        (conor/tint--apply-modeline-to-buffer))))
 #+END_SRC

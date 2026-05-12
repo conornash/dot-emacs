@@ -1503,9 +1503,8 @@ This is a system that makes `helm-apropos` more useful
         tramp-completion-reread-directory-timeout nil
         tramp-copy-size-limit (* 1024 1024)
         tramp-persistency-file-name (expand-file-name "tramp" user-emacs-directory)
-        tramp-use-connection-share t
+        tramp-use-connection-share nil
         tramp-use-scp-direct-remote-copying t
-        tramp-use-ssh-controlmaster-options nil
         tramp-verbose 2
         vc-handled-backends '(Git)
         )
