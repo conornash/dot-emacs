@@ -658,7 +658,7 @@
   (defvar conor/tint-alpha 97
     "Frame alpha (transparency) applied to tinted frames.")
 
-  (defvar conor/tint-border-width 4
+  (defvar conor/tint-border-width 6
     "Internal border width for tinted frames.")
 
   (defvar conor/tint-assignments nil
@@ -688,11 +688,11 @@
       (conor/tint--hex (nth 0 params) (nth 1 params))))
 
   (defun conor/tint--border-hex (tint-name)
-    "Border colour: same hue, slightly brighter than background, deeper saturation."
+    "Border colour: same hue, vivid and clearly visible."
     (when-let* ((params (conor/tint--palette-entry tint-name)))
       (let ((rgb (color-hsl-to-rgb (/ (float (nth 0 params)) 360.0)
-                                   0.15
-                                   (min 0.32 (+ (nth 1 params) 0.04)))))
+                                   0.70
+                                   0.75)))
         (apply #'format "#%02x%02x%02x"
                (mapcar (lambda (c) (round (* c 255))) rgb)))))
 
@@ -716,7 +716,7 @@
       ;; Font override
       (when-let* ((font-entry (assoc (frame-parameter frame 'name) conor/tint-fonts))
                   (spec (cdr font-entry)))
-        (set-face-attribute 'default frame :family (car spec) :height (cdr spec)))))
+        (set-frame-font (format "%s-%d" (car spec) (/ (cdr spec) 10)) nil (list frame)))))
 
   (defun conor/tint-apply-to-frame (&optional frame)
     "Apply the assigned tint to FRAME if a mapping exists."
