@@ -683,10 +683,6 @@ For whatever reason it won't install using use-package, so just copied from here
           pi-coding-agent-copy-raw-markdown t))
 
 
-
-
-
-
 #+end_src
 
 * Prompts

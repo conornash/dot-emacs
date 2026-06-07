@@ -1237,7 +1237,9 @@ This is a system that makes `helm-apropos` more useful
                 ("<M-left>" . markdown-promote)
                 ("<M-right>" . markdown-demote))
     :mode "\\.md\\'"
-    :config
+    :init
+    ;; Set globally so it applies even when poly-markdown-mode
+    ;; hijacks .md files and activates markdown-mode instead of gfm-mode.
     (setq markdown-command '("pandoc" "--from=gfm+subscript+superscript+smart+hard_line_breaks" "--wrap=preserve" "--standalone" "--variable=margin-left:5%" "--variable=margin-right:5%" "--variable=maxwidth:none")))
 
  #+END_SRC
@@ -1499,17 +1501,26 @@ This is a system that makes `helm-apropos` more useful
         magit-refresh-status-buffer nil
         magit-tramp-pipe-stty-settings 'pty
         remote-file-name-inhibit-auto-save-visited t
-        remote-file-name-inhibit-cache nil
+        remote-file-name-inhibit-cache 10
         remote-file-name-inhibit-delete-by-moving-to-trash t
         remote-file-name-inhibit-locks t
         tramp-completion-reread-directory-timeout nil
         tramp-copy-size-limit (* 1024 1024)
         tramp-persistency-file-name (expand-file-name "tramp" user-emacs-directory)
-        tramp-use-connection-share nil
+        tramp-use-connection-share 'suppress
         tramp-use-scp-direct-remote-copying t
         tramp-verbose 2
         vc-handled-backends '(Git)
         )
+
+  ;; Suppress SSH warnings (host key, post-quantum KEX) inside Tramp.
+  ;; OpenSSH 10.x emits multi-line ** WARNING banners that confuse
+  ;; Tramp's prompt parser and cause connections to hang.  LogLevel
+  ;; ERROR silences them for Tramp only; console SSH is unaffected.
+  (setq tramp-connection-properties
+        '(("\\`/ssh:" "login-args"
+           (("-l" "%u") ("-p" "%p") ("%c") ("%w")
+            ("-o" "LogLevel=ERROR") ("-e" "none") ("%h")))))
 
   (setq vc-ignore-dir-regexp
         (format "\\(%s\\)\\|\\(%s\\)"
@@ -1545,7 +1556,8 @@ This is a system that makes `helm-apropos` more useful
   (add-hook 'find-file-hook #'my-no-lock-files-for-remote)
 
   (defun my-disable-auto-revert-for-remote-files ()
-    (when (file-remote-p default-directory)
+    (when (and (file-remote-p default-directory)
+               (not (derived-mode-p 'dired-mode)))
       (auto-revert-mode -1)))
 
   (add-hook 'find-file-hook #'my-disable-auto-revert-for-remote-files)
@@ -1581,7 +1593,9 @@ This is a system that makes `helm-apropos` more useful
     (when (file-remote-p default-directory)
       (when (bound-and-true-p flycheck-mode) (flycheck-mode -1))
       (when (bound-and-true-p yas-minor-mode) (yas-minor-mode -1))
-      (when (bound-and-true-p auto-revert-mode) (auto-revert-mode -1))
+      (when (and (bound-and-true-p auto-revert-mode)
+                 (not (derived-mode-p 'dired-mode)))
+        (auto-revert-mode -1))
       (setq-local create-lockfiles nil)))
 
   (add-hook 'after-change-major-mode-hook #'my-populate-remote-caches -90)
@@ -1631,6 +1645,22 @@ This is a system that makes `helm-apropos` more useful
   (with-eval-after-load 'tramp
     (with-eval-after-load 'compile
       (remove-hook 'compilation-mode-hook #'tramp-compile-disable-ssh-controlmaster-options)))
+
+  ;; Reap zombie TRAMP connections: when SSH dies, clean up TRAMP's
+  ;; internal state so the next access reconnects instead of hanging.
+  (defun my-tramp-reap-dead-connections ()
+    "Kill TRAMP processes whose underlying process has exited.
+Scheduled on a timer so stale connections are reaped automatically."
+    (dolist (proc (process-list))
+      (when (and (string-match-p "\\*tramp/" (process-name proc))
+                 (memq (process-status proc) '(exit signal closed failed)))
+        (let ((vec (tramp-get-connection-property proc "vector" nil)))
+          (when vec
+            (tramp-message vec 2 "Reaping dead TRAMP process: %s" (process-name proc))
+            (tramp-cleanup-connection vec 'keep-debug 'keep-password)))
+        (delete-process proc))))
+
+  (run-with-timer 30 30 #'my-tramp-reap-dead-connections)
 
   (defalias 'tcac 'tramp-cleanup-all-connections)
  #+END_SRC

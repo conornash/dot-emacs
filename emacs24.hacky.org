@@ -630,7 +630,7 @@
 
   (defvar conor/tint-palette
     '(("warm red"     .  (  5 0.27))
-      ("gold"         .  ( 45 0.27))
+      ("gold"         .  ( 38 0.27))
       ("dark khaki"   .  ( 55 0.20))
       ("chartreuse"   .  ( 80 0.24))
       ("forest"       .  (110 0.20))
