@@ -64,6 +64,16 @@
 
 * JS2 mode
 #+BEGIN_SRC emacs-lisp :tangle yes
+  ;; simple-httpd is a skewer dependency. Its default straight local-repo
+  ;; name (emacs-web-server, from skeeto) collides with the unrelated
+  ;; web-server package (from eschulte), which also defaults to that name.
+  ;; The collision left simple-httpd.el missing. Pin a distinct local-repo
+  ;; so the skeeto repo is cloned separately.
+  (use-package simple-httpd
+    :straight (simple-httpd :type git :host github
+               :repo "skeeto/emacs-web-server"
+               :local-repo "simple-httpd"))
+
   (use-package skewer-mode
     :mode "\\.mjs\\'" "\\.js\\'"
     :bind

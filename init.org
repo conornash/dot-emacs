@@ -1852,6 +1852,7 @@ Scheduled on a timer so stale connections are reaped automatically."
     :hook
     (typescript-mode . (lambda ()
 
+                         (tide-setup)
                          (flycheck-mode +1)
                          (turn-on-smartparens-strict-mode)
                          (smartscan-mode-turn-on)
