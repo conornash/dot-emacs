@@ -1237,6 +1237,7 @@ This is a system that makes `helm-apropos` more useful
                 ("<M-left>" . markdown-promote)
                 ("<M-right>" . markdown-demote))
     :mode "\\.md\\'"
+    :hook (markdown-mode . goto-address-mode)
     :init
     ;; Set globally so it applies even when poly-markdown-mode
     ;; hijacks .md files and activates markdown-mode instead of gfm-mode.

@@ -677,6 +677,8 @@ For whatever reason it won't install using use-package, so just copied from here
     :straight (:host github :repo "dnouri/pi-coding-agent")
     :bind (("s-l" . pi-coding-agent))
     :init (defalias 'pi 'pi-coding-agent)
+    :hook ((pi-coding-agent-chat-mode . goto-address-mode)
+           (pi-coding-agent-input-mode . goto-address-mode))
     :config
     (setq pi-coding-agent-extra-args '("--persona" "lugh")
           pi-coding-agent-input-markdown-highlighting t
