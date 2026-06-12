@@ -414,11 +414,14 @@
   (when (and (treesit-available-p) (treesit-language-available-p 'python))
     (add-to-list 'major-mode-remap-alist '(python-mode . python-ts-mode)))
 
-  ;; Project detection for Python (ensures ty finds pyproject.toml)
+  ;; Project detection for Python (ensures ty finds pyproject.toml).
+  ;; Never for remote dirs: `locate-dominating-file' over TRAMP is one
+  ;; network round-trip per ancestor (see remote kill-switches below).
   (defun my-project-find-python-project (dir)
     "Find Python project root by locating pyproject.toml."
-    (when-let* ((root (locate-dominating-file dir "pyproject.toml")))
-      (cons 'python-project root)))
+    (unless (file-remote-p dir)
+      (when-let* ((root (locate-dominating-file dir "pyproject.toml")))
+        (cons 'python-project root))))
 
   (with-eval-after-load "project"
     (cl-defmethod project-root ((project (head python-project)))
@@ -1313,7 +1316,15 @@ This is a system that makes `helm-apropos` more useful
     :config
     (setq projectile-per-project-compilation-buffer t
           projectile-file-exists-remote-cache-expire nil
+          ;; Never track remote projects (see the projectile/TRAMP
+          ;; kill-switch further down).
+          projectile-ignored-project-function #'file-remote-p
           projectile-switch-project-action 'projectile-dired)
+    ;; Purge any previously-tracked remote projects so
+    ;; switch-project/cleanup never run TRAMP operations on them.
+    (setq projectile-known-projects
+          (seq-remove #'file-remote-p projectile-known-projects))
+    (projectile-save-known-projects)
     (nameframe-projectile-mode t))
     
 
@@ -1518,10 +1529,20 @@ This is a system that makes `helm-apropos` more useful
   ;; OpenSSH 10.x emits multi-line ** WARNING banners that confuse
   ;; Tramp's prompt parser and cause connections to hang.  LogLevel
   ;; ERROR silences them for Tramp only; console SSH is unaffected.
+  ;;
+  ;; ConnectTimeout bounds the *initial* connect: a dead or unreachable
+  ;; host fails fast (10s) instead of blocking Emacs on the default TCP
+  ;; timeout.  ServerAlive* let ssh notice a dropped link mid-session and
+  ;; exit, which transitions the Tramp process to a dead status that
+  ;; `my-tramp-reap-dead-connections' below can then actually reap.
   (setq tramp-connection-properties
         '(("\\`/ssh:" "login-args"
            (("-l" "%u") ("-p" "%p") ("%c") ("%w")
-            ("-o" "LogLevel=ERROR") ("-e" "none") ("%h")))))
+            ("-o" "LogLevel=ERROR")
+            ("-o" "ConnectTimeout=10")
+            ("-o" "ServerAliveInterval=10")
+            ("-o" "ServerAliveCountMax=3")
+            ("-e" "none") ("%h")))))
 
   (setq vc-ignore-dir-regexp
         (format "\\(%s\\)\\|\\(%s\\)"
@@ -1570,37 +1591,106 @@ This is a system that makes `helm-apropos` more useful
 
   (add-hook 'find-file-hook #'my-disable-yasnippet-for-remote-files)
 
-  ;; Two-phase guard for mode changes on remote buffers.
-  ;; Phase 1 (early, depth -90): populate caches BEFORE eglot's
-  ;; `eglot--maybe-activate-editing-mode' calls `project-current',
-  ;; which otherwise triggers projectile to walk the remote directory
-  ;; tree — dozens of network-requiring TRAMP operations that hang
-  ;; with a slow or broken SSH connection.
-  ;; Phase 2 (late, depth 90): disable minor modes AFTER global modes
-  ;; in `after-change-major-mode-hook' re-enable them.  Mode changes
-  ;; run `kill-all-local-variables' which clears buffer-local minor
-  ;; mode states; the `find-file-hook' guards don't re-run so
-  ;; features like flycheck, yasnippet, and auto-revert get
-  ;; re-enabled on the remote buffer.
-
-  (defun my-populate-remote-caches ()
-    "Pre-populate project caches for remote buffers before eglot runs."
-    (when (file-remote-p default-directory)
-      (unless (assoc default-directory project-current-cache)
-        (push (cons default-directory nil) project-current-cache))))
+  ;; Guard for mode changes on remote buffers (late, depth 90):
+  ;; disable minor modes AFTER global modes in
+  ;; `after-change-major-mode-hook' re-enable them.  Mode changes run
+  ;; `kill-all-local-variables' which clears buffer-local minor mode
+  ;; states; the `find-file-hook' guards don't re-run so features
+  ;; like flycheck, yasnippet, and auto-revert get re-enabled on the
+  ;; remote buffer.
 
   (defun my-guard-remote-mode-change ()
     "Re-apply remote file guards after mode changes."
     (when (file-remote-p default-directory)
       (when (bound-and-true-p flycheck-mode) (flycheck-mode -1))
+      ;; flymake backends (e.g. `python-flymake') spawn remote
+      ;; processes over TRAMP on every check — same class of problem
+      ;; as remote eglot/flycheck.
+      (when (bound-and-true-p flymake-mode) (flymake-mode -1))
       (when (bound-and-true-p yas-minor-mode) (yas-minor-mode -1))
       (when (and (bound-and-true-p auto-revert-mode)
                  (not (derived-mode-p 'dired-mode)))
         (auto-revert-mode -1))
       (setq-local create-lockfiles nil)))
 
-  (add-hook 'after-change-major-mode-hook #'my-populate-remote-caches -90)
   (add-hook 'after-change-major-mode-hook #'my-guard-remote-mode-change 90)
+
+  ;; Remote kill-switches for eglot and project.el (2026-06-12): TRAMP
+  ;; can't sustain LSP traffic, and project detection walks remote
+  ;; ancestors (network round-trips per level).  Decision: neither
+  ;; eglot nor project.el ever touches a remote file.
+  ;;
+  ;; `eglot-ensure' is the only entry point used in this config
+  ;; (emacs24.python.org's python hook); guard interactive `eglot' too.
+  (defun my-eglot-never-remote (orig &rest args)
+    "Never start eglot in a remote buffer."
+    (if (file-remote-p default-directory)
+        (when (eq this-command 'eglot)
+          (message "eglot disabled for remote files (TRAMP)"))
+      (apply orig args)))
+
+  (advice-add 'eglot-ensure :around #'my-eglot-never-remote)
+  (advice-add 'eglot :around #'my-eglot-never-remote)
+
+  ;; `project-current' is the chokepoint for all of project.el (and
+  ;; everything built on it: eglot, project-find-file, vc integration
+  ;; in some modes).  Returning nil = "no project" for remote dirs;
+  ;; callers degrade gracefully.  This replaces the old
+  ;; `memoize-project-current'/`my-populate-remote-caches' machinery,
+  ;; which only cached results per exact directory string — every NEW
+  ;; remote subdir still paid for a full `project-try-vc' ancestor
+  ;; walk.
+  (defun my-project-never-remote (orig &optional may-prompt directory)
+    "Return nil (no project) for remote directories."
+    (let ((dir (or directory
+                   project-current-directory-override
+                   default-directory)))
+      (unless (file-remote-p dir)
+        (funcall orig may-prompt directory))))
+
+  (advice-add 'project-current :around #'my-project-never-remote)
+
+  ;; Dired over TRAMP: two chronic slow paths, measured live 2026-06-12
+  ;; against patAvailabilityVM (cold subdir visit was ~5-6s, now ~1s).
+  ;;
+  ;; 1. Projectile/TRAMP kill-switch: `projectile-project-root' walks
+  ;;    every ancestor of a remote dir checking ~50 marker files; with
+  ;;    `tramp-stat-file-attributes' + `test -e' per level that's 2
+  ;;    network round-trips per ancestor (~5s measured for a depth-4
+  ;;    path), and it's called from find-file/dired hooks and the
+  ;;    mode-line.  Decision: projectile must NEVER interact with
+  ;;    remote files.  Returning nil here makes projectile treat every
+  ;;    remote buffer as "not in a project", which short-circuits all
+  ;;    downstream features (tracking, caching, mode-line, commands).
+  ;;    Combined with `projectile-ignored-project-function'
+  ;;    #'file-remote-p and purging remote `projectile-known-projects'
+  ;;    entries (see use-package block above).  project.el is equally
+  ;;    disabled for remote dirs (`my-project-never-remote' above), so
+  ;;    remote buffers have NO project awareness at all, by design.
+  (defun my-projectile-never-remote (orig &optional dir)
+    "Return nil (no project) for any remote DIR, bypassing ORIG entirely."
+    (let ((dir (or dir default-directory)))
+      (unless (file-remote-p dir)
+        (funcall orig dir))))
+
+  (with-eval-after-load 'projectile
+    (advice-add 'projectile-project-root :around
+                #'my-projectile-never-remote))
+
+  ;; 2. `dired-insert-directory' calls `dired--insert-disk-space' →
+  ;;    `get-free-disk-space' → remote `df' on EVERY readin, a full
+  ;;    round-trip per dired buffer (~0.5s each).  Note: setting
+  ;;    `dired-free-space' to nil buffer-locally does NOT prevent the
+  ;;    df call — `dired--insert-disk-space' calls
+  ;;    `get-free-disk-space' before consulting `dired-free-space' for
+  ;;    everything except deleting the "total" line.  So advise the df
+  ;;    call itself for remote dirs.
+  (defun my-no-free-disk-space-for-remote (orig dir)
+    "Skip the `df' round-trip for remote directories."
+    (unless (file-remote-p dir) (funcall orig dir)))
+
+  (advice-add 'get-free-disk-space :around
+              #'my-no-free-disk-space-for-remote)
 
   (defun memoize-remote (key cache orig-fn &rest args)
     (if (and key (file-remote-p key))
@@ -1610,16 +1700,6 @@ This is a system that makes `helm-apropos` more useful
             (set cache (cons (cons key current) (symbol-value cache)))
             current))
       (apply orig-fn args)))
-
-  (defvar project-current-cache nil)
-
-  (defun memoize-project-current (orig &optional prompt directory)
-    (memoize-remote (or directory
-                        project-current-directory-override
-                        default-directory)
-                    'project-current-cache orig prompt directory))
-
-  (advice-add 'project-current :around #'memoize-project-current)
 
   (defvar vc-git-root-cache nil)
 
@@ -1651,15 +1731,23 @@ This is a system that makes `helm-apropos` more useful
   ;; internal state so the next access reconnects instead of hanging.
   (defun my-tramp-reap-dead-connections ()
     "Kill TRAMP processes whose underlying process has exited.
-Scheduled on a timer so stale connections are reaped automatically."
+Scheduled on a timer so stale connections are reaped automatically.
+
+The connection VECTOR lives on the process plist under `tramp-vector'
+(this is how `tramp-process-sentinel' itself retrieves it); the old
+`tramp-get-connection-property' lookup returned nil, so the cleanup
+branch never ran and stale connection state was left behind.  Use
+`process-live-p' rather than an explicit status list so half-open
+connections in any non-live state are caught."
     (dolist (proc (process-list))
       (when (and (string-match-p "\\*tramp/" (process-name proc))
-                 (memq (process-status proc) '(exit signal closed failed)))
-        (let ((vec (tramp-get-connection-property proc "vector" nil)))
+                 (not (process-live-p proc)))
+        (let ((vec (process-get proc 'tramp-vector)))
           (when vec
             (tramp-message vec 2 "Reaping dead TRAMP process: %s" (process-name proc))
-            (tramp-cleanup-connection vec 'keep-debug 'keep-password)))
-        (delete-process proc))))
+            (ignore-errors
+              (tramp-cleanup-connection vec 'keep-debug 'keep-password))))
+        (ignore-errors (delete-process proc)))))
 
   (run-with-timer 30 30 #'my-tramp-reap-dead-connections)
 
