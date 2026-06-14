@@ -682,7 +682,13 @@ For whatever reason it won't install using use-package, so just copied from here
     :config
     (setq pi-coding-agent-extra-args '("--persona" "lugh")
           pi-coding-agent-input-markdown-highlighting t
-          pi-coding-agent-copy-raw-markdown t))
+          pi-coding-agent-copy-raw-markdown t)
+    (with-eval-after-load 'md-ts-mode
+      (require 'ysh-ts-mode)
+      (add-to-list 'md-ts-code-block-source-mode-map '(ysh . ysh-ts-mode))
+      ;; Optional aliases: treat ```osh/```oil fences as ysh too.
+      (add-to-list 'md-ts--code-block-language-map '("osh" . ysh))
+      (add-to-list 'md-ts--code-block-language-map '("oil" . ysh))))
 
 
 #+end_src
