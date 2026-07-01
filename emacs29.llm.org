@@ -673,6 +673,112 @@ For whatever reason it won't install using use-package, so just copied from here
     :straight (:host github :repo "misohena/phscroll"))
   (use-package markdown-table-wrap
     :straight (:host github :repo "dnouri/markdown-table-wrap"))
+
+  ;; Tint the input buffer while the session is busy.  Self-contained
+  ;; port of the comprehensive tint that previously lived in the
+  ;; pi-coding-agent package (commit 3a27de8): blends the theme
+  ;; background toward cornflower blue and uses `face-remap-set-base'
+  ;; so the tint covers the whole window, including empty regions,
+  ;; not just the text.  Hooked into
+  ;; `pi-coding-agent-activity-phase-functions' below.
+  (require 'color)
+
+  (defvar-local my-pi-input-tint-active nil
+    "Non-nil when the input buffer background is tinted for activity.")
+
+  (defun my-pi-blend-color (base target amount)
+    "Blend BASE color toward TARGET by AMOUNT (0.0–1.0), as a hex string."
+    (apply #'color-rgb-to-hex
+           (cl-mapcar (lambda (b tgt)
+                        (+ (* (- 1.0 amount) b) (* amount tgt)))
+                      (color-name-to-rgb base)
+                      (color-name-to-rgb target))))
+
+  (defun my-pi-input-activity-bg ()
+    "Return the activity background color, blended toward cornflower blue."
+    (condition-case nil
+        (let ((bg (face-background 'default nil t)))
+          (when (and bg (color-defined-p bg))
+            (let* ((dark-p (< (nth 2 (apply #'color-rgb-to-hsl
+                                            (color-name-to-rgb bg)))
+                              0.5))
+                   (amount (if dark-p 0.25 0.15))
+                   (tint   "#6495ED"))
+              (my-pi-blend-color bg tint amount))))
+      (error nil)))
+
+  (defun my-pi-tint-input-while-busy (_chat input _old new _reason)
+    "Tint INPUT while the session is busy; revert it on NEW phase \"idle\".
+      Safe when INPUT is nil or dead (e.g. during session teardown)."
+    (when (buffer-live-p input)
+      (with-current-buffer input
+        (if (string= new "idle")
+            (when my-pi-input-tint-active
+              (face-remap-reset-base 'default)
+              (setq my-pi-input-tint-active nil))
+          (when-let* ((bg (my-pi-input-activity-bg)))
+            (face-remap-set-base 'default :background bg
+                                 :foreground (face-foreground 'default nil t))
+            (setq my-pi-input-tint-active t))))))
+
+  ;; Emacs-only timestamp when the agent returns control.  Self-contained
+  ;; port of pi-coding-agent commit b9d8c59, reworked to ride the activity
+  ;; -phase hook framework instead of patching --display-agent-end.  A turn
+  ;; settling to "idle" via a real `phase-change' is exactly "control
+  ;; returned to the user" (the README's my-pi-message-when-done pattern).
+  ;; The stamp is display-only: it is never sent to the pi CLI nor stored
+  ;; in session history, so it is dropped on history rebuild/reload.
+  (defvar my-pi-show-return-timestamp t
+    "Whether to stamp the chat buffer when the agent returns control.")
+
+  (defvar my-pi-return-timestamp-format "%H:%M:%S"
+    "`format-time-string' format for the agent-return timestamp.")
+
+  (defface my-pi-return-timestamp
+    '((t :inherit shadow :slant italic))
+    "Face for the Emacs-only agent-return timestamp.")
+
+  (defun my-pi-window-following-p (window)
+    "Return non-nil if WINDOW is parked at the end of its buffer."
+    (>= (window-point window) (1- (point-max))))
+
+  (defun my-pi-insert-return-timestamp (chat)
+    "Append an agent-return timestamp to the CHAT buffer.
+    Preserves scroll position for windows the user scrolled up in, and
+    follows output in windows already parked at the end."
+    (when (buffer-live-p chat)
+      (with-current-buffer chat
+        (let* ((stamp (format-time-string my-pi-return-timestamp-format))
+               (windows (get-buffer-window-list chat nil t))
+               (following (cl-remove-if-not #'my-pi-window-following-p windows))
+               (saved (mapcar (lambda (w) (cons w (window-point w)))
+                              (cl-remove-if #'my-pi-window-following-p windows)))
+               (inhibit-read-only t))
+          (save-excursion
+            (goto-char (point-max))
+            (skip-chars-backward "\n")
+            (delete-region (point) (point-max))
+            (insert "\n\n"
+                    (propertize stamp 'face 'my-pi-return-timestamp
+                                'my-pi-return-timestamp t)
+                    "\n"))
+          (dolist (pair saved)
+            (when (window-live-p (car pair))
+              (set-window-point (car pair) (cdr pair))))
+          (dolist (win following)
+            (when (window-live-p win)
+              (set-window-point win (point-max))))))))
+
+  (defun my-pi-stamp-on-return (chat _input old new reason)
+    "Stamp CHAT when a real turn finishes and control returns to the user.
+    Guards on REASON so input relink cleanup (which also applies \"idle\")
+    does not produce a spurious stamp."
+    (when (and my-pi-show-return-timestamp
+               (eq reason 'phase-change)
+               (not (string= old "idle"))
+               (string= new "idle"))
+      (my-pi-insert-return-timestamp chat)))
+
   (use-package pi-coding-agent
     :straight (:host github :repo "dnouri/pi-coding-agent")
     :bind (("s-l" . pi-coding-agent))
@@ -680,20 +786,57 @@ For whatever reason it won't install using use-package, so just copied from here
     :hook ((pi-coding-agent-chat-mode . goto-address-mode)
            (pi-coding-agent-input-mode . goto-address-mode))
     :config
-    (setq pi-coding-agent-extra-args '("--persona" "lugh")
+    (setq pi-coding-agent-extra-args nil ;; '("--persona" "lugh")
           pi-coding-agent-input-markdown-highlighting t
           pi-coding-agent-copy-raw-markdown t)
+    ;; Tint the input window background while the agent is working.
+    (add-hook 'pi-coding-agent-activity-phase-functions
+              #'my-pi-tint-input-while-busy)
+    ;; Stamp a local timestamp each time the agent returns control.
+    (add-hook 'pi-coding-agent-activity-phase-functions
+              #'my-pi-stamp-on-return)
     (with-eval-after-load 'md-ts-mode
       (require 'ysh-ts-mode)
       (add-to-list 'md-ts-code-block-source-mode-map '(ysh . ysh-ts-mode))
       ;; Optional aliases: treat ```osh/```oil fences as ysh too.
       (add-to-list 'md-ts--code-block-language-map '("osh" . ysh))
-      (add-to-list 'md-ts--code-block-language-map '("oil" . ysh))))
+      (add-to-list 'md-ts--code-block-language-map '("oil" . ysh)))
+
+    ;; --- Widen the resume-session selector ----------------------------------
+    ;; Upstream hard-truncates the session label (name / first message) to 50
+    ;; chars in `pi-coding-agent--format-session-choice', which cuts useful
+    ;; context off in the resume picker.  Override the function (and add a
+    ;; tunable width) here instead of patching the vendored straight checkout.
+    (defcustom my-pi-resume-label-width 200
+      "Maximum characters of session name / first message in the resume picker."
+      :type 'natnum
+      :group 'pi-coding-agent)
+
+    (defun pi-coding-agent--format-session-choice (path &optional metadata)
+      "Format session PATH for display in selector.
+      Returns (display-string . path) for `completing-read', or nil when PATH is not
+      a valid pi session.  Prefers session name over first message when available.
+      Optional METADATA reuses data already collected by the session-list step.
+
+      Overridden in init to widen the label to `my-pi-resume-label-width'."
+      (when-let* ((metadata (or metadata (pi-coding-agent--session-metadata path))))
+        (let* ((modified-time (plist-get metadata :modified-time))
+               (session-name (plist-get metadata :session-name))
+               (first-msg (plist-get metadata :first-message))
+               (msg-count (plist-get metadata :message-count))
+               (relative-time (pi-coding-agent--format-relative-time modified-time))
+               (width my-pi-resume-label-width)
+               (label (cond
+                       (session-name (pi-coding-agent--truncate-string session-name width))
+                       (first-msg (pi-coding-agent--truncate-string first-msg width))
+                       (t nil)))
+               (display (if label
+                            (format "%s · %s (%d msgs)"
+                                    label relative-time msg-count)
+                          (format "[empty session] · %s" relative-time))))
+          (cons display path)))))
 
 
 #+end_src
 
-* Prompts
-Stored in snippets
-#+BEGIN_SRC emacs-lisp :tangle yes
-#+end_src
+

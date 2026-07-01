@@ -25,11 +25,12 @@
   (setq enable-recursive-minibuffers t
         inhibit-startup-screen t
         load-prefer-newer t
-        use-dialog-box nil
         max-lisp-eval-depth 30000
         ring-bell-function 'ignore
-        save-interprogram-paste-before-kill t)
-
+        save-interprogram-paste-before-kill t
+        use-dialog-box nil
+        view-lossage-auto-refresh t                ; EMACS-31: live-updating C-h l, great for teaching/debugging
+        )
 
   (pcase (window-system)
     ('x
@@ -122,6 +123,7 @@
   ;;   :straight (:host github :repo "jwiegley/emacs-async")
   ;;   :config
   ;;   (async-bytecomp-package-mode 1))
+  (setq native-comp-async-on-battery-power nil)     ; EMACS-31: stop native-comp jobs on battery
 
 #+end_src
 
@@ -429,11 +431,15 @@
     (add-hook 'project-find-functions #'my-project-find-python-project))
 #+end_src
 
+
+
 * Hacky scripts
 #+BEGIN_SRC emacs-lisp :tangle yes
   (org-babel-load-if-exists (expand-file-name "emacs24.hacky.org" user-emacs-directory))
 
 #+end_src
+
+
 
 * LLMs
  #+BEGIN_SRC emacs-lisp :tangle yes
@@ -1294,15 +1300,6 @@ This is a system that makes `helm-apropos` more useful
  #+END_SRC
 
 
-** Prettify
-#+BEGIN_SRC emacs-lisp :tangle yes
-
-  (global-prettify-symbols-mode 1)
-  (setq prettify-symbols-unprettify-at-point 'right-edge)
-
- #+END_SRC
-
-
 ** Projectile
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package projectile
@@ -1322,6 +1319,13 @@ This is a system that makes `helm-apropos` more useful
           projectile-switch-project-action 'projectile-dired)
     ;; Purge any previously-tracked remote projects so
     ;; switch-project/cleanup never run TRAMP operations on them.
+    ;; NOTE: `projectile-mode' does NOT load the saved list from disk;
+    ;; that happens lazily via `projectile-load-known-projects'.  We
+    ;; must load it explicitly here, otherwise `projectile-known-projects'
+    ;; is still nil at :config time and `projectile-save-known-projects'
+    ;; would clobber projectile-bookmarks.eld with an empty list
+    ;; (data-loss bug introduced in 4d60da4, fixed here).
+    (projectile-load-known-projects)
     (setq projectile-known-projects
           (seq-remove #'file-remote-p projectile-known-projects))
     (projectile-save-known-projects)
@@ -1330,6 +1334,15 @@ This is a system that makes `helm-apropos` more useful
 
 
 #+end_src
+
+** Prettify
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+  (global-prettify-symbols-mode 1)
+  (setq prettify-symbols-unprettify-at-point 'right-edge)
+
+ #+END_SRC
+
 
 ** pulse
 #+BEGIN_SRC emacs-lisp :tangle yes
@@ -1932,7 +1945,9 @@ connections in any non-live state are caught."
   (use-package tide
     :config
     ;; aligns annotation to the right hand side
-    (setq company-tooltip-align-annotations t))
+    (setq company-tooltip-align-annotations t)
+    ;; Lever 2: tide passes these straight to tsserver. Tabs, not spaces.
+    (setq tide-format-options '(:convertTabsToSpaces nil :tabSize 4 :indentSize 4)))
 
   (use-package typescript-mode
     :mode "\\.ts\\'"
@@ -1940,6 +1955,12 @@ connections in any non-live state are caught."
     (setq flycheck-check-syntax-automatically '(save mode-enabled))
     :hook
     (typescript-mode . (lambda ()
+
+                         ;; Lever 1: override the global `indent-tabs-mode nil`
+                         ;; for TypeScript buffers only (both vars are
+                         ;; automatically buffer-local).
+                         (setq indent-tabs-mode t)
+                         (setq tab-width 4)
 
                          (tide-setup)
                          (flycheck-mode +1)
@@ -2358,6 +2379,10 @@ omitted.  If not a git repo, the magit pane is omitted.
   (use-package unicode-fonts
     :config
     (unicode-fonts-setup))
+
+  ;; Enable rendering SF symbols on macOS.
+  (when (memq system-type '(darwin))
+    (set-fontset-font t nil "SF Pro Display" nil 'append))
 #+END_SRC
 
 
@@ -2425,6 +2450,15 @@ omitted.  If not a git repo, the magit pane is omitted.
 
 * Novelty / Fun
 
+** ytr
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package ytr
+  :straight (:host github :repo "xenodium/ytr")
+  :commands (ytr)
+  :config
+  (ytr-macos-use-sf-symbols))
+#+end_src
+
 ** pretend-type
 #+BEGIN_SRC emacs-lisp :tangle yes
   (use-package pretend-type
@@ -2470,6 +2504,7 @@ omitted.  If not a git repo, the magit pane is omitted.
   (global-set-key [remap beginning-of-visual-line] 'my/smarter-move-beginning-of-line)
   (global-set-key (kbd "<f14>") 'scroll-lock-mode)
   (global-set-key (kbd "<s-f9>") 'conor/project-layout)
+  (global-set-key (kbd "<C-M-f9>") 'conor/project-layout)
 #+END_SRC
 
 
@@ -2646,7 +2681,6 @@ Kill the same line three times and you get three identical entries in the kill r
 
   ;; (setenv "LC_ALL" "en_US.UTF-8")
   ;; (setenv "LANG" "en_US.UTF-8")
-
 
 #+END_SRC
 
