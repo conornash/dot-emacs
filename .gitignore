@@ -155,3 +155,15 @@ prompts/
 # Test files
 test-emacs-*.sh
 test-emacs-*.el
+
+# Local runtime state, data blobs, and vendored trees
+.claude/skills/
+.pi/
+.restic-ignore
+INTENTIONS.md
+cglisp/
+cl100k_base.txt
+elfeed/
+projectile-bookmarks.eld
+tree-sitter/
+ytr/
