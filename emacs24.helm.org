@@ -71,7 +71,6 @@
     (("<f1>" . helm-M-x)
      ("<C-f1>" . helm-command-prefix)
      ("<f2>" . helm-command-prefix)
-     ("<f9>" . conor-helm-files)
      ("<C-f9>" . helm-find-files)
      ("<M-f1>" . helm-apropos)
      ("<C-f8>" . helm-global-mark-ring)
